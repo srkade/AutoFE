@@ -1,0 +1,127 @@
+/* Layout base */
+.welcome-wrapper {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* background: linear-gradient(135deg, #e8f0ff, #d7e3fc); */
+  color: #1a237e;
+  font-family: "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+
+.welcome-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 80px 100px;
+  flex: 1;
+}
+
+/* Text section */
+.welcome-text {
+  max-width: 600px;
+  animation: fadeInLeft 1s ease-in-out;
+}
+
+.welcome-text h1 {
+  font-size: 50px;
+  margin-bottom: 20px;
+  color: #0d47a1;
+  line-height: 1.2;
+}
+
+.welcome-text h1 span {
+  color: #1565c0;
+}
+
+.welcome-text p {
+  font-size: 18px;
+  line-height: 1.7;
+  margin-bottom: 30px;
+  color: #2c387e;
+}
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 16px;
+  color: #283593;
+  margin-bottom: 40px;
+}
+
+/* Button */
+.start-btn {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  padding: 14px 30px;
+  border-radius: 25px;
+  font-size: 17px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3);
+  transition: 0.3s ease;
+}
+
+.start-btn:hover {
+  background-color: #0d47a1;
+  transform: translateY(-2px);
+}
+
+/* Image section */
+.welcome-image img {
+  width: 420px;
+  height: auto;
+  animation: float 3s ease-in-out infinite;
+  filter: drop-shadow(0px 8px 16px rgba(0, 0, 0, 0.2));
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 20px;
+  /* background-color: #f0f4ff; */
+  font-size: 14px;
+  color: #3949ab;
+  border-top: 1px solid #c5cae9;
+}
+
+/* Animations */
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .welcome-inner {
+    flex-direction: column;
+    padding: 50px 20px;
+    text-align: center;
+  }
+
+  .welcome-text h1 {
+    font-size: 36px;
+  }
+
+  .welcome-image img {
+    width: 300px;
+    margin-top: 40px;
+  }
+}

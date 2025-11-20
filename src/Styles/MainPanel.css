@@ -1,0 +1,66 @@
+/* Desktop & Tablet Adjustments */
+@media(max-width:1024px) {
+    .main-panel {
+        padding: 10px !important;
+    }
+
+    .main-panel.empty {
+        padding: 20px !important;
+    }
+}
+
+@media(max-width:768px) {
+    .main-panel {
+        padding: 5px !important;
+    }
+
+    .main-panel h2 {
+        font-size: 20px !important;
+    }
+
+    .main-panel p {
+        font-size: 14px !important;
+    }
+}
+
+/* Mobile ≤480px */
+@media (max-width: 480px) {
+    .main-panel-wrapper.has-selection {
+        display: none !important;
+    }
+
+    .mobile-only {
+        display: block;
+    }
+}
+
+@media (min-width: 481px) {
+    .mobile-only {
+        display: none;
+        /* hide mobile-only schematic on larger screens */
+    }
+}
+
+/* Hide schematic viewer on mobile */
+@media (max-width: 768px) {
+    .main-panel-wrapper {
+        display: none !important;
+    }
+}
+/* default: desktop/tablet layout */
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* mobile: stack vertically */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+  }
+
+  .left-panel {
+    width: 100% !important;
+  }
+}

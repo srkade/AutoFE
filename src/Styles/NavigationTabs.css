@@ -1,0 +1,77 @@
+
+/* Hamburger hidden on desktop */
+.hamburger {
+  display: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 12px;
+  user-select: none;
+}
+
+
+/* older desktop */
+@media(max-width:1024px) {
+  .nav-tabs {
+    gap: 1px !important;
+    padding: 0 8px !important;
+  }
+  .nav-tab {
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* laptop */
+@media(max-width:786px) {
+  .nav-tabs {
+    justify-content: center !important;
+    flex-wrap:wrap;
+    padding :4px 8px;
+    gap:6px;
+  }
+  .nav-tab {
+    flex:1 1 auto;
+    min-width: 90px;
+    padding: 8px 8px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Mobile ≤480px */
+@media (max-width: 480px) {
+  .hamburger {
+    display: block; /* show hamburger on mobile */
+  }
+
+  .nav-tabs {
+    display: none !important; /* hide nav by default, override inline style */
+    flex-direction: column;
+    position: absolute;
+    top: 50px; 
+    left: 0;
+    width: 100%;
+    background: white;
+    z-index: 100;
+  }
+
+  .nav-tabs.open {
+    display: flex !important; /* show nav only when hamburger clicked */
+  }
+
+  .nav-tab {
+    width: 100%;
+    justify-content: center;
+  }
+}
+/* Between 480px and 768px */
+@media (min-width: 481px) and (max-width: 768px) {
+  .hamburger {
+    display: none; /* hide hamburger above 480px */
+  }
+
+  .nav-tabs {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

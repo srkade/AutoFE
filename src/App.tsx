@@ -9,6 +9,7 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
+import { getComponents } from "./services/api";
 
 export type DashboardItem = {
   code: string;
@@ -21,9 +22,7 @@ export type DashboardItem = {
 };
 
 export default function App() {
-  // ========================
-  // STATE
-  // ========================
+
   const [loggedIn, setLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("");
   const [selectedItem, setSelectedItem] = useState<DashboardItem | null>(null);
@@ -36,10 +35,9 @@ export default function App() {
 
   // API schematic data
   const [apiSchematics, setApiSchematics] = useState<any[]>([]);
+  // API data for each category
+  const [components, setComponents] = useState<any[]>([]);
 
-  // ========================
-  // WINDOW RESIZE HANDLER
-  // ========================
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener("resize", handleResize);
@@ -47,50 +45,36 @@ export default function App() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ========================
-  // FETCH SCHEMATICS FROM API
-  // ========================
   useEffect(() => {
-  async function fetchSchematics() {
-    try {
-      const res = await fetch(
-        "http://localhost:8080/api/schematics/c21b8364-b15c-43f6-85dd-6901dc076db1/components"
-      );
+    async function loadSchematics() {
+      try {
+        const data = await getComponents(
+          "aa2fe692-6b4a-47fe-b227-5e8b86bca364"
+        );
 
-      const data = await res.json();
+        console.log("Raw API components:", data);
+        setApiSchematics(data);
 
-      // 🔥 PRINT EXACT RAW DATA
-      console.log("Raw API response:", data);
-
-      setApiSchematics(data);
-    } catch (err) {
-      console.error("Failed to fetch schematics:", err);
+      } catch (err) {
+        console.error("Failed to load components:", err);
+      }
     }
-  }
 
-  fetchSchematics();
-}, []);
+    loadSchematics();
+  }, []);
 
-
-  // ========================
-  // CREATE DASHBOARD ITEMS FROM API ONLY
-  // ========================
   const dashboardItems: DashboardItem[] = apiSchematics.map((api) => {
-  return {
-    code: api.code,
-    name: api.name,
-    type: "Component", // default because API does not send type
-    status: "Active",
-    voltage: "12V", // default
-    description: `Schematic for ${api.name}`,
-    schematicData: api     // API returns only code + name → still OK
-  };
-});
+    return {
+      code: api.code,
+      name: api.name,
+      type: api.type || api.category || "Component",
+      status: "Active",
+      voltage: "12V", // default
+      description: `Schematic for ${api.name}`,
+      schematicData: api
+    };
+  });
 
-
-  // ========================
-  // MULTI SELECT → MERGE API SCHEMATICS
-  // ========================
   function handleViewSchematic(codes: string[]) {
     const selectedItems = dashboardItems.filter((item) =>
       codes.includes(item.code)
@@ -103,36 +87,31 @@ export default function App() {
     setSelectedItem(null);
   }
 
-  // ========================
-  // FILTER COMPONENT LIST BASED ON TAB
-  // ========================
   const filteredItems = dashboardItems.filter((item) => {
     switch (activeTab) {
       case "components":
         return item.type === "Component";
       case "controllers":
-        return item.type === "Controller"; // depends on your API structure
+        return item.type === "Controller";
       case "systems":
-        return false; // NO hardcoded systems since mode A
+        return false;
       case "voltage":
-        return item.voltage === "12V" || item.voltage === "5V";
+        return false;
       case "DTC":
-        return false; // NO dtc in mode A
+        return false;
+      case "signals":
+        return false;
+      case "harnesses":
+        return false;
       default:
         return true;
     }
   });
 
-  // ========================
-  // LOGIN CHECK
-  // ========================
   if (!loggedIn) {
     return <LoginPage onLoginSuccess={() => setLoggedIn(true)} />;
   }
 
-  // ========================
-  // RENDER APP
-  // ========================
   return (
     <div
       style={{
@@ -179,7 +158,7 @@ export default function App() {
 
           {/* MOBILE MODE */}
           {!isMobile && selectedItem?.schematicData && (
-            <Schematic data={selectedItem.schematicData} activeTab={activeTab} />
+            <Schematic data={selectedItem.schematicData} activeTab={activeTab}  />
           )}
 
           {/* MAIN PANEL */}
@@ -187,14 +166,14 @@ export default function App() {
             selectedItem={
               mergedSchematic
                 ? {
-                    code: "MERGED",
-                    name: "Merged Schematic",
-                    type: "Merged",
-                    status: "Active",
-                    voltage: "12V",
-                    description: "Merged API schematic view",
-                    schematicData: mergedSchematic,
-                  }
+                  code: "MERGED",
+                  name: "Merged Schematic",
+                  type: "Merged",
+                  status: "Active",
+                  voltage: "12V",
+                  description: "Merged API schematic view",
+                  schematicData: mergedSchematic,
+                }
                 : selectedItem
             }
             activeTab={activeTab}

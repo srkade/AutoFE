@@ -1,75 +1,14 @@
-import React, { Component, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import NavigationTabs from "./panels/NavigationTabs";
 import LeftPanel from "./panels/LeftPanel";
 import MainPanel from "./panels/MainPanel";
 import Schematic from "./components/Schematic/Schematic";
 import { SchematicData } from "./components/Schematic/SchematicTypes";
-import "../src/Styles/global.css"
-import {
-  ICC,
-  S4,
-  S9,
-  S8,
-  B3,
-  CrankingSystem,
-  ChargingSystem,
-  LightSwitchFuse,
-  HeadLightRelayFuse,
-} from "./components/Schematic/tests";
+import "../src/Styles/global.css";
+
 import WelcomePage from "./pages/HomePage";
-import { DTC_StarterCoolDown, DTC_StarterRelayPower, DTC_StarterRelayGround, DTC_ICC } from "./components/Schematic/tests/DTCs"
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-
-
-const wrapSchematic = (schematic: any): any => ({
-  masterComponents: [], // add this line
-  ...schematic
-});
-// Create dashboard items from schematics
-const allSchematics = {
-  ICC: wrapSchematic(ICC),
-  B3: wrapSchematic(B3),
-  S4: wrapSchematic(S4),
-  S8: wrapSchematic(S8),
-  S9: wrapSchematic(S9),
-  CrankingSystem: wrapSchematic(CrankingSystem),
-  ChargingSystem: wrapSchematic(ChargingSystem),
-  DTC_StarterCoolDown: wrapSchematic(DTC_StarterCoolDown),
-  DTC_StarterRelayPower: wrapSchematic(DTC_StarterRelayPower),
-  DTC_StarterRelayGround: wrapSchematic(DTC_StarterRelayGround),
-  DTC_ICC: wrapSchematic(DTC_ICC),
-  LightSwitchFuse: wrapSchematic(LightSwitchFuse),
-  HeadLightRelayFuse: wrapSchematic(HeadLightRelayFuse),
-};
-const SYSTEM_KEYS = ["CrankingSystem", "ChargingSystem"];
-
-// Create dashboardItems mapping (DO NOT place any hook or selection logic here)
-const dashboardItems = Object.entries(allSchematics).map(([key, schematic]) => {
-  const isSystem = SYSTEM_KEYS.includes(key);
-  // NEW: Read code and name from schematic if they exist
-  const dtcCode = schematic.code || key;
-  const dtcName = schematic.name || schematic.components[0]?.label || (isSystem ? key : "Unknown Component");
-  const label =
-    schematic.components[0]?.label || (isSystem ? key : "Unknown Component");
-  return {
-    code: dtcCode,  // Changed: now uses schematic.code
-    name: dtcName,  // Changed: now uses schematic.name
-    type: isSystem ? "System" : schematic.components[0]?.category || "Unknown",
-    status: "Active" as const,
-    voltage: isSystem
-      ? "12V"
-      : key === "B3"
-        ? "12V"
-        : key === "S4"
-          ? "5V"
-          : "12V",
-    description: isSystem
-      ? `System schematic: ${label}`
-      : `Schematic for ${label}`,
-    schematicData: schematic,
-  };
-});
 
 export type DashboardItem = {
   code: string;
@@ -81,69 +20,119 @@ export type DashboardItem = {
   schematicData: SchematicData;
 };
 
-// ===============================
-// Place ALL React state and logic BELOW this line in the main function
-// ===============================
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(false); // track login state
+  // ========================
+  // STATE
+  // ========================
+  const [loggedIn, setLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("");
   const [selectedItem, setSelectedItem] = useState<DashboardItem | null>(null);
 
-
-  // Multi-select additions:
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
-  const [mergedSchematic, setMergedSchematic] = useState<SchematicData | null>(
-    null
-  );
+  const [mergedSchematic, setMergedSchematic] = useState<SchematicData | null>(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showWelcome, setShowWelcome] = useState(true);
+
+  // API schematic data
+  const [apiSchematics, setApiSchematics] = useState<any[]>([]);
+
+  // ========================
+  // WINDOW RESIZE HANDLER
+  // ========================
   useEffect(() => {
-    const handleResize = () => {
-      const nowMobile = window.innerWidth <= 768;
-      setIsMobile(nowMobile);
-    };
-
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener("resize", handleResize);
-
-    // Run once when component mounts (to ensure correct initial size)
     handleResize();
-
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  function handleViewSchematic(codes: string[]) {
-    const selectedItems = dashboardItems.filter((it) =>
-      codes.includes(it.code)
-    );
-    // Extract schematic data from dashboard items
-    const schematicConfigs = selectedItems.map(item => item.schematicData);
-    const merged = mergeSchematicConfigs(...schematicConfigs);
-    setMergedSchematic(merged);
-    setSelectedItem(null); // Optionally deselect single
+  // ========================
+  // FETCH SCHEMATICS FROM API
+  // ========================
+  useEffect(() => {
+  async function fetchSchematics() {
+    try {
+      const res = await fetch(
+        "http://localhost:8080/api/schematics/c21b8364-b15c-43f6-85dd-6901dc076db1/components"
+      );
+
+      const data = await res.json();
+
+      // 🔥 PRINT EXACT RAW DATA
+      console.log("Raw API response:", data);
+
+      setApiSchematics(data);
+    } catch (err) {
+      console.error("Failed to fetch schematics:", err);
+    }
   }
 
-  // Filter items by category based on active tab
+  fetchSchematics();
+}, []);
+
+
+  // ========================
+  // CREATE DASHBOARD ITEMS FROM API ONLY
+  // ========================
+  const dashboardItems: DashboardItem[] = apiSchematics.map((api) => {
+  return {
+    code: api.code,
+    name: api.name,
+    type: "Component", // default because API does not send type
+    status: "Active",
+    voltage: "12V", // default
+    description: `Schematic for ${api.name}`,
+    schematicData: api     // API returns only code + name → still OK
+  };
+});
+
+
+  // ========================
+  // MULTI SELECT → MERGE API SCHEMATICS
+  // ========================
+  function handleViewSchematic(codes: string[]) {
+    const selectedItems = dashboardItems.filter((item) =>
+      codes.includes(item.code)
+    );
+
+    const schematicConfigs = selectedItems.map((item) => item.schematicData);
+    const merged = mergeSchematicConfigs(...schematicConfigs);
+
+    setMergedSchematic(merged);
+    setSelectedItem(null);
+  }
+
+  // ========================
+  // FILTER COMPONENT LIST BASED ON TAB
+  // ========================
   const filteredItems = dashboardItems.filter((item) => {
     switch (activeTab) {
       case "components":
-        return ["Sensor", "Switch"].includes(item.type);
+        return item.type === "Component";
       case "controllers":
-        return ["Transistor", "Instrument"].includes(item.type);
+        return item.type === "Controller"; // depends on your API structure
       case "systems":
-        return ["System"].includes(item.type);
+        return false; // NO hardcoded systems since mode A
       case "voltage":
-        return ["Supply"].includes(item.type);
+        return item.voltage === "12V" || item.voltage === "5V";
       case "DTC":
-        return ["dtc"].includes(item.type);
+        return false; // NO dtc in mode A
       default:
-        return false;
+        return true;
     }
   });
+
+  // ========================
+  // LOGIN CHECK
+  // ========================
   if (!loggedIn) {
     return <LoginPage onLoginSuccess={() => setLoggedIn(true)} />;
   }
 
+  // ========================
+  // RENDER APP
+  // ========================
   return (
     <div
       style={{
@@ -158,7 +147,7 @@ export default function App() {
         activeTab={activeTab}
         onTabChange={(tabId) => {
           setActiveTab(tabId);
-          setShowWelcome(false); //  hides welcome page when a tab is clicked
+          setShowWelcome(false);
         }}
         onLogout={() => setLoggedIn(false)}
         userName="admin"
@@ -173,13 +162,13 @@ export default function App() {
         />
       ) : (
         <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-          {/* Left Panel */}
+          {/* LEFT PANEL */}
           <LeftPanel
             activeTab={activeTab}
             data={filteredItems}
             onItemSelect={(item) => {
               setSelectedItem(item);
-              setMergedSchematic(null); // Reset merge if new single selected
+              setMergedSchematic(null);
             }}
             selectedItem={selectedItem}
             selectedCodes={selectedCodes}
@@ -187,24 +176,25 @@ export default function App() {
             onViewSchematic={handleViewSchematic}
             isMobile={isMobile}
           />
+
+          {/* MOBILE MODE */}
           {!isMobile && selectedItem?.schematicData && (
             <Schematic data={selectedItem.schematicData} activeTab={activeTab} />
           )}
 
-          {/* Main Panel */}
+          {/* MAIN PANEL */}
           <MainPanel
-            // If merged schematic is present, show that; otherwise single selection
             selectedItem={
               mergedSchematic
                 ? {
-                  code: "MERGED",
-                  name: "Merged Schematic",
-                  type: "Merged",
-                  status: "Active",
-                  voltage: "12V",
-                  description: "Merged view of selected schematics",
-                  schematicData: mergedSchematic,
-                }
+                    code: "MERGED",
+                    name: "Merged Schematic",
+                    type: "Merged",
+                    status: "Active",
+                    voltage: "12V",
+                    description: "Merged API schematic view",
+                    schematicData: mergedSchematic,
+                  }
                 : selectedItem
             }
             activeTab={activeTab}
@@ -212,9 +202,7 @@ export default function App() {
             isMobile={isMobile}
           />
         </div>
-      )
-      }
-
+      )}
     </div>
   );
 }

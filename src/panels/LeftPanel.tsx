@@ -145,6 +145,49 @@ export default function LeftPanel({
             🔍
           </span>
         </div>
+        {showCheckbox && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "8px 16px",
+              borderBottom: "1px solid #e9ecef",
+              gap: "8px",
+            }}
+          >
+
+
+            {selectedCodes.length > 0 && (
+              <button
+                onClick={() => setSelectedCodes([])}
+                title="Clear Selection"
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  background: "#f1f3f5",
+                  border: "1px solid #ced4da",
+                  borderRadius: "50%",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "18px",
+                  color: "#495057",
+                  transition: "background 0.2s ease",
+                }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLButtonElement).style.background = "#e9ecef")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLButtonElement).style.background = "#f1f3f5")
+                }
+              >
+                🧹
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Items List */}

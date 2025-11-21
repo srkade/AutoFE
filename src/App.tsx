@@ -48,13 +48,9 @@ export default function App() {
   useEffect(() => {
     async function loadSchematics() {
       try {
-        const data = await getComponents(
-          "aa2fe692-6b4a-47fe-b227-5e8b86bca364"
-        );
-
+        const data = await getComponents(); 
         console.log("Raw API components:", data);
         setApiSchematics(data);
-
       } catch (err) {
         console.error("Failed to load components:", err);
       }
@@ -158,7 +154,7 @@ export default function App() {
 
           {/* MOBILE MODE */}
           {!isMobile && selectedItem?.schematicData && (
-            <Schematic data={selectedItem.schematicData} activeTab={activeTab}  />
+            <Schematic data={selectedItem.schematicData} activeTab={activeTab} />
           )}
 
           {/* MAIN PANEL */}

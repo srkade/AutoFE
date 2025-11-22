@@ -9,7 +9,7 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents, getDtcs, getHarnesses } from "./services/api";
+import { getComponents, getDtcs, getHarnesses,getSystems} from "./services/api";
 
 export type DashboardItem = {
   code: string;
@@ -39,6 +39,9 @@ export default function App() {
   const [components, setComponents] = useState<any[]>([]);
   const [dtcList, setDtcList] = useState<any[]>([]);
   const [harnessesList, setHarnessesList] = useState<any[]>([]);
+  const [systemsList, setSystemsList] = useState<any[]>([]);
+  
+
 
   const dtcItems: DashboardItem[] = dtcList.map((d) => ({
     code: d.code,
@@ -68,6 +71,21 @@ export default function App() {
       components: [],
       connections: [],
       name: h.name
+    }
+  }));
+
+  const systemsItem: DashboardItem[] = systemsList.map((s) => ({
+    code: s.code,
+    name: s.name,
+    type: "System",
+    status: "Active",
+    voltage: "N/A",
+    description: s.description || "No description available",
+    schematicData: {
+      masterComponents: [],
+      components: [],
+      connections: [],
+      name: s.name
     }
   }));
 
@@ -118,6 +136,21 @@ export default function App() {
 
     loadHarnesses();
   }, []);
+  useEffect(() => {
+    async function loadSystems() {
+      try {
+        const data = await getSystems();
+        console.log("Raw API harnesses:", data);
+        setSystemsList(data);
+      } catch (err) {
+        console.error("Failed to load harnesses:", err);
+      }
+    }
+
+    loadSystems();
+  }, []);
+  
+  
   const dashboardItems: DashboardItem[] = [
     // Components
     ...apiSchematics.map((api) => ({
@@ -138,7 +171,9 @@ export default function App() {
     // DTC Items
     ...dtcItems,
     // Harness Items
-    ...harnessItems
+    ...harnessItems,
+    // Systems Items
+    ...systemsItem
   ];
 
   function handleViewSchematic(codes: string[]) {
@@ -160,7 +195,7 @@ export default function App() {
       case "controllers":
         return item.type === "Controller";
       case "systems":
-        return false;
+        return item.type === "System";
       case "voltage":
         return false;
       case "DTC":

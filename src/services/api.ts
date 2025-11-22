@@ -14,6 +14,15 @@ export async function getComponents() {
     throw err;
   }
 }
+export async function getSystems() {
+  try {
+    const res = await api.get(`/schematics/systems`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getComponents:", err);
+    throw err;
+  }
+}
 export async function getDtcs() {
   try {
     const res = await api.get(`/schematics/dtcs`);

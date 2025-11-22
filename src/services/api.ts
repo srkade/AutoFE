@@ -7,7 +7,7 @@ const api = axios.create({
 
 export async function getComponents() {
   try {
-    const res = await api.get(`/schematics/components`); 
+    const res = await api.get(`/schematics/components`);
     return res.data;
   } catch (err) {
     console.error("API ERROR → getComponents:", err);
@@ -24,5 +24,13 @@ export async function getDtcs() {
   }
 }
 
-
+export async function getHarnesses() {
+  try {
+    const res = await api.get(`/schematics/harnesses`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getHarnesses:", err);
+    throw err;
+  }
+}
 export default api;

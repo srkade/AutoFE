@@ -9,7 +9,7 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents, getDtcs } from "./services/api";
+import { getComponents, getDtcs, getHarnesses } from "./services/api";
 
 export type DashboardItem = {
   code: string;
@@ -38,6 +38,8 @@ export default function App() {
   // API data for each category
   const [components, setComponents] = useState<any[]>([]);
   const [dtcList, setDtcList] = useState<any[]>([]);
+  const [harnessesList, setHarnessesList] = useState<any[]>([]);
+
   const dtcItems: DashboardItem[] = dtcList.map((d) => ({
     code: d.code,
     name: d.name,
@@ -54,6 +56,20 @@ export default function App() {
     }
   }));
 
+  const harnessItems: DashboardItem[] = harnessesList.map((h) => ({
+    code: h.code,
+    name: h.name,
+    type: "Harness",
+    status: "Active",
+    voltage: "N/A",
+    description: h.description || "No description available",
+    schematicData: {
+      masterComponents: [],
+      components: [],
+      connections: [],
+      name: h.name
+    }
+  }));
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -89,6 +105,19 @@ export default function App() {
     loadDtcs();
   }, []);
 
+  useEffect(() => {
+    async function loadHarnesses() {
+      try {
+        const data = await getHarnesses();
+        console.log("Raw API harnesses:", data);
+        setHarnessesList(data);
+      } catch (err) {
+        console.error("Failed to load harnesses:", err);
+      }
+    }
+
+    loadHarnesses();
+  }, []);
   const dashboardItems: DashboardItem[] = [
     // Components
     ...apiSchematics.map((api) => ({
@@ -107,7 +136,9 @@ export default function App() {
       }
     })),
     // DTC Items
-    ...dtcItems
+    ...dtcItems,
+    // Harness Items
+    ...harnessItems
   ];
 
   function handleViewSchematic(codes: string[]) {
@@ -137,7 +168,7 @@ export default function App() {
       case "signals":
         return false;
       case "harnesses":
-        return false;
+        return item.type === "Harness";
       default:
         return true;
     }

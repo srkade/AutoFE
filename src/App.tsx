@@ -9,7 +9,7 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents, getDtcs, getHarnesses,getSystems} from "./services/api";
+import { getComponents, getDtcs, getHarnesses, getVoltageSupply, getSystems} from "./services/api";
 
 export type DashboardItem = {
   code: string;
@@ -39,9 +39,8 @@ export default function App() {
   const [components, setComponents] = useState<any[]>([]);
   const [dtcList, setDtcList] = useState<any[]>([]);
   const [harnessesList, setHarnessesList] = useState<any[]>([]);
-  const [systemsList, setSystemsList] = useState<any[]>([]);
-  
-
+  const [supplyList, setVoltageSupplyList] = useState<any[]>([]);
+   const [systemsList, setSystemsList] = useState<any[]>([]);
 
   const dtcItems: DashboardItem[] = dtcList.map((d) => ({
     code: d.code,
@@ -59,6 +58,21 @@ export default function App() {
     }
   }));
 
+   const systemsItem: DashboardItem[] = systemsList.map((s) => ({
+    code: s.code,
+    name: s.name,
+    type: "System",
+    status: "Active",
+    voltage: "N/A",
+    description: s.description || "No description available",
+    schematicData: {
+      masterComponents: [],
+      components: [],
+      connections: [],
+      name: s.name
+    }
+  }));
+
   const harnessItems: DashboardItem[] = harnessesList.map((h) => ({
     code: h.code,
     name: h.name,
@@ -73,11 +87,10 @@ export default function App() {
       name: h.name
     }
   }));
-
-  const systemsItem: DashboardItem[] = systemsList.map((s) => ({
+  const supplyItems: DashboardItem[] = supplyList.map((s) => ({
     code: s.code,
     name: s.name,
-    type: "System",
+    type: "Supply",
     status: "Active",
     voltage: "N/A",
     description: s.description || "No description available",
@@ -109,6 +122,23 @@ export default function App() {
 
     loadSchematics();
   }, []);
+
+
+  useEffect(() => {
+    async function loadSystems() {
+      try {
+        const data = await getSystems();
+        console.log("Raw API harnesses:", data);
+        setSystemsList(data);
+      } catch (err) {
+        console.error("Failed to load harnesses:", err);
+      }
+    }
+
+    loadSystems();
+  }, []);
+
+
   useEffect(() => {
     async function loadDtcs() {
       try {
@@ -137,20 +167,17 @@ export default function App() {
     loadHarnesses();
   }, []);
   useEffect(() => {
-    async function loadSystems() {
+    async function loadSupply() {
       try {
-        const data = await getSystems();
-        console.log("Raw API harnesses:", data);
-        setSystemsList(data);
+        const data = await getVoltageSupply();
+        console.log("Row API voltage supply:", data);
+        setVoltageSupplyList(data);
       } catch (err) {
-        console.error("Failed to load harnesses:", err);
+        console.log("failed to load harness: ", err);
       }
     }
-
-    loadSystems();
+    loadSupply();
   }, []);
-  
-  
   const dashboardItems: DashboardItem[] = [
     // Components
     ...apiSchematics.map((api) => ({
@@ -170,10 +197,12 @@ export default function App() {
     })),
     // DTC Items
     ...dtcItems,
+    // Systems Items
+    ...systemsItem,
     // Harness Items
     ...harnessItems,
-    // Systems Items
-    ...systemsItem
+    //voltage supply
+    ...supplyItems,
   ];
 
   function handleViewSchematic(codes: string[]) {
@@ -197,7 +226,7 @@ export default function App() {
       case "systems":
         return item.type === "System";
       case "voltage":
-        return false;
+        return item.type === "Supply";
       case "DTC":
         return item.type === "DTC";
       case "signals":

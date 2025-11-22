@@ -42,4 +42,14 @@ export async function getHarnesses() {
     throw err;
   }
 }
+
+export async function getVoltageSupply(){
+  try{
+    const res=await api.get(`/schematics/supply`);
+    return res.data;
+  }catch (err){
+    console.error("API Error-> getVoltageSupply:",err);
+    throw err;
+  }
+}
 export default api;

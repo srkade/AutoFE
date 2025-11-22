@@ -9,7 +9,7 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents } from "./services/api";
+import { getComponents, getDtcs } from "./services/api";
 
 export type DashboardItem = {
   code: string;
@@ -37,6 +37,23 @@ export default function App() {
   const [apiSchematics, setApiSchematics] = useState<any[]>([]);
   // API data for each category
   const [components, setComponents] = useState<any[]>([]);
+  const [dtcList, setDtcList] = useState<any[]>([]);
+  const dtcItems: DashboardItem[] = dtcList.map((d) => ({
+    code: d.code,
+    name: d.name,
+    type: "DTC",
+    status: "Active",
+    voltage: "N/A",
+    description: d.comment || "No description available",
+
+    schematicData: {
+      masterComponents: [],
+      components: [],
+      connections: [],
+      name: d.name
+    }
+  }));
+
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -48,7 +65,7 @@ export default function App() {
   useEffect(() => {
     async function loadSchematics() {
       try {
-        const data = await getComponents(); 
+        const data = await getComponents();
         console.log("Raw API components:", data);
         setApiSchematics(data);
       } catch (err) {
@@ -58,18 +75,40 @@ export default function App() {
 
     loadSchematics();
   }, []);
+  useEffect(() => {
+    async function loadDtcs() {
+      try {
+        const data = await getDtcs();
+        console.log("Raw API DTC list:", data);
+        setDtcList(data);
+      } catch (err) {
+        console.error("Failed to load DTC list:", err);
+      }
+    }
 
-  const dashboardItems: DashboardItem[] = apiSchematics.map((api) => {
-    return {
+    loadDtcs();
+  }, []);
+
+  const dashboardItems: DashboardItem[] = [
+    // Components
+    ...apiSchematics.map((api) => ({
       code: api.code,
       name: api.name,
       type: api.type || api.category || "Component",
-      status: "Active",
-      voltage: "12V", // default
+      status: "Active" as const,
+      voltage: "12V",
       description: `Schematic for ${api.name}`,
-      schematicData: api
-    };
-  });
+
+      schematicData: {
+        masterComponents: api.masterComponents || [],
+        components: api.components || [],
+        connections: api.connections || [],
+        name: api.name || "Unnamed Schematic"
+      }
+    })),
+    // DTC Items
+    ...dtcItems
+  ];
 
   function handleViewSchematic(codes: string[]) {
     const selectedItems = dashboardItems.filter((item) =>
@@ -94,7 +133,7 @@ export default function App() {
       case "voltage":
         return false;
       case "DTC":
-        return false;
+        return item.type === "DTC";
       case "signals":
         return false;
       case "harnesses":

@@ -47,10 +47,7 @@ export default function LeftPanel({
 
     if (!search) return true;
 
-    return (
-      name.includes(search) ||
-      code.includes(search)
-    );
+    return name.includes(search) || code.includes(search);
   });
 
   const selectedSet = new Set(selectedCodes);
@@ -64,7 +61,6 @@ export default function LeftPanel({
   );
 
   const filteredData = [...selectedPart, ...otherPart];
-
 
   const handleItemClick = (item: DashboardItem) => {
     onItemSelect(item);
@@ -145,6 +141,7 @@ export default function LeftPanel({
             🔍
           </span>
         </div>
+
         {showCheckbox && (
           <div
             style={{
@@ -156,8 +153,6 @@ export default function LeftPanel({
               gap: "8px",
             }}
           >
-
-
             {selectedCodes.length > 0 && (
               <button
                 onClick={() => setSelectedCodes([])}
@@ -177,10 +172,12 @@ export default function LeftPanel({
                   transition: "background 0.2s ease",
                 }}
                 onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLButtonElement).style.background = "#e9ecef")
+                  ((e.currentTarget as HTMLButtonElement).style.background =
+                    "#e9ecef")
                 }
                 onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLButtonElement).style.background = "#f1f3f5")
+                  ((e.currentTarget as HTMLButtonElement).style.background =
+                    "#f1f3f5")
                 }
               >
                 🧹
@@ -192,7 +189,8 @@ export default function LeftPanel({
 
       {/* Items List */}
       <div style={{ flex: 1, overflow: "auto", padding: "16px" }}>
-        {filteredData.length === 0 && searchTerm ? (
+        {/* FIXED "No items found" */}
+        {filteredData.length === 0 ? (
           <div
             style={{
               textAlign: "center",
@@ -221,18 +219,19 @@ export default function LeftPanel({
                   style={{
                     padding: "16px",
                     marginBottom: "12px",
-                    border: `2px solid ${isSelected
-                      ? "#007bff"
-                      : isChecked
+                    border: `2px solid ${
+                      isSelected
+                        ? "#007bff"
+                        : isChecked
                         ? "#007bff"
                         : "#e9ecef"
-                      }`,
+                    }`,
                     borderRadius: "12px",
                     background: isSelected
                       ? "#f0f8ff"
                       : isChecked
-                        ? "#cce5ff"
-                        : "white",
+                      ? "#cce5ff"
+                      : "white",
                     cursor: "pointer",
                     transition: "all 0.2s ease",
                     position: "relative",

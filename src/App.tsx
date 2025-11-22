@@ -9,7 +9,7 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents, getDtcs, getHarnesses } from "./services/api";
+import { getComponents, getDtcs, getHarnesses, getVoltageSupply } from "./services/api";
 
 export type DashboardItem = {
   code: string;
@@ -39,6 +39,7 @@ export default function App() {
   const [components, setComponents] = useState<any[]>([]);
   const [dtcList, setDtcList] = useState<any[]>([]);
   const [harnessesList, setHarnessesList] = useState<any[]>([]);
+  const [supplyList, setVoltageSupplyList] = useState<any[]>([]);
 
   const dtcItems: DashboardItem[] = dtcList.map((d) => ({
     code: d.code,
@@ -68,6 +69,20 @@ export default function App() {
       components: [],
       connections: [],
       name: h.name
+    }
+  }));
+  const supplyItems: DashboardItem[] = supplyList.map((s) => ({
+    code: s.code,
+    name: s.name,
+    type: "Supply",
+    status: "Active",
+    voltage: "N/A",
+    description: s.description || "No description available",
+    schematicData: {
+      masterComponents: [],
+      components: [],
+      connections: [],
+      name: s.name
     }
   }));
 
@@ -118,6 +133,18 @@ export default function App() {
 
     loadHarnesses();
   }, []);
+  useEffect(() => {
+    async function loadSupply() {
+      try {
+        const data = await getVoltageSupply();
+        console.log("Row API voltage supply:", data);
+        setVoltageSupplyList(data);
+      } catch (err) {
+        console.log("failed to load harness: ", err);
+      }
+    }
+    loadSupply();
+  }, []);
   const dashboardItems: DashboardItem[] = [
     // Components
     ...apiSchematics.map((api) => ({
@@ -138,7 +165,9 @@ export default function App() {
     // DTC Items
     ...dtcItems,
     // Harness Items
-    ...harnessItems
+    ...harnessItems,
+    //voltage supply
+    ...supplyItems,
   ];
 
   function handleViewSchematic(codes: string[]) {
@@ -162,7 +191,7 @@ export default function App() {
       case "systems":
         return false;
       case "voltage":
-        return false;
+        return item.type === "Supply";
       case "DTC":
         return item.type === "DTC";
       case "signals":

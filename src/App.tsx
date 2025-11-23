@@ -9,7 +9,8 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents, getDtcs, getHarnesses, getVoltageSupply, getSystems} from "./services/api";
+import { getComponents,getComponentSchematic, getDtcs, getHarnesses, getVoltageSupply, getSystems} from "./services/api";
+import { normalizeSchematic } from "./utils/normalizeSchematic";
 
 export type DashboardItem = {
   code: string;
@@ -101,6 +102,11 @@ export default function App() {
       name: s.name
     }
   }));
+
+
+
+
+  
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -275,10 +281,35 @@ export default function App() {
           <LeftPanel
             activeTab={activeTab}
             data={filteredItems}
-            onItemSelect={(item) => {
-              setSelectedItem(item);
-              setMergedSchematic(null);
-            }}
+            onItemSelect={async (item) => {
+  try {
+    // Get the code coming from LeftPanel
+    const code = item.code;
+
+    // Call backend API
+    const data = await getComponentSchematic(code);
+    console.log("Loaded schematic:", data);
+
+    const converted = normalizeSchematic(data);
+
+const updatedItem = {
+  ...item,
+  schematicData: converted
+};
+
+setSelectedItem(updatedItem);
+    // print data in console
+    console.log("Updated Item with schematic data:", updatedItem);
+
+    // Store the item WITH loaded schematic JSON
+    setSelectedItem(updatedItem);
+    setMergedSchematic(null);
+  } catch (err) {
+    console.error("Failed to load schematic:", err);
+  }
+}}
+
+
             selectedItem={selectedItem}
             selectedCodes={selectedCodes}
             setSelectedCodes={setSelectedCodes}

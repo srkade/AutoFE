@@ -14,6 +14,18 @@ export async function getComponents() {
     throw err;
   }
 }
+
+export async function getComponentSchematic(code: string) {
+  try {
+    const res = await api.get(`/wires/schematic/${code}`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getComponentSchematic:", err);
+    throw err;
+  }
+}
+
+
 export async function getSystems() {
   try {
     const res = await api.get(`/schematics/systems`);
@@ -52,4 +64,6 @@ export async function getVoltageSupply(){
     throw err;
   }
 }
+
+
 export default api;

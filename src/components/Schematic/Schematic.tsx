@@ -637,6 +637,7 @@ export default function Schematic({
       setIsExporting(false);
     }
   };
+
   // export function end
   return (
     <div
@@ -943,198 +944,200 @@ export default function Schematic({
             >
               {data.components.map((comp, componentIndex) => (
                 <g key={comp.id}>
-                  {comp.componentType?.toLowerCase() === "splice" ? (
-                    <g>
-                      <circle
-                        cx={
-                          getXForComponent(comp) + getWidthForComponent(comp) / 2
-                        }
-                        cy={getYForComponent(comp) - connectorHeight / 2 - 2}
-                        r={componentSize.height / 8} // adjust radius as needed
-                        fill="white"
-                        stroke="black"
-                        strokeWidth={1}
-                      />
-                      <circle
-                        cx={
-                          getXForComponent(comp) + getWidthForComponent(comp) / 2
-                        }
-                        cy={getYForComponent(comp) - connectorHeight / 2 - 2}
-                        r={componentSize.height / 10}
-                        fill="black"
-                      />
-                    </g>
-                  ) : (
-                    comp.shape === "rectangle" && (
-                      <g
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedWires([]);
-                          setSelectedConnector(null);
-
-                          // Select this component
-                          setSelectedComponentIds([comp.id]);
-                          setPopupWire(null);
-                          setPopupConnector(null);
-
-                          // Show popup only if it wasn't manually closed
-                          if (!popupClosedManually) {
-                            setPopupComponent(comp);
-                            setPopupPosition({
-                              x:
-                                getXForComponent(comp) +
-                                getWidthForComponent(comp) +
-                                900,
-                              y:
-                                getYForComponent(comp) +
-                                componentSize.height +
-                                100,
-                            });
+                  {(comp.componentType?.toLowerCase() === "splice" ||
+                    comp.label?.toLowerCase() === "splice")
+                    ? (
+                      <g>
+                        <circle
+                          cx={
+                            getXForComponent(comp) + getWidthForComponent(comp) / 2
                           }
-                        }}
-                      >
-                        <rect
-                          x={getXForComponent(comp)}
-                          y={getYForComponent(comp)}
-                          width={getWidthForComponent(comp)}
-                          height={componentSize.height}
-                          fill="lightblue"
+                          cy={getYForComponent(comp) - connectorHeight / 2 - 2}
+                          r={componentSize.height / 8} // adjust radius as needed
+                          fill="white"
                           stroke="black"
-                          strokeDasharray={
-                            componentIndex !== 0 ? "6,4" : undefined
-                          }
-                          onClick={() => {
-                            console.log("Rectangle clicked!", comp.id);
-                          }}
-                          style={{ cursor: "pointer" }}
+                          strokeWidth={1}
                         />
-                        {selectedComponentIds.includes(comp.id) && (
+                        <circle
+                          cx={
+                            getXForComponent(comp) + getWidthForComponent(comp) / 2
+                          }
+                          cy={getYForComponent(comp) - connectorHeight / 2 - 2}
+                          r={componentSize.height / 10}
+                          fill="black"
+                        />
+                      </g>
+                    ) : (
+                      comp.shape === "rectangle" && (
+                        <g
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedWires([]);
+                            setSelectedConnector(null);
+
+                            // Select this component
+                            setSelectedComponentIds([comp.id]);
+                            setPopupWire(null);
+                            setPopupConnector(null);
+
+                            // Show popup only if it wasn't manually closed
+                            if (!popupClosedManually) {
+                              setPopupComponent(comp);
+                              setPopupPosition({
+                                x:
+                                  getXForComponent(comp) +
+                                  getWidthForComponent(comp) +
+                                  900,
+                                y:
+                                  getYForComponent(comp) +
+                                  componentSize.height +
+                                  100,
+                              });
+                            }
+                          }}
+                        >
                           <rect
                             x={getXForComponent(comp)}
-                            y={
-                              getYForComponent(comp) <
-                                fitViewBox.y + fitViewBox.h / 2
-                                ? getYForComponent(comp) - 60
-                                : getYForComponent(comp) + 60
-                            }
+                            y={getYForComponent(comp)}
                             width={getWidthForComponent(comp)}
                             height={componentSize.height}
-                            fill="#3390FF"
-                            opacity={0.3}
-                            pointerEvents="none" // so the click still passes through to the base rect
-                          />
-                        )}
-
-                        {comp.category?.toLowerCase() === "sensor" && (
-                          <Sensor
-                            x={getXForComponent(comp) + 20} // left of rectangle
-                            y={getYForComponent(comp) + 15} // top of rectangle
-                            width={getWidthForComponent(comp) / 20} // match rectangle width
-                            height={componentSize.height / 2} // match rectangle height
+                            fill="lightblue"
                             stroke="black"
-                            strokeWidth={1}
-                          />
-                        )}
-
-                        {comp.category?.toLowerCase() === "switch" && (
-                          <ElectricalSwitch
-                            x={getXForComponent(comp)}
-                            y={getYForComponent(comp)}
-                            sizeMultiplier={0.5}
-                            stroke="black"
-                            strokeWidth={1}
-                          />
-                        )}
-
-                        {comp.category?.toLowerCase() === "transistor" && (
-                          <Transistor
-                            x={
-                              getXForComponent(comp) +
-                              getWidthForComponent(comp) / 12
-                            } // horizontal centering
-                            y={getYForComponent(comp) + componentSize.height / 2} // vertical centering
-                            sizeMultiplier={0.3} // make smaller so it fits neatly inside
-                            stroke="black"
-                            strokeWidth={5}
-                          />
-                        )}
-                        {comp.category?.toLowerCase() === "transformer" && (
-                          <Transformer
-                            x={
-                              getXForComponent(comp) +
-                              getWidthForComponent(comp) / 16
-                            } // horizontal centering
-                            y={getYForComponent(comp) + componentSize.height / 6} // vertical centering
-                            sizeMultiplier={0.2} // scale it down to fit
-                            stroke="black"
-                            strokeWidth={1}
-                            fill="black"
-                          />
-                        )}
-                        {comp.category?.toLowerCase() === "motor" && (
-                          <MotorSymbol
-                            cx={
-                              getXForComponent(comp) +
-                              getWidthForComponent(comp) / 5
-                            } // center of rectangle
-                            cy={getYForComponent(comp) + componentSize.height / 2} // center of rectangle
-                            size={
-                              Math.min(
-                                getWidthForComponent(comp),
-                                componentSize.height
-                              ) * 0.5
-                            } // scale to fit rectangle
-                            color="black"
-                            fill="#B0E0E6"
-                          />
-                        )}
-                        {comp.category?.toLowerCase() === "lamp" && (
-                          <LampSymbol
-                            cx={
-                              getXForComponent(comp) +
-                              getWidthForComponent(comp) / 5
+                            strokeDasharray={
+                              componentIndex !== 0 ? "6,4" : undefined
                             }
-                            cy={getYForComponent(comp) + componentSize.height / 2}
-                            size={
-                              Math.min(
-                                getWidthForComponent(comp),
-                                componentSize.height
-                              ) * 0.5
-                            }
-                            color="black"
+                            onClick={() => {
+                              console.log("Rectangle clicked!", comp.id);
+                            }}
+                            style={{ cursor: "pointer" }}
                           />
-                        )}
-                        {comp.category?.toLowerCase() === "ground" && (
-                          <GroundSymbol
-                            x={getXForComponent(comp)} // adjust horizontal position
-                            y={getYForComponent(comp) + 15} // adjust vertical position
-                            width={getWidthForComponent(comp) / 2} // adjust width scaling
-                            height={componentSize.height / 2} // adjust height scaling
-                            stroke="black"
-                            strokeWidth={3}
-                          />
-                        )}
-                        {comp.category?.toLowerCase() === "resistor" && (
-                          <ResistorSymbol
-                            x={getXForComponent(comp) - 50}
-                            y={getYForComponent(comp) + 13}
-                            width={getWidthForComponent(comp)}
-                            height={40}
-                          />
-                        )}
-                        {comp.category?.toLowerCase() === "battery" && (
-                          <Battery
-                            x={getXForComponent(comp) + 10}
-                            y={getYForComponent(comp) + 10}
-                            width={30}
-                            height={40}
-                            leadLength={5}
-                            centralLineRatio={3}
-                          />
-                        )}
-                      </g>
-                    )
-                  )}
+                          {selectedComponentIds.includes(comp.id) && (
+                            <rect
+                              x={getXForComponent(comp)}
+                              y={
+                                getYForComponent(comp) <
+                                  fitViewBox.y + fitViewBox.h / 2
+                                  ? getYForComponent(comp) - 60
+                                  : getYForComponent(comp) + 60
+                              }
+                              width={getWidthForComponent(comp)}
+                              height={componentSize.height}
+                              fill="#3390FF"
+                              opacity={0.3}
+                              pointerEvents="none" // so the click still passes through to the base rect
+                            />
+                          )}
+
+                          {comp.category?.toLowerCase() === "sensor" && (
+                            <Sensor
+                              x={getXForComponent(comp) + 20} // left of rectangle
+                              y={getYForComponent(comp) + 15} // top of rectangle
+                              width={getWidthForComponent(comp) / 20} // match rectangle width
+                              height={componentSize.height / 2} // match rectangle height
+                              stroke="black"
+                              strokeWidth={1}
+                            />
+                          )}
+
+                          {comp.category?.toLowerCase() === "switch" && (
+                            <ElectricalSwitch
+                              x={getXForComponent(comp)}
+                              y={getYForComponent(comp)}
+                              sizeMultiplier={0.5}
+                              stroke="black"
+                              strokeWidth={1}
+                            />
+                          )}
+
+                          {comp.category?.toLowerCase() === "transistor" && (
+                            <Transistor
+                              x={
+                                getXForComponent(comp) +
+                                getWidthForComponent(comp) / 12
+                              } // horizontal centering
+                              y={getYForComponent(comp) + componentSize.height / 2} // vertical centering
+                              sizeMultiplier={0.3} // make smaller so it fits neatly inside
+                              stroke="black"
+                              strokeWidth={5}
+                            />
+                          )}
+                          {comp.category?.toLowerCase() === "transformer" && (
+                            <Transformer
+                              x={
+                                getXForComponent(comp) +
+                                getWidthForComponent(comp) / 16
+                              } // horizontal centering
+                              y={getYForComponent(comp) + componentSize.height / 6} // vertical centering
+                              sizeMultiplier={0.2} // scale it down to fit
+                              stroke="black"
+                              strokeWidth={1}
+                              fill="black"
+                            />
+                          )}
+                          {comp.category?.toLowerCase() === "motor" && (
+                            <MotorSymbol
+                              cx={
+                                getXForComponent(comp) +
+                                getWidthForComponent(comp) / 5
+                              } // center of rectangle
+                              cy={getYForComponent(comp) + componentSize.height / 2} // center of rectangle
+                              size={
+                                Math.min(
+                                  getWidthForComponent(comp),
+                                  componentSize.height
+                                ) * 0.5
+                              } // scale to fit rectangle
+                              color="black"
+                              fill="#B0E0E6"
+                            />
+                          )}
+                          {comp.category?.toLowerCase() === "lamp" && (
+                            <LampSymbol
+                              cx={
+                                getXForComponent(comp) +
+                                getWidthForComponent(comp) / 5
+                              }
+                              cy={getYForComponent(comp) + componentSize.height / 2}
+                              size={
+                                Math.min(
+                                  getWidthForComponent(comp),
+                                  componentSize.height
+                                ) * 0.5
+                              }
+                              color="black"
+                            />
+                          )}
+                          {comp.category?.toLowerCase() === "ground" && (
+                            <GroundSymbol
+                              x={getXForComponent(comp)} // adjust horizontal position
+                              y={getYForComponent(comp) + 15} // adjust vertical position
+                              width={getWidthForComponent(comp) / 2} // adjust width scaling
+                              height={componentSize.height / 2} // adjust height scaling
+                              stroke="black"
+                              strokeWidth={3}
+                            />
+                          )}
+                          {comp.category?.toLowerCase() === "resistor" && (
+                            <ResistorSymbol
+                              x={getXForComponent(comp) - 50}
+                              y={getYForComponent(comp) + 13}
+                              width={getWidthForComponent(comp)}
+                              height={40}
+                            />
+                          )}
+                          {comp.category?.toLowerCase() === "battery" && (
+                            <Battery
+                              x={getXForComponent(comp) + 10}
+                              y={getYForComponent(comp) + 10}
+                              width={30}
+                              height={40}
+                              leadLength={5}
+                              centralLineRatio={3}
+                            />
+                          )}
+                        </g>
+                      )
+                    )}
                   <text
                     vectorEffect="non-scaling-stroke"
                     ref={(el) => {
@@ -1210,14 +1213,43 @@ export default function Schematic({
                   data
                 );
                 const fromComponent = fromData[0];
-                const from = fromData[1];
+                var from = fromData[1];
 
                 const toData = getComponentConnectorTupleFromConnectionPoint(
                   toConn,
                   data
                 );
                 const toComponent = toData[0];
-                const to = toData[1];
+                var to = toData[1];
+                if (fromComponent?.componentType?.toLowerCase() === "splice" && !from) {
+                  const centerX =
+                    getXForComponent(fromComponent) + getWidthForComponent(fromComponent) / 2;
+
+                  const centerY =
+                    getYForComponent(fromComponent) - connectorHeight / 2 - 2;
+
+                  from = {
+                    id: `splice-from-${fromComponent.id}-${i}`,
+                    label: "",
+                    x: centerX,
+                    y: centerY
+                  } as any;
+                }
+
+                if (toComponent?.componentType?.toLowerCase() === "splice" && !to) {
+                  const centerX =
+                    getXForComponent(toComponent) + getWidthForComponent(toComponent) / 2;
+
+                  const centerY =
+                    getYForComponent(toComponent) - connectorHeight / 2 - 2;
+
+                  to = {
+                    id: `splice-to-${toComponent.id}-${i}`,
+                    label: "",
+                    x: centerX,
+                    y: centerY
+                  } as any;
+                }
 
                 if (!from || !to) return null;
 
@@ -1228,8 +1260,13 @@ export default function Schematic({
                   toComponent!.id
                 );
 
-                var fromStoredConnectionPoint =
-                  connectionPoints[connectionPointKey(wire.from)];
+                let fromKey =
+                  fromComponent?.componentType?.toLowerCase() === "splice"
+                    ? `splice-${fromComponent.id}-${i}`
+                    : connectionPointKey(wire.from);
+
+                var fromStoredConnectionPoint = connectionPoints[fromKey];
+
 
                 var fromX = fromStoredConnectionPoint?.x;
                 if (fromX == undefined) {
@@ -1267,13 +1304,21 @@ export default function Schematic({
                     : getYForConnector(from, fromComponent!);
                 }
 
-                connectionPoints[connectionPointKey(wire.from)] = {
-                  x: fromX,
-                  y: fromY,
-                };
+                fromKey =
+                  fromComponent?.componentType?.toLowerCase() === "splice"
+                    ? `splice-${fromComponent.id}-${i}`
+                    : connectionPointKey(wire.from);
 
-                var toStoredConnectionPoint =
-                  connectionPoints[connectionPointKey(wire.to)];
+                connectionPoints[fromKey] = { x: fromX, y: fromY };
+
+
+                var toKey =
+                  toComponent?.componentType?.toLowerCase() === "splice"
+                    ? `splice-${toComponent.id}-${i}`
+                    : connectionPointKey(wire.to);
+
+                var toStoredConnectionPoint = connectionPoints[toKey];
+
                 var toX = toStoredConnectionPoint?.x;
                 if (toX == undefined) {
 
@@ -1310,10 +1355,13 @@ export default function Schematic({
                     : getYForConnector(to, toComponent!);
                 }
 
-                connectionPoints[connectionPointKey(wire.to)] = {
-                  x: toX,
-                  y: toY,
-                };
+                toKey =
+                  toComponent?.componentType?.toLowerCase() === "splice"
+                    ? `splice-${toComponent.id}-${i}`
+                    : connectionPointKey(wire.to);
+
+                connectionPoints[toKey] = { x: toX, y: toY };
+
 
                 let intermediateY;
                 if (isFromMasterComponent && isToMasterComponent) {

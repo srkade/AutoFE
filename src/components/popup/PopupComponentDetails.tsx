@@ -282,7 +282,7 @@ export default function PopupComponentDetails({
             )}
 
             {/* Component Type */}
-            {popupComponent.component_type && (
+            {popupComponent.componentType && (
               <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
                 <td
                   style={{
@@ -295,7 +295,7 @@ export default function PopupComponentDetails({
                   Component Type
                 </td>
                 <td style={{ padding: "10px 8px", color: "#333" }}>
-                  {popupComponent.component_type}
+                  {popupComponent.componentType}
                 </td>
               </tr>
             )}

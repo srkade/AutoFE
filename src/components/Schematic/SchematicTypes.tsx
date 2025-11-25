@@ -8,7 +8,7 @@ export type ComponentType = {
   engineering_manufacturer?: string;
   primary_part_number?: string;
   harness_name?: string;
-  component_type?: string;
+  componentType?: string;
   connector_type?: string;
   remove?: boolean;
   manufacturer?: string;

@@ -423,11 +423,11 @@ export default function Schematic({
     componentConnections.forEach((wire) => {
       if (wire.wireDetails?.fuse) {
         const fuse = wire.wireDetails.fuse;
-        const codeWidth = (fuse.code?.length || 1) * 8;      
-        const fuseSymbolWidth = 16;                           
-        const spacing = 8;                                    
+        const codeWidth = (fuse.code?.length || 1) * 8;
+        const fuseSymbolWidth = 16;
+        const spacing = 8;
 
-        totalFuseWidth += codeWidth  + fuseSymbolWidth + spacing;
+        totalFuseWidth += codeWidth + fuseSymbolWidth + spacing;
       }
     });
 
@@ -447,8 +447,6 @@ export default function Schematic({
 
     return width;
   }
-
-
 
   function getXForComponent(component: ComponentType): number {
     let index = data.components.findIndex((c) => c.id === component.id);
@@ -543,8 +541,6 @@ export default function Schematic({
 
     return originalWidth;
   }
-
-
 
   function getXForWireToSplice(
     component: ComponentType,
@@ -641,8 +637,6 @@ export default function Schematic({
       setIsExporting(false);
     }
   };
-
-
   // export function end
   return (
     <div
@@ -949,7 +943,7 @@ export default function Schematic({
             >
               {data.components.map((comp, componentIndex) => (
                 <g key={comp.id}>
-                  {comp.category?.toLowerCase() === "splice" ? (
+                  {comp.componentType?.toLowerCase() === "splice" ? (
                     <g>
                       <circle
                         cx={
@@ -1154,7 +1148,7 @@ export default function Schematic({
                         fitViewBox.y + fitViewBox.h / 2
                         ? -componentSize.height / 2 // above component
                         : componentSize.height +
-                        (comp.category?.toLowerCase() === "splice" ? -30 : 30))
+                        (comp.componentType?.toLowerCase() === "splice" ? -30 : 30))
                     }
                     textAnchor="middle"
                     fontSize="20"
@@ -1165,7 +1159,7 @@ export default function Schematic({
                   {comp.connectors.map((conn) => (
                     <g key={conn.id}>
                       {/* open conditional rendering when the component is not splice */}
-                      {comp.category?.toLowerCase() !== "splice" && (
+                      {comp.componentType?.toLowerCase() !== "splice" && (
                         <rect
                           x={getXForConnector(conn, comp)}
                           y={getYForConnector(conn, comp)}
@@ -1191,7 +1185,7 @@ export default function Schematic({
                         }}
                         x={
                           getXForConnector(conn, comp) -
-                          (comp.category?.toLowerCase() === "splice" ? -10 : 1) // reduce gap if splice
+                          (comp.componentType?.toLowerCase() === "splice" ? -10 : 1) // reduce gap if splice
                         }
                         y={getYForConnector(conn, comp) + 13}
                         textAnchor="end" //change to move text at the left
@@ -1239,27 +1233,31 @@ export default function Schematic({
 
                 var fromX = fromStoredConnectionPoint?.x;
                 if (fromX == undefined) {
-                  const fromConnectorX = getXForConnector(from, fromComponent!);
-                  const fromConnectorWidth = getWidthForConnector(
-                    from,
-                    fromComponent!
-                  );
-                  const fromConnectorCount =
-                    connectorConnectionCount[from.id] || 1;
-                  const connIndex = getConnectionsForConnector(
-                    from,
-                    data
-                  ).findIndex((c) => c === wire);
-                  const fromConnectorOffset =
-                    fromConnectorCount === 1
-                      ? fromConnectorWidth / 2
-                      : (fromConnectorWidth / (fromConnectorCount + 1)) *
-                      (connIndex + 1);
 
-                  fromX =
-                    fromComponent?.shape === "circle"
-                      ? fromConnectorX + fromConnectorWidth / 2
-                      : fromConnectorX + fromConnectorOffset;
+                  // FIX FOR SPLICE: always center wire on the splice dot
+                  if (fromComponent?.componentType?.toLowerCase() === "splice") {
+                    fromX =
+                      getXForComponent(fromComponent) +
+                      getWidthForComponent(fromComponent) / 2;
+                  } else {
+                    const fromConnectorX = getXForConnector(from, fromComponent!);
+                    const fromConnectorWidth = getWidthForConnector(from, fromComponent!);
+                    const fromConnectorCount = connectorConnectionCount[from.id] || 1;
+
+                    const connIndex = getConnectionsForConnector(from, data)
+                      .findIndex((c) => c === wire);
+
+                    const fromConnectorOffset =
+                      fromConnectorCount === 1
+                        ? fromConnectorWidth / 2
+                        : (fromConnectorWidth / (fromConnectorCount + 1)) *
+                        (connIndex + 1);
+
+                    fromX =
+                      fromComponent?.shape === "circle"
+                        ? fromConnectorX + fromConnectorWidth / 2
+                        : fromConnectorX + fromConnectorOffset;
+                  }
                 }
 
                 var fromY = fromStoredConnectionPoint?.y;
@@ -1278,24 +1276,33 @@ export default function Schematic({
                   connectionPoints[connectionPointKey(wire.to)];
                 var toX = toStoredConnectionPoint?.x;
                 if (toX == undefined) {
-                  const toConnectorX = getXForConnector(to, toComponent!);
-                  const toConnectorWidth = getWidthForConnector(to, toComponent!);
-                  const toConnectorCount = connectorConnectionCount[to.id] || 1;
-                  const connIndexTo = getConnectionsForConnector(
-                    to,
-                    data
-                  ).findIndex((c) => c === wire);
-                  const toConnectorOffset =
-                    toConnectorCount === 1
-                      ? toConnectorWidth / 2
-                      : (toConnectorWidth / (toConnectorCount + 1)) *
-                      (connIndexTo + 1);
 
-                  toX =
-                    toComponent?.shape === "circle"
-                      ? toConnectorX + toConnectorWidth / 2
-                      : toConnectorX + toConnectorOffset;
+                  //  FIX FOR SPLICE (multiple connections): always center
+                  if (toComponent?.componentType?.toLowerCase() === "splice") {
+                    toX =
+                      getXForComponent(toComponent) +
+                      getWidthForComponent(toComponent) / 2;
+                  } else {
+                    const toConnectorX = getXForConnector(to, toComponent!);
+                    const toConnectorWidth = getWidthForConnector(to, toComponent!);
+                    const toConnectorCount = connectorConnectionCount[to.id] || 1;
+
+                    const connIndexTo = getConnectionsForConnector(to, data)
+                      .findIndex((c) => c === wire);
+
+                    const toConnectorOffset =
+                      toConnectorCount === 1
+                        ? toConnectorWidth / 2
+                        : (toConnectorWidth / (toConnectorCount + 1)) *
+                        (connIndexTo + 1);
+
+                    toX =
+                      toComponent?.shape === "circle"
+                        ? toConnectorX + toConnectorWidth / 2
+                        : toConnectorX + toConnectorOffset;
+                  }
                 }
+
                 var toY = toStoredConnectionPoint?.y;
                 if (toY == undefined) {
                   toY = isToMasterComponent
@@ -1344,7 +1351,7 @@ export default function Schematic({
                 let wireElement;
                 wireElement = (
                   <g>
-                    {fromComponent?.category?.toLowerCase() !== "splice" && (
+                    {fromComponent?.componentType?.toLowerCase() !== "splice" && (
                       <>
                         {isFromTop ? (
                           <>
@@ -1355,12 +1362,10 @@ export default function Schematic({
                               color={wire.color}
                               size={10}
                             />
-
-
                             {fromComponent?.category?.toLowerCase() === "supply" &&
                               fromComponent?.label?.toLowerCase().includes("load center") &&
                               wire.wireDetails?.fuse &&
-                              allowedCavities.includes(fromCavity) && (  // ✅ only show for allowed cavities
+                              allowedCavities.includes(fromCavity) && (  //  only show for allowed cavities
                                 <g transform={`translate(${fromX}, ${fromY - 45})`}>
 
                                   {/* LEFT NORMAL TEXT (not flipped) */}
@@ -1457,7 +1462,6 @@ export default function Schematic({
                                   )}
                                 </g>
                               )}
-
                           </>
                         )}
                       </>
@@ -1505,7 +1509,7 @@ export default function Schematic({
                       />
                     </g>
                     {/* <circle cx={toX} cy={toY} r={5} fill={wire.color}></circle> */}
-                    {toComponent?.category?.toLowerCase() !== "splice" && (
+                    {toComponent?.componentType?.toLowerCase() !== "splice" && (
                       <>
                         {isToTop ? (
                           <>
@@ -1563,7 +1567,6 @@ export default function Schematic({
                         )}
                       </>
                     )}
-
                     <text
                       x={fromX + 10}
                       y={fromLabelY}
@@ -1626,7 +1629,6 @@ const spinnerStyle = `
     100% { transform: rotate(360deg); }
   }
 `;
-
 const style = document.createElement("style");
 style.textContent = spinnerStyle;
 document.head.appendChild(style);

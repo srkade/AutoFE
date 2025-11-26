@@ -1299,10 +1299,19 @@ export default function Schematic({
 
                 var fromY = fromStoredConnectionPoint?.y;
                 if (fromY == undefined) {
-                  fromY = isFromMasterComponent
-                    ? getYForConnector(from, fromComponent!) + 20
-                    : getYForConnector(from, fromComponent!);
+                  if (fromComponent?.componentType?.toLowerCase() === "splice") {
+                    // Align wire to splice dot Y-position
+                    fromY =
+                      getYForComponent(fromComponent) -
+                      connectorHeight / 2 -
+                      2;
+                  } else {
+                    fromY = isFromMasterComponent
+                      ? getYForConnector(from, fromComponent!) + 20
+                      : getYForConnector(from, fromComponent!);
+                  }
                 }
+
 
                 fromKey =
                   fromComponent?.componentType?.toLowerCase() === "splice"

@@ -9,7 +9,7 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents,getComponentSchematic, getDtcs, getHarnesses, getVoltageSupply, getSystems} from "./services/api";
+import { getComponents, getComponentSchematic, getDtcs, getHarnesses, getVoltageSupply, getSystems } from "./services/api";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 
 export type DashboardItem = {
@@ -41,7 +41,7 @@ export default function App() {
   const [dtcList, setDtcList] = useState<any[]>([]);
   const [harnessesList, setHarnessesList] = useState<any[]>([]);
   const [supplyList, setVoltageSupplyList] = useState<any[]>([]);
-   const [systemsList, setSystemsList] = useState<any[]>([]);
+  const [systemsList, setSystemsList] = useState<any[]>([]);
 
   const dtcItems: DashboardItem[] = dtcList.map((d) => ({
     code: d.code,
@@ -59,7 +59,7 @@ export default function App() {
     }
   }));
 
-   const systemsItem: DashboardItem[] = systemsList.map((s) => ({
+  const systemsItem: DashboardItem[] = systemsList.map((s) => ({
     code: s.code,
     name: s.name,
     type: "System",
@@ -103,10 +103,6 @@ export default function App() {
     }
   }));
 
-
-
-
-  
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -211,16 +207,22 @@ export default function App() {
     ...supplyItems,
   ];
 
-  function handleViewSchematic(codes: string[]) {
-    const selectedItems = dashboardItems.filter((item) =>
-      codes.includes(item.code)
-    );
+  async function handleViewSchematic(codes: string[]) {
+    try {
+      const fetchedSchematics = await Promise.all(
+        codes.map(async (code) => {
+          const data = await getComponentSchematic(code);
+          return normalizeSchematic(data);
+        })
+      );
 
-    const schematicConfigs = selectedItems.map((item) => item.schematicData);
-    const merged = mergeSchematicConfigs(...schematicConfigs);
+      const merged = mergeSchematicConfigs(...fetchedSchematics);
 
-    setMergedSchematic(merged);
-    setSelectedItem(null);
+      setMergedSchematic(merged);
+      setSelectedItem(null);
+    } catch (err) {
+      console.error("Error loading and merging schematics:", err);
+    }
   }
 
   const filteredItems = dashboardItems.filter((item) => {
@@ -282,32 +284,32 @@ export default function App() {
             activeTab={activeTab}
             data={filteredItems}
             onItemSelect={async (item) => {
-  try {
-    // Get the code coming from LeftPanel
-    const code = item.code;
+              try {
+                // Get the code coming from LeftPanel
+                const code = item.code;
 
-    // Call backend API
-    const data = await getComponentSchematic(code);
-    console.log("Loaded schematic:", data);
+                // Call backend API
+                const data = await getComponentSchematic(code);
+                console.log("Loaded schematic:", data);
 
-    const converted = normalizeSchematic(data);
+                const converted = normalizeSchematic(data);
 
-const updatedItem = {
-  ...item,
-  schematicData: converted
-};
+                const updatedItem = {
+                  ...item,
+                  schematicData: converted
+                };
 
-setSelectedItem(updatedItem);
-    // print data in console
-    console.log("Updated Item with schematic data:", updatedItem);
+                setSelectedItem(updatedItem);
+                // print data in console
+                console.log("Updated Item with schematic data:", updatedItem);
 
-    // Store the item WITH loaded schematic JSON
-    setSelectedItem(updatedItem);
-    setMergedSchematic(null);
-  } catch (err) {
-    console.error("Failed to load schematic:", err);
-  }
-}}
+                // Store the item WITH loaded schematic JSON
+                setSelectedItem(updatedItem);
+                setMergedSchematic(null);
+              } catch (err) {
+                console.error("Failed to load schematic:", err);
+              }
+            }}
 
 
             selectedItem={selectedItem}

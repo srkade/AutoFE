@@ -5,11 +5,10 @@ import MainPanel from "./panels/MainPanel";
 import Schematic from "./components/Schematic/Schematic";
 import { SchematicData } from "./components/Schematic/SchematicTypes";
 import "../src/Styles/global.css";
-
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents, getComponentSchematic, getDtcs, getHarnesses, getVoltageSupply, getSystems } from "./services/api";
+import { getComponents, getComponentSchematic, getDtcs, getHarnesses, getVoltageSupply, getSystems,getSystemFormula } from "./services/api";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 
 export type DashboardItem = {
@@ -285,11 +284,16 @@ export default function App() {
             data={filteredItems}
             onItemSelect={async (item) => {
               try {
-                // Get the code coming from LeftPanel
-                const code = item.code;
+                let data;
 
-                // Call backend API
-                const data = await getComponentSchematic(code);
+                if (item.type === "System") {
+                  // Fetch system formula
+                  data = await getSystemFormula(Number(item.code));
+                } else {
+                  // Fetch component schematic
+                  data = await getComponentSchematic(item.code);
+                }
+
                 console.log("Loaded schematic:", data);
 
                 const converted = normalizeSchematic(data);
@@ -300,24 +304,18 @@ export default function App() {
                 };
 
                 setSelectedItem(updatedItem);
-                // print data in console
-                console.log("Updated Item with schematic data:", updatedItem);
-
-                // Store the item WITH loaded schematic JSON
-                setSelectedItem(updatedItem);
                 setMergedSchematic(null);
               } catch (err) {
                 console.error("Failed to load schematic:", err);
               }
             }}
-
-
             selectedItem={selectedItem}
             selectedCodes={selectedCodes}
             setSelectedCodes={setSelectedCodes}
             onViewSchematic={handleViewSchematic}
             isMobile={isMobile}
           />
+
 
           {/* MOBILE MODE */}
           {!isMobile && selectedItem?.schematicData && (

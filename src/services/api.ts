@@ -35,6 +35,16 @@ export async function getSystems() {
     throw err;
   }
 }
+export async function getSystemFormula(code: number) {
+  try {
+    const res = await api.get(`/schematics/formula/json/${code}`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getSystemFormula:", err);
+    throw err;
+  }
+}
+
 export async function getDtcs() {
   try {
     const res = await api.get(`/schematics/dtcs`);

@@ -65,6 +65,20 @@ export async function getHarnesses() {
   }
 }
 
+// ✅ NEW: Harness schematic endpoint
+export async function getHarnessSchematic(code: string) {
+  try {
+    console.log(`📡 Calling getHarnessSchematic for: ${code}`);
+    const res = await api.get(`/wires/harness/${code}`);
+    console.log(`✅ Harness schematic received:`, res.data);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getHarnessSchematic:", err);
+    throw err;
+  }
+}
+
+
 export async function getVoltageSupply(){
   try{
     const res=await api.get(`/schematics/supply`);

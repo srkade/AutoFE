@@ -9,7 +9,7 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents, getComponentSchematic, getDtcs, getHarnesses, getVoltageSupply, getSystems } from "./services/api";
+import { getComponents, getComponentSchematic, getDtcs, getHarnesses, getVoltageSupply, getSystems, getHarnessSchematic, } from "./services/api";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 
 export type DashboardItem = {
@@ -88,6 +88,7 @@ export default function App() {
       name: h.name
     }
   }));
+
   const supplyItems: DashboardItem[] = supplyList.map((s) => ({
     code: s.code,
     name: s.name,
@@ -208,22 +209,36 @@ export default function App() {
   ];
 
   async function handleViewSchematic(codes: string[]) {
-    try {
-      const fetchedSchematics = await Promise.all(
-        codes.map(async (code) => {
-          const data = await getComponentSchematic(code);
-          return normalizeSchematic(data);
-        })
-      );
+  try {
+    if (activeTab === "harnesses" && codes.length > 0) {
+      // Use only the first selected harness for now
+      const harnessCode = codes[0];
 
-      const merged = mergeSchematicConfigs(...fetchedSchematics);
+      const data = await getHarnessSchematic(harnessCode);
 
-      setMergedSchematic(merged);
+      const normalized = normalizeSchematic(data);
+
+      setMergedSchematic(normalized);
       setSelectedItem(null);
-    } catch (err) {
-      console.error("Error loading and merging schematics:", err);
+      return;
     }
+
+    // Existing behavior for components, DTC, etc.
+    const fetchedSchematics = await Promise.all(
+      codes.map(async (code) => {
+        const data = await getComponentSchematic(code);
+        return normalizeSchematic(data);
+      })
+    );
+
+    const merged = mergeSchematicConfigs(...fetchedSchematics);
+    setMergedSchematic(merged);
+    setSelectedItem(null);
+  } catch (err) {
+    console.error("Error loading and merging schematics:", err);
   }
+}
+
 
   const filteredItems = dashboardItems.filter((item) => {
     switch (activeTab) {
@@ -280,44 +295,64 @@ export default function App() {
       ) : (
         <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
           {/* LEFT PANEL */}
-          <LeftPanel
-            activeTab={activeTab}
-            data={filteredItems}
-            onItemSelect={async (item) => {
-              try {
-                // Get the code coming from LeftPanel
-                const code = item.code;
+          {/* LEFT PANEL */}
+<LeftPanel
+  activeTab={activeTab}
+  data={filteredItems}
+  onItemSelect={async (item) => {
+    try {
+      console.log("🔗 Item clicked:", item.code, "Type:", item.type);
+      
+      // ✅ CHECK IF HARNESS
+      if (item.type === "Harness") {
+        console.log("📦 Loading harness schematic for:", item.code);
+        
+        // Call harness API
+        const data = await getHarnessSchematic(item.code);
+        console.log("✅ Harness data received:", data);
+        
+        const converted = normalizeSchematic(data);
+        console.log("✅ Normalized harness schematic:", converted);
+        
+        const updatedItem = {
+          ...item,
+          schematicData: converted
+        };
+        
+        setSelectedItem(updatedItem);
+        setMergedSchematic(null);
+        console.log("✅ Harness schematic set and ready to render");
+        return;
+      }
+      
+      // ✅ OTHERWISE USE COMPONENT API (existing behavior)
+      console.log("🔍 Loading component schematic for:", item.code);
+      
+      const code = item.code;
+      const data = await getComponentSchematic(code);
+      console.log("Loaded schematic:", data);
+      
+      const converted = normalizeSchematic(data);
+      const updatedItem = {
+        ...item,
+        schematicData: converted
+      };
+      
+      setSelectedItem(updatedItem);
+      setMergedSchematic(null);
+      console.log("Updated Item with schematic data:", updatedItem);
+      
+    } catch (err) {
+      console.error("❌ Failed to load schematic:", err);
+    }
+  }}
+  selectedItem={selectedItem}
+  selectedCodes={selectedCodes}
+  setSelectedCodes={setSelectedCodes}
+  onViewSchematic={handleViewSchematic}
+  isMobile={isMobile}
+/>
 
-                // Call backend API
-                const data = await getComponentSchematic(code);
-                console.log("Loaded schematic:", data);
-
-                const converted = normalizeSchematic(data);
-
-                const updatedItem = {
-                  ...item,
-                  schematicData: converted
-                };
-
-                setSelectedItem(updatedItem);
-                // print data in console
-                console.log("Updated Item with schematic data:", updatedItem);
-
-                // Store the item WITH loaded schematic JSON
-                setSelectedItem(updatedItem);
-                setMergedSchematic(null);
-              } catch (err) {
-                console.error("Failed to load schematic:", err);
-              }
-            }}
-
-
-            selectedItem={selectedItem}
-            selectedCodes={selectedCodes}
-            setSelectedCodes={setSelectedCodes}
-            onViewSchematic={handleViewSchematic}
-            isMobile={isMobile}
-          />
 
           {/* MOBILE MODE */}
           {!isMobile && selectedItem?.schematicData && (

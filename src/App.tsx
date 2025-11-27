@@ -294,7 +294,6 @@ export default function App() {
       ) : (
         <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
           {/* LEFT PANEL */}
-          {/* LEFT PANEL */}
           <LeftPanel
             activeTab={activeTab}
             data={filteredItems}
@@ -302,16 +301,15 @@ export default function App() {
               try {
                 console.log("🔗 Item clicked:", item.code, "Type:", item.type);
 
-                // ✅ CHECK IF HARNESS
+                //  HARNESS CHECK
                 if (item.type === "Harness") {
-                  console.log("📦 Loading harness schematic for:", item.code);
+                  console.log(" Loading harness schematic for:", item.code);
 
-                  // Call harness API
-                  const data = await getHarnessSchematic(item.code);
-                  console.log("✅ Harness data received:", data);
+                  const harnessData = await getHarnessSchematic(item.code);
+                  console.log(" Harness data received:", harnessData);
 
-                  const converted = normalizeSchematic(data);
-                  console.log("✅ Normalized harness schematic:", converted);
+                  const converted = normalizeSchematic(harnessData);
+                  console.log(" Normalized harness schematic:", converted);
 
                   const updatedItem = {
                     ...item,
@@ -320,18 +318,22 @@ export default function App() {
 
                   setSelectedItem(updatedItem);
                   setMergedSchematic(null);
-                  console.log("✅ Harness schematic set and ready to render");
+                  console.log(" Harness schematic set and ready to render");
                   return;
                 }
 
-                // ✅ OTHERWISE USE COMPONENT API (existing behavior)
-                console.log("🔍 Loading component schematic for:", item.code);
+                // SYSTEM OR COMPONENT
+                let schematicData;
 
-                const code = item.code;
-                const data = await getComponentSchematic(code);
-                console.log("Loaded schematic:", data);
+                if (item.type === "System") {
+                  schematicData = await getSystemFormula(Number(item.code));
+                } else {
+                  schematicData = await getComponentSchematic(item.code);
+                }
 
-                const converted = normalizeSchematic(data);
+                console.log("Loaded schematic:", schematicData);
+
+                const converted = normalizeSchematic(schematicData);
                 const updatedItem = {
                   ...item,
                   schematicData: converted
@@ -342,7 +344,7 @@ export default function App() {
                 console.log("Updated Item with schematic data:", updatedItem);
 
               } catch (err) {
-                console.error("❌ Failed to load schematic:", err);
+                console.error("Failed to load schematic:", err);
               }
             }}
             selectedItem={selectedItem}
@@ -351,8 +353,6 @@ export default function App() {
             onViewSchematic={handleViewSchematic}
             isMobile={isMobile}
           />
-
-
 
           {/* MOBILE MODE */}
           {!isMobile && selectedItem?.schematicData && (

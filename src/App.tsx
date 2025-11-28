@@ -8,7 +8,7 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents, getComponentSchematic, getDtcs, getHarnesses, getVoltageSupply, getSystems, getSystemFormula, getHarnessSchematic } from "./services/api";
+import { getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarnesses, getVoltageSupply, getSystems, getSystemFormula, getHarnessSchematic } from "./services/api";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 
 export type DashboardItem = {
@@ -225,6 +225,7 @@ export default function App() {
       // Existing behavior for components, DTC, etc.
       const fetchedSchematics = await Promise.all(
         codes.map(async (code) => {
+
           const data = await getComponentSchematic(code);
           return normalizeSchematic(data);
         })
@@ -303,13 +304,13 @@ export default function App() {
 
                 //  HARNESS CHECK
                 if (item.type === "Harness") {
-                  console.log(" Loading harness schematic for:", item.code);
+                  
 
                   const harnessData = await getHarnessSchematic(item.code);
-                  console.log(" Harness data received:", harnessData);
+                  
 
                   const converted = normalizeSchematic(harnessData);
-                  console.log(" Normalized harness schematic:", converted);
+                  
 
                   const updatedItem = {
                     ...item,
@@ -330,6 +331,25 @@ export default function App() {
                 } else {
                   schematicData = await getComponentSchematic(item.code);
                 }
+
+                // DTC CHECK
+if (item.type === "DTC") {
+  const dtcData = await getDtcSchematic(item.code);
+  console
+
+  const converted = normalizeSchematic(dtcData);
+
+  const updatedItem = {
+    ...item,
+    schematicData: converted,
+  };
+
+  setSelectedItem(updatedItem);
+  setMergedSchematic(null);
+  console.log("DTC schematic set and ready to render");
+  return;
+}
+
 
                 console.log("Loaded schematic:", schematicData);
 

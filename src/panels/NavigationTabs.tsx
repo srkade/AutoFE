@@ -116,14 +116,14 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, userN
             }}
           onMouseEnter={(e) => {
             if (activeTab !== tab.id) {
-              (e.target as HTMLElement).style.background = "#eaebeeff";
-              (e.target as HTMLElement).style.color = "black";
+              (e.currentTarget as HTMLElement).style.background = "#eaebeeff";
+              (e.currentTarget as HTMLElement).style.color = "black";
             }
           }}
           onMouseLeave={(e) => {
             if (activeTab !== tab.id) {
-              (e.target as HTMLElement).style.background = "transparent";
-              (e.target as HTMLElement).style.color = "black";
+              (e.currentTarget as HTMLElement).style.background = "transparent";
+              (e.currentTarget as HTMLElement).style.color = "black";
             }
           }}
           >

@@ -102,17 +102,18 @@ export default function LeftPanel({
 
   return (
     <div
-      className="left_panel"
-      style={{
-        width: "320px",
-        minWidth: "320px",
-        background: "white",
-        borderRight: "1px solid #e9ecef",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}
-    >
+  className="left_panel"
+  style={{
+    width: "320px",
+    minWidth: "320px",
+    background: "white",
+    borderRight: "1px solid #e9ecef",
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
+  }}
+>
+
       {/* Header */}
       <div style={{ padding: "20px", borderBottom: "1px solid #e9ecef" }}>
         <h2
@@ -203,7 +204,15 @@ export default function LeftPanel({
       </div>
 
       {/* Items List */}
-      <div style={{ flex: 1, overflow: "auto", padding: "16px" }}>
+      <div
+  style={{
+    flex: 1,
+    overflowY: "auto",
+    padding: "16px",
+    paddingBottom: "30px", 
+  }}
+>
+
         {/* FIXED "No items found" */}
         {filteredData.length === 0 ? (
           <div

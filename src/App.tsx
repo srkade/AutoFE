@@ -300,6 +300,7 @@ export default function App() {
             activeTab={activeTab}
             onTabChange={(tabId) => {
               setActiveTab(tabId);
+              setSelectedItem(null);
               setShowWelcome(false);
             }}
             onLogout={() => setLoggedIn(false)}
@@ -352,7 +353,22 @@ export default function App() {
                     } else {
                       schematicData = await getComponentSchematic(item.code);
                     }
+                    if (item.type === "DTC") {
+                      const dtcData = await getDtcSchematic(item.code);
+                      console
 
+                      const converted = normalizeSchematic(dtcData);
+
+                      const updatedItem = {
+                        ...item,
+                        schematicData: converted,
+                      };
+
+                      setSelectedItem(updatedItem);
+                      setMergedSchematic(null);
+                      console.log("DTC schematic set and ready to render");
+                      return;
+                    }
                     console.log("Loaded schematic:", schematicData);
 
                     const converted = normalizeSchematic(schematicData);

@@ -8,7 +8,7 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents, getComponentSchematic, getDtcs, getHarnesses, getVoltageSupply, getSystems, getSystemFormula, getHarnessSchematic } from "./services/api";
+import { getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarnesses, getVoltageSupply, getSystems, getSystemFormula, getHarnessSchematic } from "./services/api";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 import RegisterForm from "./pages/RegistrationForm";
 export type DashboardItem = {
@@ -230,6 +230,7 @@ export default function App() {
       // Existing behavior for components, DTC, etc.
       const fetchedSchematics = await Promise.all(
         codes.map(async (code) => {
+
           const data = await getComponentSchematic(code);
           return normalizeSchematic(data);
         })

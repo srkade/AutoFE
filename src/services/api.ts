@@ -55,6 +55,20 @@ export async function getDtcs() {
   }
 }
 
+
+export async function getDtcSchematic(code: string) {
+  try {
+   
+    const res = await api.get(`/wires/dtc/${code}`);
+    
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getDtcSchematic:", err);
+    throw err;
+  }
+}
+
+
 export async function getHarnesses() {
   try {
     const res = await api.get(`/schematics/harnesses`);

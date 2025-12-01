@@ -449,17 +449,13 @@ export default function Schematic({
   }
 
   function getXForComponent(component: ComponentType): number {
-    let index = data.components.findIndex((c) => c.id === component.id);
-    if (index < 1) {
-      return padding;
-    } else {
-      let x = padding;
-      for (let i = 1; i < index; i++) {
-        let component = data.components[i];
-        x += getWidthForComponent(component) + padding;
-      }
-      return x;
+    const index = data.components.findIndex((c) => c.id === component.id);
+    let x = padding;
+    for (let i = 0; i < index; i++) {
+      const compBefore = data.components[i];
+      x += getWidthForComponent(compBefore) + padding;
     }
+    return x;
   }
 
   function getYForComponent(component: ComponentType): number {
@@ -516,6 +512,16 @@ export default function Schematic({
     return isMasterComponent
       ? getYForComponent(component) + componentSize.height
       : getYForComponent(component) - 20;
+  }
+
+  function getSpliceCenterY(component: ComponentType): number {
+    const isMasterComponent = data.masterComponents.includes(component.id);
+    const baseY = getYForComponent(component);
+    const offset = connectorHeight / 2 + 2;
+
+    return isMasterComponent
+      ? baseY + componentSize.height + offset
+      : baseY - offset;
   }
   function getWidthForConnector(conn: ConnectorType, comp: ComponentType): number {
     let connections = getConnectionsForConnector(conn, data);
@@ -952,7 +958,7 @@ export default function Schematic({
                           cx={
                             getXForComponent(comp) + getWidthForComponent(comp) / 2
                           }
-                          cy={getYForComponent(comp) - connectorHeight / 2 - 2}
+                          cy={getSpliceCenterY(comp)}
                           r={componentSize.height / 8} // adjust radius as needed
                           fill="white"
                           stroke="black"
@@ -962,7 +968,7 @@ export default function Schematic({
                           cx={
                             getXForComponent(comp) + getWidthForComponent(comp) / 2
                           }
-                          cy={getYForComponent(comp) - connectorHeight / 2 - 2}
+                          cy={getSpliceCenterY(comp)}
                           r={componentSize.height / 10}
                           fill="black"
                         />
@@ -1226,7 +1232,7 @@ export default function Schematic({
                     getXForComponent(fromComponent) + getWidthForComponent(fromComponent) / 2;
 
                   const centerY =
-                    getYForComponent(fromComponent) - connectorHeight / 2 - 2;
+                    getSpliceCenterY(fromComponent);
 
                   from = {
                     id: `splice-from-${fromComponent.id}-${i}`,
@@ -1241,7 +1247,7 @@ export default function Schematic({
                     getXForComponent(toComponent) + getWidthForComponent(toComponent) / 2;
 
                   const centerY =
-                    getYForComponent(toComponent) - connectorHeight / 2 - 2;
+                    getSpliceCenterY(toComponent);
 
                   to = {
                     id: `splice-to-${toComponent.id}-${i}`,
@@ -1302,9 +1308,7 @@ export default function Schematic({
                   if (fromComponent?.componentType?.toLowerCase() === "splice") {
                     // Align wire to splice dot Y-position
                     fromY =
-                      getYForComponent(fromComponent) -
-                      connectorHeight / 2 -
-                      2;
+                      getSpliceCenterY(fromComponent);
                   } else {
                     fromY = isFromMasterComponent
                       ? getYForConnector(from, fromComponent!) + 20
@@ -1359,9 +1363,13 @@ export default function Schematic({
 
                 var toY = toStoredConnectionPoint?.y;
                 if (toY == undefined) {
-                  toY = isToMasterComponent
-                    ? getYForConnector(to, toComponent!) + 20
-                    : getYForConnector(to, toComponent!);
+                  if (toComponent?.componentType?.toLowerCase() === "splice") {
+                    toY = getSpliceCenterY(toComponent);
+                  } else {
+                    toY = isToMasterComponent
+                      ? getYForConnector(to, toComponent!) + 20
+                      : getYForConnector(to, toComponent!);
+                  }
                 }
 
                 toKey =
@@ -1371,6 +1379,38 @@ export default function Schematic({
 
                 connectionPoints[toKey] = { x: toX, y: toY };
 
+                const spliceRadius = componentSize.height / 8; // matches rendered splice radius
+
+                if (fromComponent?.componentType?.toLowerCase() === "splice") {
+                  const cx =
+                    getXForComponent(fromComponent) +
+                    getWidthForComponent(fromComponent) / 2;
+                  const cy = getSpliceCenterY(fromComponent);
+                  // if from is master (top row), attach at bottom center; else attach at top center
+                  if (isFromMasterComponent) {
+                    fromX = cx;
+                    fromY = cy + spliceRadius;
+                  } else {
+                    fromX = cx;
+                    fromY = cy - spliceRadius;
+                  }
+                  connectionPoints[fromKey] = { x: fromX, y: fromY };
+                }
+                // If 'to' is a splice, place the endpoint at the circle's center edge
+                if (toComponent?.componentType?.toLowerCase() === "splice") {
+                  const cx = getXForComponent(toComponent) + getWidthForComponent(toComponent) / 2;
+                  const cy = getSpliceCenterY(toComponent);
+                  if (isToMasterComponent) {
+                    // splice at top — connect at bottom center
+                    toX = cx;
+                    toY = cy + spliceRadius;
+                  } else {
+                    // splice at bottom — connect at top center
+                    toX = cx;
+                    toY = cy - spliceRadius;
+                  }
+                  connectionPoints[toKey] = { x: toX, y: toY };
+                }
 
                 let intermediateY;
                 if (isFromMasterComponent && isToMasterComponent) {

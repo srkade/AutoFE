@@ -69,10 +69,25 @@ export default function LeftPanel({
   const handleCheckboxChange = (item: DashboardItem) => {
     const code = item.code;
 
-    let newSelectedCodes: string[] = selectedCodes.includes(code)
-      ? selectedCodes.filter((c) => c !== code)
-      : [...selectedCodes, code];
+    // If item already checked → uncheck normally
+    if (selectedCodes.includes(code)) {
+      const newSelectedCodes = selectedCodes.filter((c) => c !== code);
+      setSelectedCodes(newSelectedCodes);
 
+      if (newSelectedCodes.length > 0) {
+        onViewSchematic(newSelectedCodes);
+      }
+      return;
+    }
+
+    //  LIMIT CHECK: Max selection 15
+    if (selectedCodes.length >= 15) {
+      alert("You can select maximum 15 components only.");
+      return;
+    }
+
+    // Add the new item
+    const newSelectedCodes = [...selectedCodes, code];
     setSelectedCodes(newSelectedCodes);
 
     if (newSelectedCodes.length > 0) {
@@ -172,12 +187,12 @@ export default function LeftPanel({
                   transition: "background 0.2s ease",
                 }}
                 onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLButtonElement).style.background =
-                    "#e9ecef")
+                ((e.currentTarget as HTMLButtonElement).style.background =
+                  "#e9ecef")
                 }
                 onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLButtonElement).style.background =
-                    "#f1f3f5")
+                ((e.currentTarget as HTMLButtonElement).style.background =
+                  "#f1f3f5")
                 }
               >
                 🧹
@@ -219,19 +234,18 @@ export default function LeftPanel({
                   style={{
                     padding: "16px",
                     marginBottom: "12px",
-                    border: `2px solid ${
-                      isSelected
+                    border: `2px solid ${isSelected
                         ? "#007bff"
                         : isChecked
-                        ? "#007bff"
-                        : "#e9ecef"
-                    }`,
+                          ? "#007bff"
+                          : "#e9ecef"
+                      }`,
                     borderRadius: "12px",
                     background: isSelected
                       ? "#f0f8ff"
                       : isChecked
-                      ? "#cce5ff"
-                      : "white",
+                        ? "#cce5ff"
+                        : "white",
                     cursor: "pointer",
                     transition: "all 0.2s ease",
                     position: "relative",

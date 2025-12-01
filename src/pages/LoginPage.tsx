@@ -3,9 +3,10 @@ import logo from "../assets/Images/logo.jpg"
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
+  onRegisterClick: () => void;
 }
 
-export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
+export default function LoginPage({ onLoginSuccess ,onRegisterClick}: LoginPageProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -151,7 +152,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
               style={{
                 display: "flex",
                 justifyContent: "center",
-                alignItems: "center",    
+                alignItems: "center",
                 width: "100%",
               }}
             >
@@ -166,15 +167,13 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                   color: "white",
                   fontWeight: "bold",
                   cursor: "pointer",
-                  marginTop:"5px"
+                  marginTop: "5px"
                 }}
               >
                 LOGIN
               </button>
             </div>
-
-
-            {/* <div
+            <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -184,12 +183,17 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
             >
               <p>
                 New User?{" "}
-                <span style={{ color: "#007bff", cursor: "pointer" }}>SignUp</span>
+                <span
+                  style={{ color: "#007bff", cursor: "pointer" }}
+                  onClick={onRegisterClick}
+                >
+                  SignUp
+                </span>
               </p>
               <p style={{ color: "#007bff", cursor: "pointer" }}>
                 Forgot Password?
               </p>
-            </div> */}
+            </div>
           </form>
         </div>
       </div>

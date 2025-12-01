@@ -10,7 +10,7 @@ import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
 import { getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarnesses, getVoltageSupply, getSystems, getSystemFormula, getHarnessSchematic } from "./services/api";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
-
+import RegisterForm from "./pages/RegistrationForm";
 export type DashboardItem = {
   code: string;
   name: string;
@@ -24,6 +24,11 @@ export type DashboardItem = {
 export default function App() {
 
   const [loggedIn, setLoggedIn] = useState(false);
+  const [page, setPage] = useState<"login" | "register" | "dashboard">("login");
+
+  const handleLoginSuccess = () => {
+    setPage("dashboard");
+  };
   const [activeTab, setActiveTab] = useState<string>("");
   const [selectedItem, setSelectedItem] = useState<DashboardItem | null>(null);
 
@@ -261,143 +266,158 @@ export default function App() {
     }
   });
 
-  if (!loggedIn) {
-    return <LoginPage onLoginSuccess={() => setLoggedIn(true)} />;
-  }
+  // if (!loggedIn) {
+  //   return <LoginPage
+  //     onLoginSuccess={() => setLoggedIn(true)}
+  //     onRegisterClick={() => setPage("login")}
+  //   />;
+  // }
 
   return (
-    <div
-      style={{
-        height: "100vh",
-        background: "#f8f9fa",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* Navigation Tabs */}
-      <NavigationTabs
-        activeTab={activeTab}
-        onTabChange={(tabId) => {
-          setActiveTab(tabId);
-          setShowWelcome(false);
-        }}
-        onLogout={() => setLoggedIn(false)}
-        userName="admin"
-      />
-
-      {showWelcome ? (
-        <WelcomePage
-          onStart={() => {
-            setShowWelcome(false);
-            setActiveTab("components");
-          }}
+    <div>
+      {page === "login" && (
+        <LoginPage
+          onLoginSuccess={handleLoginSuccess}
+          onRegisterClick={() => setPage("register")}
         />
-      ) : (
-        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-          {/* LEFT PANEL */}
-          <LeftPanel
+      )}
+
+      {page === "register" && (
+        <RegisterForm onBackToLogin={() => setPage("login")} />
+      )}
+
+      {page === "dashboard" && (
+        <div
+          style={{
+            height: "100vh",
+            background: "#f8f9fa",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* Navigation Tabs */}
+          <NavigationTabs
             activeTab={activeTab}
-            data={filteredItems}
-            onItemSelect={async (item) => {
-              try {
-                console.log("🔗 Item clicked:", item.code, "Type:", item.type);
-
-                //  HARNESS CHECK
-                if (item.type === "Harness") {
-                  
-
-                  const harnessData = await getHarnessSchematic(item.code);
-                  
-
-                  const converted = normalizeSchematic(harnessData);
-                  
-
-                  const updatedItem = {
-                    ...item,
-                    schematicData: converted
-                  };
-
-                  setSelectedItem(updatedItem);
-                  setMergedSchematic(null);
-                  console.log(" Harness schematic set and ready to render");
-                  return;
-                }
-
-                // SYSTEM OR COMPONENT
-                let schematicData;
-
-                if (item.type === "System") {
-                  schematicData = await getSystemFormula(Number(item.code));
-                } else {
-                  schematicData = await getComponentSchematic(item.code);
-                }
-
-                // DTC CHECK
-if (item.type === "DTC") {
-  const dtcData = await getDtcSchematic(item.code);
-  console
-
-  const converted = normalizeSchematic(dtcData);
-
-  const updatedItem = {
-    ...item,
-    schematicData: converted,
-  };
-
-  setSelectedItem(updatedItem);
-  setMergedSchematic(null);
-  console.log("DTC schematic set and ready to render");
-  return;
-}
-
-
-                console.log("Loaded schematic:", schematicData);
-
-                const converted = normalizeSchematic(schematicData);
-                const updatedItem = {
-                  ...item,
-                  schematicData: converted
-                };
-
-                setSelectedItem(updatedItem);
-                setMergedSchematic(null);
-                console.log("Updated Item with schematic data:", updatedItem);
-
-              } catch (err) {
-                console.error("Failed to load schematic:", err);
-              }
+            onTabChange={(tabId) => {
+              setActiveTab(tabId);
+              setSelectedItem(null);
+              setShowWelcome(false);
             }}
-            selectedItem={selectedItem}
-            selectedCodes={selectedCodes}
-            setSelectedCodes={setSelectedCodes}
-            onViewSchematic={handleViewSchematic}
-            isMobile={isMobile}
+            onLogout={() => setLoggedIn(false)}
+            userName="admin"
           />
 
-          {/* MOBILE MODE */}
-          {!isMobile && selectedItem?.schematicData && (
-            <Schematic data={selectedItem.schematicData} activeTab={activeTab} />
-          )}
+          {showWelcome ? (
+            <WelcomePage
+              onStart={() => {
+                setShowWelcome(false);
+                setActiveTab("components");
+              }}
+            />
+          ) : (
+            <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+              {/* LEFT PANEL */}
+              <LeftPanel
+                activeTab={activeTab}
+                data={filteredItems}
+                onItemSelect={async (item) => {
+                  try {
+                    console.log("🔗 Item clicked:", item.code, "Type:", item.type);
 
-          {/* MAIN PANEL */}
-          <MainPanel
-            selectedItem={
-              mergedSchematic
-                ? {
-                  code: "MERGED",
-                  name: "Merged Schematic",
-                  type: "Merged",
-                  status: "Active",
-                  voltage: "12V",
-                  description: "Merged API schematic view",
-                  schematicData: mergedSchematic,
+                    //  HARNESS CHECK
+                    if (item.type === "Harness") {
+                      console.log(" Loading harness schematic for:", item.code);
+
+                      const harnessData = await getHarnessSchematic(item.code);
+                      console.log(" Harness data received:", harnessData);
+
+                      const converted = normalizeSchematic(harnessData);
+                      console.log(" Normalized harness schematic:", converted);
+
+                      const updatedItem = {
+                        ...item,
+                        schematicData: converted
+                      };
+
+                      setSelectedItem(updatedItem);
+                      setMergedSchematic(null);
+                      console.log(" Harness schematic set and ready to render");
+                      return;
+                    }
+
+                    // SYSTEM OR COMPONENT
+                    let schematicData;
+
+                    if (item.type === "System") {
+                      schematicData = await getSystemFormula(Number(item.code));
+                    } else {
+                      schematicData = await getComponentSchematic(item.code);
+                    }
+                    if (item.type === "DTC") {
+                      const dtcData = await getDtcSchematic(item.code);
+                      console
+
+                      const converted = normalizeSchematic(dtcData);
+
+                      const updatedItem = {
+                        ...item,
+                        schematicData: converted,
+                      };
+
+                      setSelectedItem(updatedItem);
+                      setMergedSchematic(null);
+                      console.log("DTC schematic set and ready to render");
+                      return;
+                    }
+                    console.log("Loaded schematic:", schematicData);
+
+                    const converted = normalizeSchematic(schematicData);
+                    const updatedItem = {
+                      ...item,
+                      schematicData: converted
+                    };
+
+                    setSelectedItem(updatedItem);
+                    setMergedSchematic(null);
+                    console.log("Updated Item with schematic data:", updatedItem);
+
+                  } catch (err) {
+                    console.error("Failed to load schematic:", err);
+                  }
+                }}
+                selectedItem={selectedItem}
+                selectedCodes={selectedCodes}
+                setSelectedCodes={setSelectedCodes}
+                onViewSchematic={handleViewSchematic}
+                isMobile={isMobile}
+              />
+
+              {/* MOBILE MODE */}
+              {!isMobile && selectedItem?.schematicData && (
+                <Schematic data={selectedItem.schematicData} activeTab={activeTab} />
+              )}
+
+              {/* MAIN PANEL */}
+              <MainPanel
+                selectedItem={
+                  mergedSchematic
+                    ? {
+                      code: "MERGED",
+                      name: "Merged Schematic",
+                      type: "Merged",
+                      status: "Active",
+                      voltage: "12V",
+                      description: "Merged API schematic view",
+                      schematicData: mergedSchematic,
+                    }
+                    : selectedItem
                 }
-                : selectedItem
-            }
-            activeTab={activeTab}
-            isMultipleComponents={!!mergedSchematic}
-            isMobile={isMobile}
-          />
+                activeTab={activeTab}
+                isMultipleComponents={!!mergedSchematic}
+                isMobile={isMobile}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

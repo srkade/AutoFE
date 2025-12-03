@@ -123,6 +123,7 @@ export default function LoginPage({ onLoginSuccess ,onRegisterClick}: LoginPageP
               placeholder="Enter Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
               style={{
                 width: "100%",
                 padding: "12px",
@@ -137,6 +138,7 @@ export default function LoginPage({ onLoginSuccess ,onRegisterClick}: LoginPageP
               placeholder="Enter Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               style={{
                 width: "100%",
                 padding: "12px",

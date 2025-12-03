@@ -15,6 +15,13 @@ const Transistor: React.FC<TransistorProps> = ({
   stroke = "black",
   strokeWidth = 5,
 }) => {
+  const safeVal = (val: number, fallback: number = 0): number =>
+    Number.isFinite(val) ? val : fallback;
+
+  const safeX = safeVal(x, 0);
+  const safeY = safeVal(y, 0);
+  const safeMult = safeVal(sizeMultiplier, 1);
+
   // Emitter line coordinates
   const ex1 = -10;
   const ey1 = 30;
@@ -29,8 +36,8 @@ const Transistor: React.FC<TransistorProps> = ({
   const dx = ex2 - ex1;
   const dy = ey2 - ey1;
   const lineLength = Math.sqrt(dx * dx + dy * dy);
-  const ux = dx / lineLength;
-  const uy = dy / lineLength;
+  const ux = safeVal(dx / lineLength, 0);
+  const uy = safeVal(dy / lineLength, 0);
 
   // Perpendicular vector for width
   const px = -uy;
@@ -45,7 +52,7 @@ const Transistor: React.FC<TransistorProps> = ({
   const rightY = baseY - py * (arrowWidth / 2);
 
   return (
-    <g transform={`translate(${x}, ${y}) scale(${sizeMultiplier})`}>
+    <g transform={`translate(${safeX}, ${safeY}) scale(${safeMult})`}>
       {/* Base Line */}
       <line x1={-40} y1={0} x2={-10} y2={0} stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" />
 

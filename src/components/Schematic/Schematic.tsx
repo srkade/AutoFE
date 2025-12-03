@@ -63,6 +63,11 @@ const colors = {
   OG: "orange",
 };
 
+// Safe numeric helper to prevent NaN from being rendered
+const safe = (val: number, fallback: number = 0): number => {
+  return Number.isFinite(val) ? val : fallback;
+};
+
 export default function Schematic({
   data,
   scale = 1,
@@ -230,11 +235,17 @@ export default function Schematic({
     });
   };
   const popupRef = useRef<HTMLDivElement | null>(null);
+  const viewBoxRef = useRef({ x: 0, y: 0, w: 800, h: 600 });
 
   const [viewBox, setViewBox] = useState({ x: 0, y: 0, w: 800, h: 600 });
   const [fitViewBox, setFitViewBox] = useState(viewBox);
   // Track if popup was manually closed
   const [popupClosedManually, setPopupClosedManually] = useState(false);
+
+  // Keep viewBoxRef in sync with state
+  useEffect(() => {
+    viewBoxRef.current = viewBox;
+  }, [viewBox]);
 
   //change deafault view box on data change
   useEffect(() => {
@@ -242,6 +253,21 @@ export default function Schematic({
       resetView(svgWrapperRef, fitViewBox, setViewBox);
     }
   }, [fitViewBox]);
+
+  // Attach wheel listener with { passive: false } to allow preventDefault
+  useEffect(() => {
+    const svgElement = svgWrapperRef.current?.querySelector("svg");
+    if (!svgElement) return;
+
+    const handleWheelEvent = (e: WheelEvent) => {
+      handleWheel(e, svgElement as SVGSVGElement, viewBoxRef.current, setViewBox);
+    };
+
+    svgElement.addEventListener("wheel", handleWheelEvent, { passive: false });
+    return () => {
+      svgElement.removeEventListener("wheel", handleWheelEvent);
+    };
+  }, []); // Empty dependency—listener attached once
 
   const [componentNameWidths, setComponentNameWidths] = useState<{
     [id: string]: number;
@@ -471,10 +497,12 @@ export default function Schematic({
   }
 
   function getXForComponentTitle(component: ComponentType): number {
-    return (
+    const nameWidth = componentNameWidths[component.id] ?? 100; // fallback if not measured yet
+    return safe(
       getXForComponent(component) +
-      componentNameWidths[component.id] / 2 +
-      padding / 2
+      nameWidth / 2 +
+      padding / 2,
+      padding
     );
   }
 
@@ -908,7 +936,14 @@ export default function Schematic({
                   setPopupClosedManually(false);
                 }
               }}
-              onWheel={(e) => handleWheel(e, viewBox, setViewBox)}
+              onWheel={(e) => {
+                handleWheel(
+                  e.nativeEvent,
+                  e.currentTarget as SVGSVGElement,
+                  viewBoxRef.current,
+                  setViewBox
+                );
+              }}
               style={{
                 border: "1px solid #ccc",
                 width: "100%",
@@ -922,6 +957,7 @@ export default function Schematic({
                 msUserSelect: dragging ? ("none" as any) : ("auto" as any),
                 position: "relative",
                 overflow: "auto",
+                touchAction: "none",
               }}
               viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
               onMouseDown={handleMouseDown}
@@ -955,20 +991,22 @@ export default function Schematic({
                     ? (
                       <g>
                         <circle
-                          cx={
-                            getXForComponent(comp) + getWidthForComponent(comp) / 2
-                          }
-                          cy={getSpliceCenterY(comp)}
+                          cx={safe(
+                            getXForComponent(comp) + getWidthForComponent(comp) / 2,
+                            padding
+                          )}
+                          cy={safe(getSpliceCenterY(comp), padding)}
                           r={componentSize.height / 8} // adjust radius as needed
                           fill="white"
                           stroke="black"
                           strokeWidth={1}
                         />
                         <circle
-                          cx={
-                            getXForComponent(comp) + getWidthForComponent(comp) / 2
-                          }
-                          cy={getSpliceCenterY(comp)}
+                          cx={safe(
+                            getXForComponent(comp) + getWidthForComponent(comp) / 2,
+                            padding
+                          )}
+                          cy={safe(getSpliceCenterY(comp), padding)}
                           r={componentSize.height / 10}
                           fill="black"
                         />
@@ -1003,9 +1041,9 @@ export default function Schematic({
                           }}
                         >
                           <rect
-                            x={getXForComponent(comp)}
-                            y={getYForComponent(comp)}
-                            width={getWidthForComponent(comp)}
+                            x={safe(getXForComponent(comp), padding)}
+                            y={safe(getYForComponent(comp), padding)}
+                            width={safe(getWidthForComponent(comp), 100)}
                             height={componentSize.height}
                             fill="lightblue"
                             stroke="black"
@@ -1019,14 +1057,15 @@ export default function Schematic({
                           />
                           {selectedComponentIds.includes(comp.id) && (
                             <rect
-                              x={getXForComponent(comp)}
-                              y={
+                              x={safe(getXForComponent(comp), padding)}
+                              y={safe(
                                 getYForComponent(comp) <
                                   fitViewBox.y + fitViewBox.h / 2
                                   ? getYForComponent(comp) - 60
-                                  : getYForComponent(comp) + 60
-                              }
-                              width={getWidthForComponent(comp)}
+                                  : getYForComponent(comp) + 60,
+                                padding
+                              )}
+                              width={safe(getWidthForComponent(comp), 100)}
                               height={componentSize.height}
                               fill="#3390FF"
                               opacity={0.3}
@@ -1036,9 +1075,9 @@ export default function Schematic({
 
                           {comp.category?.toLowerCase() === "sensor" && (
                             <Sensor
-                              x={getXForComponent(comp) + 20} // left of rectangle
-                              y={getYForComponent(comp) + 15} // top of rectangle
-                              width={getWidthForComponent(comp) / 20} // match rectangle width
+                              x={safe(getXForComponent(comp) + 20, 50)} // left of rectangle
+                              y={safe(getYForComponent(comp) + 15, 50)} // top of rectangle
+                              width={safe(getWidthForComponent(comp) / 20, 5)} // match rectangle width
                               height={componentSize.height / 2} // match rectangle height
                               stroke="black"
                               strokeWidth={1}
@@ -1149,16 +1188,17 @@ export default function Schematic({
                     ref={(el) => {
                       componentNameRefs.current[comp.id] = el;
                     }}
-                    x={getXForComponentTitle(comp)}
+                    x={safe(getXForComponentTitle(comp), padding)}
                     // y={getYForComponent(comp) + componentSize.height / 2}
-                    y={
+                    y={safe(
                       getYForComponent(comp) +
                       (getYForComponent(comp) + componentSize.height / 2 <
                         fitViewBox.y + fitViewBox.h / 2
                         ? -componentSize.height / 2 // above component
                         : componentSize.height +
-                        (comp.componentType?.toLowerCase() === "splice" ? -30 : 30))
-                    }
+                        (comp.componentType?.toLowerCase() === "splice" ? -30 : 30)),
+                      padding
+                    )}
                     textAnchor="middle"
                     fontSize="20"
                     fill="black"
@@ -1170,9 +1210,9 @@ export default function Schematic({
                       {/* open conditional rendering when the component is not splice */}
                       {comp.componentType?.toLowerCase() !== "splice" && (
                         <rect
-                          x={getXForConnector(conn, comp)}
-                          y={getYForConnector(conn, comp)}
-                          width={getWidthForConnector(conn, comp)}
+                          x={safe(getXForConnector(conn, comp), padding)}
+                          y={safe(getYForConnector(conn, comp), padding)}
+                          width={safe(getWidthForConnector(conn, comp), 50)}
                           height={connectorHeight}
                           fill={
                             selectedConnector?.id === conn.id
@@ -1192,11 +1232,12 @@ export default function Schematic({
                         ref={(el) => {
                           connectorNameRefs.current[conn.id] = el;
                         }}
-                        x={
+                        x={safe(
                           getXForConnector(conn, comp) -
-                          (comp.componentType?.toLowerCase() === "splice" ? -10 : 1) // reduce gap if splice
-                        }
-                        y={getYForConnector(conn, comp) + 13}
+                          (comp.componentType?.toLowerCase() === "splice" ? -10 : 1),
+                          padding
+                        )} // reduce gap if splice
+                        y={safe(getYForConnector(conn, comp) + 13, padding)}
                         textAnchor="end" //change to move text at the left
                         dominantBaseline="middle" //change to take text left at middle
                         fontSize="10"
@@ -1454,8 +1495,8 @@ export default function Schematic({
                           <>
                             {/* top component → trident points UP */}
                             <TridentShape
-                              cx={fromX}
-                              cy={fromY - 15}
+                              cx={safe(fromX, 0)}
+                              cy={safe(fromY - 15, 0)}
                               color={wire.color}
                               size={10}
                             />
@@ -1463,7 +1504,7 @@ export default function Schematic({
                               fromComponent?.label?.toLowerCase().includes("load center") &&
                               wire.wireDetails?.fuse &&
                               allowedCavities.includes(fromCavity) && (  //  only show for allowed cavities
-                                <g transform={`translate(${fromX}, ${fromY - 45})`}>
+                                <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY - 45, 0)})`}>
 
                                   {/* LEFT NORMAL TEXT (not flipped) */}
                                   {wire.wireDetails.fuse.code && (
@@ -1507,7 +1548,7 @@ export default function Schematic({
                           <>
                             {/* bottom component → trident points DOWN */}
                             <g
-                              transform={`translate(${fromX}, ${fromY + 15
+                              transform={`translate(${safe(fromX, 0)}, ${safe(fromY + 15, 0)
                                 }) scale(1, -1)`}
                             >
                               <TridentShape
@@ -1523,7 +1564,7 @@ export default function Schematic({
                               fromComponent?.label?.toLowerCase().includes("load center") &&
                               wire.wireDetails?.fuse &&
                               allowedCavities.includes(fromCavity) && (
-                                <g transform={`translate(${fromX}, ${fromY + 28})`}>
+                                <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY + 28, 0)})`}>
 
                                   {/* CODE (left) */}
                                   {wire.wireDetails.fuse.code && (
@@ -1593,7 +1634,7 @@ export default function Schematic({
                     >
                       <polyline
                         key={i}
-                        points={`${fromX},${fromY} ${fromX},${intermediateY} ${toX},${intermediateY} ${toX},${toY}`}
+                        points={`${safe(fromX, 0)},${safe(fromY, 0)} ${safe(fromX, 0)},${safe(intermediateY, 0)} ${safe(toX, 0)},${safe(intermediateY, 0)} ${safe(toX, 0)},${safe(toY, 0)}`}
                         fill="none"
                         stroke={
                           selectedWires.includes(i.toString())
@@ -1611,8 +1652,8 @@ export default function Schematic({
                         {isToTop ? (
                           <>
                             <TridentShape
-                              cx={toX}
-                              cy={toY - 15}
+                              cx={safe(toX, 0)}
+                              cy={safe(toY - 15, 0)}
                               color={wire.color}
                               size={10}
                             />
@@ -1623,7 +1664,7 @@ export default function Schematic({
                                 ?.toLowerCase()
                                 .includes("load center") && (
                                 <g
-                                  transform={`translate(${toX}, ${toY - 10
+                                  transform={`translate(${safe(toX, 0)}, ${safe(toY - 10, 0)
                                     }) scale(1, -1)`}
                                 >
                                   <FuseSymbol
@@ -1638,7 +1679,7 @@ export default function Schematic({
                         ) : (
                           <>
                             <g
-                              transform={`translate(${toX}, ${toY + 15
+                              transform={`translate(${safe(toX, 0)}, ${safe(toY + 15, 0)
                                 }) scale(1, -1)`}
                             >
                               <TridentShape
@@ -1654,8 +1695,8 @@ export default function Schematic({
                                 ?.toLowerCase()
                                 .includes("load center") && (
                                 <FuseSymbol
-                                  cx={toX}
-                                  cy={toY + 35}
+                                  cx={safe(toX, 0)}
+                                  cy={safe(toY + 35, 0)}
                                   size={14}
                                   color="black"
                                 />
@@ -1665,8 +1706,8 @@ export default function Schematic({
                       </>
                     )}
                     <text
-                      x={fromX + 10}
-                      y={fromLabelY}
+                      x={safe(fromX + 10, 0)}
+                      y={safe(fromLabelY, 0)}
                       textAnchor="start"
                       fontSize="10"
                       alignmentBaseline="middle"
@@ -1676,8 +1717,8 @@ export default function Schematic({
                       {wire.from.cavity}
                     </text>
                     <text
-                      x={toX + 10}
-                      y={toLabelY}
+                      x={safe(toX + 10, 0)}
+                      y={safe(toLabelY, 0)}
                       textAnchor="start"
                       fontSize="10"
                       alignmentBaseline="middle"

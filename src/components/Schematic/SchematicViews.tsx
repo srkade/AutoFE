@@ -38,31 +38,41 @@ export const resetView = (
 };
 
 export const handleWheel = (
-    e: React.WheelEvent<SVGSVGElement>,
+    e: WheelEvent | React.WheelEvent<SVGSVGElement>,
+    svg: SVGSVGElement,
     viewBox: { x: number; y: number; w: number; h: number },
     setViewBox: React.Dispatch<React.SetStateAction<{ x: number; y: number; w: number; h: number }>>
-
 ) => {
-    e.preventDefault();
     const scaleFactor = 1.1;
-    const mouseX = e.nativeEvent.offsetX;
-    const mouseY = e.nativeEvent.offsetY;
+    
+    // Get the position of the mouse relative to the SVG
+    const rect = svg.getBoundingClientRect();
+    const mouseX = (e as any).clientX - rect.left;
+    const mouseY = (e as any).clientY - rect.top;
+    
     let { x, y, w, h } = viewBox;
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(w) || !Number.isFinite(h)) {
+        return; // Skip if viewBox has NaN/Infinity
+    }
 
     // Calculate zoom direction
-    const zoomIn = e.deltaY < 0;
-    // Mouse coordinates in SVG space
-    const svg = e.currentTarget;
-    const bounds = svg.getBoundingClientRect();
-    const svgX = (mouseX / svg.width.baseVal.value) * w + x;
-    const svgY = (mouseY / svg.height.baseVal.value) * h + y;
+    const zoomIn = (e as any).deltaY < 0;
+    const svgWidth = svg.width.baseVal.value;
+    const svgHeight = svg.height.baseVal.value;
+    
+    if (!Number.isFinite(svgWidth) || !Number.isFinite(svgHeight)) {
+        return; // Skip if SVG dimensions are invalid
+    }
+    
+    const svgX = (mouseX / svgWidth) * w + x;
+    const svgY = (mouseY / svgHeight) * h + y;
 
     let newW = zoomIn ? w / scaleFactor : w * scaleFactor;
     let newH = zoomIn ? h / scaleFactor : h * scaleFactor;
 
     // Keep mouse position centered after zoom
-    const newX = svgX - (mouseX / svg.width.baseVal.value) * newW;
-    const newY = svgY - (mouseY / svg.height.baseVal.value) * newH;
+    const newX = svgX - (mouseX / svgWidth) * newW;
+    const newY = svgY - (mouseY / svgHeight) * newH;
 
     setViewBox({
         x: newX,

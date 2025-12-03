@@ -93,6 +93,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterPageProps) {
             <input
               type="text"
               placeholder="First Name"
+              autoComplete="given-name"
               style={{
                 width: "100%",
                 padding: "12px",
@@ -103,6 +104,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterPageProps) {
             <input
               type="text"
               placeholder="Last Name"
+              autoComplete="family-name"
               style={{
                 width: "100%",
                 padding: "12px",
@@ -113,6 +115,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterPageProps) {
             <input
               type="email"
               placeholder="Email Address"
+              autoComplete="email"
               style={{
                 width: "100%",
                 padding: "12px",
@@ -123,6 +126,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterPageProps) {
             <input
               type="password"
               placeholder="Password"
+              autoComplete="new-password"
               style={{
                 width: "100%",
                 padding: "12px",
@@ -133,6 +137,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterPageProps) {
             <input
               type="password"
               placeholder="Confirm Password"
+              autoComplete="new-password"
               style={{
                 width: "100%",
                 padding: "12px",

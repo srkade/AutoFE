@@ -19,11 +19,14 @@ const Sensor: React.FC<DiagonalBoxProps> = ({
   strokeWidth = 1,
   sizeMultiplier = 1,
 }) => {
-  const finalWidth = width * sizeMultiplier;
-  const finalHeight = height * sizeMultiplier;
-  const finalX = x * sizeMultiplier;
-  const finalY = y * sizeMultiplier;
-  const extensionAmount =4;
+  const safeVal = (val: number, fallback: number = 0): number =>
+    Number.isFinite(val) ? val : fallback;
+
+  const finalWidth = safeVal(width * sizeMultiplier, 10);
+  const finalHeight = safeVal(height * sizeMultiplier, 16);
+  const finalX = safeVal(x * sizeMultiplier, 30);
+  const finalY = safeVal(y * sizeMultiplier, 30);
+  const extensionAmount = 4;
 
   return (
     <g>

@@ -377,8 +377,8 @@ export default function PopupComponentDetails({
                 </tr>
               )}
           </tbody>
-          <img src="" alt="" />
         </table>
+        <img src="" alt="" />
         
       </div>
     </div>

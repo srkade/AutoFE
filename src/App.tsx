@@ -329,16 +329,69 @@ export default function App() {
                 data={filteredItems}
                 onItemSelect={async (item) => {
                   try {
-                    const data = await getComponentSchematic(item.code);
-                    const normalized = normalizeSchematic(data);
+                    console.log("🔗 Item clicked:", item.code, "Type:", item.type);
 
-                    setSelectedItem({ ...item, schematicData: normalized });
-                    setMergedSchematic(null); // clear merged view if any
-                  } catch (error) {
-                    console.error("Failed to load schematic:", error);
+                    //  HARNESS CHECK
+                    if (item.type === "Harness") {
+                      console.log(" Loading harness schematic for:", item.code);
+
+                      const harnessData = await getHarnessSchematic(item.code);
+                      console.log(" Harness data received:", harnessData);
+
+                      const converted = normalizeSchematic(harnessData);
+                      console.log(" Normalized harness schematic:", converted);
+
+                      const updatedItem = {
+                        ...item,
+                        schematicData: converted
+                      };
+
+                      setSelectedItem(updatedItem);
+                      setMergedSchematic(null);
+                      console.log(" Harness schematic set and ready to render");
+                      return;
+                    }
+
+                    // SYSTEM OR COMPONENT
+                    let schematicData;
+
+                    if (item.type === "System") {
+                      schematicData = await getSystemFormula(Number(item.code));
+                    } else {
+                      schematicData = await getComponentSchematic(item.code);
+                    }
+                    if (item.type === "DTC") {
+                      const dtcData = await getDtcSchematic(item.code);
+                      console
+
+                      const converted = normalizeSchematic(dtcData);
+
+                      const updatedItem = {
+                        ...item,
+                        schematicData: converted,
+                      };
+
+                      setSelectedItem(updatedItem);
+                      setMergedSchematic(null);
+                      console.log("DTC schematic set and ready to render");
+                      return;
+                    }
+                    console.log("Loaded schematic:", schematicData);
+
+                    const converted = normalizeSchematic(schematicData);
+                    const updatedItem = {
+                      ...item,
+                      schematicData: converted
+                    };
+
+                    setSelectedItem(updatedItem);
+                    setMergedSchematic(null);
+                    console.log("Updated Item with schematic data:", updatedItem);
+
+                  } catch (err) {
+                    console.error("Failed to load schematic:", err);
                   }
                 }}
-
                 selectedItem={selectedItem}
                 selectedCodes={selectedCodes}
                 setSelectedCodes={setSelectedCodes}

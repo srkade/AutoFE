@@ -2,23 +2,29 @@ import React, { useState } from "react";
 import logo from "../assets/Images/logo.jpg"
 
 interface LoginPageProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (role: "admin" | "user") => void;
   onRegisterClick: () => void;
 }
 
-export default function LoginPage({ onLoginSuccess ,onRegisterClick}: LoginPageProps) {
+export default function LoginPage({ onLoginSuccess, onRegisterClick }: LoginPageProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (username === "admin" && password === "admin123") {
-      onLoginSuccess();
-    } else {
+      onLoginSuccess("admin");
+    }
+    else if (username === "user" && password === "user123") {
+      onLoginSuccess("user");
+    }
+    else {
       setError("Invalid username or password");
     }
   };
+
 
   return (
     <div

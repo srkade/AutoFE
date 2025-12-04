@@ -20,15 +20,20 @@ export type DashboardItem = {
   description: string;
   schematicData: SchematicData;
 };
-
+import AdminNavigationTabs from "./pages/AdminNavigationTabs";
+import ManageUsers from "./pages/ManageUsers";
+import ImportFiles from "./pages/ImportedFiles";
 export default function App() {
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [page, setPage] = useState<"login" | "register" | "dashboard">("login");
+  const [role, setRole] = useState<"admin" | "user" | null>(null);
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (loggedInRole: "admin" | "user") => {
+    setRole(loggedInRole);
     setPage("dashboard");
   };
+
   const [activeTab, setActiveTab] = useState<string>("");
   const [selectedItem, setSelectedItem] = useState<DashboardItem | null>(null);
 
@@ -286,7 +291,8 @@ export default function App() {
         <RegisterForm onBackToLogin={() => setPage("login")} />
       )}
 
-      {page === "dashboard" && (
+      {/* ADMIN DASHBOARD */}
+      {page === "dashboard" && role === "user" && (
         <div
           style={{
             height: "100vh",
@@ -295,7 +301,6 @@ export default function App() {
             flexDirection: "column",
           }}
         >
-          {/* Navigation Tabs */}
           <NavigationTabs
             activeTab={activeTab}
             onTabChange={(tabId) => {
@@ -303,8 +308,11 @@ export default function App() {
               setSelectedItem(null);
               setShowWelcome(false);
             }}
-            onLogout={() => setLoggedIn(false)}
-            userName="admin"
+            onLogout={() => {
+              setRole(null);
+              setPage("login");
+            }}
+            userName="Admin"
           />
 
           {showWelcome ? (
@@ -316,75 +324,21 @@ export default function App() {
             />
           ) : (
             <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-              {/* LEFT PANEL */}
               <LeftPanel
                 activeTab={activeTab}
                 data={filteredItems}
                 onItemSelect={async (item) => {
                   try {
-                    console.log("🔗 Item clicked:", item.code, "Type:", item.type);
+                    const data = await getComponentSchematic(item.code);
+                    const normalized = normalizeSchematic(data);
 
-                    //  HARNESS CHECK
-                    if (item.type === "Harness") {
-                      console.log(" Loading harness schematic for:", item.code);
-
-                      const harnessData = await getHarnessSchematic(item.code);
-                      console.log(" Harness data received:", harnessData);
-
-                      const converted = normalizeSchematic(harnessData);
-                      console.log(" Normalized harness schematic:", converted);
-
-                      const updatedItem = {
-                        ...item,
-                        schematicData: converted
-                      };
-
-                      setSelectedItem(updatedItem);
-                      setMergedSchematic(null);
-                      console.log(" Harness schematic set and ready to render");
-                      return;
-                    }
-
-                    // SYSTEM OR COMPONENT
-                    let schematicData;
-
-                    if (item.type === "System") {
-                      schematicData = await getSystemFormula(Number(item.code));
-                    } else {
-                      schematicData = await getComponentSchematic(item.code);
-                    }
-                    if (item.type === "DTC") {
-                      const dtcData = await getDtcSchematic(item.code);
-                      console
-
-                      const converted = normalizeSchematic(dtcData);
-
-                      const updatedItem = {
-                        ...item,
-                        schematicData: converted,
-                      };
-
-                      setSelectedItem(updatedItem);
-                      setMergedSchematic(null);
-                      console.log("DTC schematic set and ready to render");
-                      return;
-                    }
-                    console.log("Loaded schematic:", schematicData);
-
-                    const converted = normalizeSchematic(schematicData);
-                    const updatedItem = {
-                      ...item,
-                      schematicData: converted
-                    };
-
-                    setSelectedItem(updatedItem);
-                    setMergedSchematic(null);
-                    console.log("Updated Item with schematic data:", updatedItem);
-
-                  } catch (err) {
-                    console.error("Failed to load schematic:", err);
+                    setSelectedItem({ ...item, schematicData: normalized });
+                    setMergedSchematic(null); // clear merged view if any
+                  } catch (error) {
+                    console.error("Failed to load schematic:", error);
                   }
                 }}
+
                 selectedItem={selectedItem}
                 selectedCodes={selectedCodes}
                 setSelectedCodes={setSelectedCodes}
@@ -392,12 +346,10 @@ export default function App() {
                 isMobile={isMobile}
               />
 
-              {/* MOBILE MODE */}
               {!isMobile && selectedItem?.schematicData && (
                 <Schematic data={selectedItem.schematicData} activeTab={activeTab} />
               )}
 
-              {/* MAIN PANEL */}
               <MainPanel
                 selectedItem={
                   mergedSchematic
@@ -418,6 +370,116 @@ export default function App() {
               />
             </div>
           )}
+        </div>
+      )}
+      {/* USER DASHBOARD */}
+      {page === "dashboard" && role === "admin" && (
+        <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+
+          <AdminNavigationTabs
+            active={activeTab}
+            onChange={setActiveTab}
+            onLogout={() => {
+              setRole(null);
+              setPage("login");
+            }}
+          />
+
+          {/* TAB CONTENT */}
+          <div style={{ flex: 1 }}>
+            {activeTab === "manage-users" && (
+              <ManageUsers />
+            )}
+
+            {activeTab === "import-files" && (
+              <ImportFiles />
+            )}
+
+            {/* {activeTab === "uploaded-files" && (
+              <UploadedFiles />
+            )} */}
+
+            {activeTab === "view-schematic" && (
+              <div
+                style={{
+                  height: "100vh",
+                  background: "#f8f9fa",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <NavigationTabs
+                  activeTab={activeTab}
+                  onTabChange={(tabId) => {
+                    setActiveTab(tabId);
+                    setSelectedItem(null);
+                    setShowWelcome(false);
+                  }}
+                  onLogout={() => {
+                    setRole(null);
+                    setPage("login");
+                  }}
+                  userName="Admin"
+                />
+
+                {showWelcome ? (
+                  <WelcomePage
+                    onStart={() => {
+                      setShowWelcome(false);
+                      setActiveTab("components");
+                    }}
+                  />
+                ) : (
+                  <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+                    <LeftPanel
+                      activeTab={activeTab}
+                      data={filteredItems}
+                      onItemSelect={async (item) => {
+                        try {
+                          const data = await getComponentSchematic(item.code);
+                          const normalized = normalizeSchematic(data);
+
+                          setSelectedItem({ ...item, schematicData: normalized });
+                          setMergedSchematic(null); // clear merged view if any
+                        } catch (error) {
+                          console.error("Failed to load schematic:", error);
+                        }
+                      }}
+
+                      selectedItem={selectedItem}
+                      selectedCodes={selectedCodes}
+                      setSelectedCodes={setSelectedCodes}
+                      onViewSchematic={handleViewSchematic}
+                      isMobile={isMobile}
+                    />
+
+                    {!isMobile && selectedItem?.schematicData && (
+                      <Schematic data={selectedItem.schematicData} activeTab={activeTab} />
+                    )}
+
+                    <MainPanel
+                      selectedItem={
+                        mergedSchematic
+                          ? {
+                            code: "MERGED",
+                            name: "Merged Schematic",
+                            type: "Merged",
+                            status: "Active",
+                            voltage: "12V",
+                            description: "Merged API schematic view",
+                            schematicData: mergedSchematic,
+                          }
+                          : selectedItem
+                      }
+                      activeTab={activeTab}
+                      isMultipleComponents={!!mergedSchematic}
+                      isMobile={isMobile}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -1,6 +1,8 @@
 import React from "react";
+import "../Styles/AdminNavigationTabs.css";
+
 interface AdminNavigationTabsProps {
-  active: string;
+  active: string ;
   onChange: (tabId: string) => void;
   onLogout: () => void;
 }
@@ -13,36 +15,26 @@ export default function AdminNavigationTabs({
   const tabs = [
     { id: "manage-users", label: "Manage Users" },
     { id: "import-files", label: "Import Files" },
-    // { id: "uploaded-files", label: "Uploaded Files" },
-    { id: "view-schematic", label: "View Schematic" }
+    { id: "view-schematic", label: "View Schematic" },
   ];
 
   return (
-    <div style={{ 
-      display: "flex", 
-      background: "#343a40", 
-      padding: "10px", 
-      color: "white",
-      gap: "20px"
-    }}>
-      
-      {tabs.map(t => (
-        <div
-          key={t.id}
-          onClick={() => onChange(t.id)}
-          style={{
-            cursor: "pointer",
-            padding: "8px 12px",
-            borderRadius: "6px",
-            background: active === t.id ? "#007bff" : "transparent"
-          }}
-        >
-          {t.label}
-        </div>
-      ))}
-
-      {/* Logout button right side */}
-      <div style={{ marginLeft: "auto", cursor: "pointer" }} onClick={onLogout}>
+    <div className="admin-nav">
+      <div className="tabs">
+        {tabs.map((t) => (
+          <div
+            key={t.id}
+            className={`tab-item ${active === t.id ? "active" : ""}`}
+            onClick={() => {
+              console.log("Admin tab clicked:", t.id); // debug
+              onChange(t.id);
+            }}
+          >
+            {t.label}
+          </div>
+        ))}
+      </div>
+      <div className="logout" onClick={onLogout}>
         Logout
       </div>
     </div>

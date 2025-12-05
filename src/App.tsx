@@ -11,6 +11,7 @@ import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
 import { getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarnesses, getVoltageSupply, getSystems, getSystemFormula, getHarnessSchematic } from "./services/api";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 import RegisterForm from "./pages/RegistrationForm";
+import AdminDashboard from "./pages/AdminDashboard";
 export type DashboardItem = {
   code: string;
   name: string;
@@ -433,7 +434,7 @@ export default function App() {
       )}
       {/* Admin DASHBOARD */}
       {page === "dashboard" && role === "admin" && (
-        <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+        <div style={{ height: "100vh", display: "flex", flexDirection: "row" }}>
 
           <AdminNavigationTabs
             active={adminTab}

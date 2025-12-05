@@ -33,8 +33,9 @@ export default function App() {
     setRole(loggedInRole);
     setPage("dashboard");
   };
-
-  const [activeTab, setActiveTab] = useState<string>("");
+  const [activeTab, setActiveTab] = useState("components");
+  const [adminTab, setAdminTab] = useState("manage-users");
+  const [schematicTab, setSchematicTab] = useState("components");
   const [selectedItem, setSelectedItem] = useState<DashboardItem | null>(null);
 
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
@@ -219,7 +220,10 @@ export default function App() {
 
   async function handleViewSchematic(codes: string[]) {
     try {
-      if (activeTab === "harnesses" && codes.length > 0) {
+      const tab = role === "admin" ? schematicTab : activeTab;
+
+      if (tab === "harnesses" && codes.length > 0) {
+
         // Use only the first selected harness for now
         const harnessCode = codes[0];
 
@@ -251,7 +255,9 @@ export default function App() {
 
 
   const filteredItems = dashboardItems.filter((item) => {
-    switch (activeTab) {
+    const filterBase = role === "admin" ? schematicTab : activeTab;
+
+    switch (filterBase) {
       case "components":
         return item.type === "Component";
       case "controllers":
@@ -291,7 +297,7 @@ export default function App() {
         <RegisterForm onBackToLogin={() => setPage("login")} />
       )}
 
-      {/* ADMIN DASHBOARD */}
+      {/* USER DASHBOARD */}
       {page === "dashboard" && role === "user" && (
         <div
           style={{
@@ -312,7 +318,7 @@ export default function App() {
               setRole(null);
               setPage("login");
             }}
-            userName="Admin"
+            userName="User"
           />
 
           {showWelcome ? (
@@ -425,13 +431,13 @@ export default function App() {
           )}
         </div>
       )}
-      {/* USER DASHBOARD */}
+      {/* Admin DASHBOARD */}
       {page === "dashboard" && role === "admin" && (
         <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
 
           <AdminNavigationTabs
-            active={activeTab}
-            onChange={setActiveTab}
+            active={adminTab}
+            onChange={setAdminTab}
             onLogout={() => {
               setRole(null);
               setPage("login");
@@ -440,11 +446,11 @@ export default function App() {
 
           {/* TAB CONTENT */}
           <div style={{ flex: 1 }}>
-            {activeTab === "manage-users" && (
+            {adminTab === "manage-users" && (
               <ManageUsers />
             )}
 
-            {activeTab === "import-files" && (
+            {adminTab === "import-files" && (
               <ImportFiles />
             )}
 
@@ -452,7 +458,7 @@ export default function App() {
               <UploadedFiles />
             )} */}
 
-            {activeTab === "view-schematic" && (
+            {adminTab === "view-schematic" && (
               <div
                 style={{
                   height: "100vh",
@@ -462,9 +468,9 @@ export default function App() {
                 }}
               >
                 <NavigationTabs
-                  activeTab={activeTab}
+                  activeTab={schematicTab}
                   onTabChange={(tabId) => {
-                    setActiveTab(tabId);
+                    setSchematicTab(tabId);
                     setSelectedItem(null);
                     setShowWelcome(false);
                   }}
@@ -473,19 +479,20 @@ export default function App() {
                     setPage("login");
                   }}
                   userName="Admin"
+                  hideLogout={true}
                 />
 
                 {showWelcome ? (
                   <WelcomePage
                     onStart={() => {
                       setShowWelcome(false);
-                      setActiveTab("components");
+                      setSchematicTab("components");
                     }}
                   />
                 ) : (
                   <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
                     <LeftPanel
-                      activeTab={activeTab}
+                      activeTab={schematicTab}
                       data={filteredItems}
                       onItemSelect={async (item) => {
                         try {
@@ -493,12 +500,11 @@ export default function App() {
                           const normalized = normalizeSchematic(data);
 
                           setSelectedItem({ ...item, schematicData: normalized });
-                          setMergedSchematic(null); // clear merged view if any
+                          setMergedSchematic(null);
                         } catch (error) {
                           console.error("Failed to load schematic:", error);
                         }
                       }}
-
                       selectedItem={selectedItem}
                       selectedCodes={selectedCodes}
                       setSelectedCodes={setSelectedCodes}
@@ -507,7 +513,7 @@ export default function App() {
                     />
 
                     {!isMobile && selectedItem?.schematicData && (
-                      <Schematic data={selectedItem.schematicData} activeTab={activeTab} />
+                      <Schematic data={selectedItem.schematicData} activeTab={schematicTab} />
                     )}
 
                     <MainPanel
@@ -524,7 +530,7 @@ export default function App() {
                           }
                           : selectedItem
                       }
-                      activeTab={activeTab}
+                      activeTab={schematicTab}
                       isMultipleComponents={!!mergedSchematic}
                       isMobile={isMobile}
                     />

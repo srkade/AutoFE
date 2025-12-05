@@ -16,6 +16,7 @@ interface NavigationTabsProps {
   onTabChange: (tab: string) => void;
   onLogout: () => void;
   userName: string;
+  hideLogout?: boolean;
 }
 
 const tabs = [
@@ -28,7 +29,7 @@ const tabs = [
   { id: "harnesses", label: "Harnesses", icon: Cable },
 ];
 
-export default function NavigationTabs({ activeTab, onTabChange, onLogout, userName }: NavigationTabsProps) {
+export default function NavigationTabs({ activeTab, onTabChange, onLogout, userName,hideLogout=false, }: NavigationTabsProps) {
   const [menuOpen, setMenuOpen] = useState(false);  //change to dispaly hamberger icon at the time of the mobile screen
   const [userMenuOpen, setUserMenuOpen] = useState(false); //  new state for dropdown toggle
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -132,7 +133,8 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, userN
           </button>
         );
       })}
-      <div
+     {!hideLogout && (
+       <div
         ref={userMenuRef}
         style={{
           display: "flex",
@@ -219,6 +221,7 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, userN
           </div>
         )}
       </div>
+     )}
     </nav>
     </div>
   );

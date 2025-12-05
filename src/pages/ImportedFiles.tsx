@@ -3,8 +3,9 @@ import React, { useState, ChangeEvent } from "react";
 export interface UploadedFile {
   id: number;
   name: string;
-  size: number; // in bytes
+  size: number;
   uploadedAt: Date;
+  file?: File; // store actual file
 }
 
 export default function ImportFiles() {
@@ -28,10 +29,18 @@ export default function ImportFiles() {
       name: selectedFile.name,
       size: selectedFile.size,
       uploadedAt: new Date(),
+      file: selectedFile,
     };
 
     setUploadedFiles([newFile, ...uploadedFiles]);
     setSelectedFile(null);
+  };
+
+  // Open file in new tab
+  const handleView = (file?: File) => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    window.open(url, "_blank");
   };
 
   const handleDelete = (id: number) => {
@@ -42,7 +51,7 @@ export default function ImportFiles() {
     <div style={{ padding: "20px" }}>
       <h2>Import Files</h2>
 
-      {/* File Upload Form */}
+      {/* Upload Section */}
       <div
         style={{
           marginBottom: "20px",
@@ -73,7 +82,7 @@ export default function ImportFiles() {
         </button>
       </div>
 
-      {/* Uploaded Files Table */}
+      {/* Files Table */}
       <table style={{ width: "100%", borderCollapse: "collapse", background: "white" }}>
         <thead>
           <tr style={{ background: "#e9ecef" }}>
@@ -83,6 +92,7 @@ export default function ImportFiles() {
             <th style={th}>Actions</th>
           </tr>
         </thead>
+
         <tbody>
           {uploadedFiles.map((file) => (
             <tr key={file.id}>
@@ -90,6 +100,12 @@ export default function ImportFiles() {
               <td style={td}>{(file.size / 1024).toFixed(2)}</td>
               <td style={td}>{file.uploadedAt.toLocaleString()}</td>
               <td style={td}>
+                <button
+                  style={btnView}
+                  onClick={() => handleView(file.file)}
+                >
+                  View
+                </button>
                 <button
                   style={btnDelete}
                   onClick={() => handleDelete(file.id)}
@@ -113,6 +129,32 @@ export default function ImportFiles() {
   );
 }
 
-const th: React.CSSProperties = { padding: "10px", border: "1px solid #ccc", textAlign: "left" };
-const td: React.CSSProperties = { padding: "8px", border: "1px solid #ddd" };
-const btnDelete: React.CSSProperties = { padding: "6px 10px", background: "#dc3545", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" };
+const th: React.CSSProperties = {
+  padding: "10px",
+  border: "1px solid #ccc",
+  textAlign: "left",
+};
+
+const td: React.CSSProperties = {
+  padding: "8px",
+  border: "1px solid #ddd",
+};
+
+const btnView: React.CSSProperties = {
+  padding: "6px 10px",
+  background: "#007bff",
+  color: "white",
+  border: "none",
+  borderRadius: "4px",
+  cursor: "pointer",
+  marginRight: "8px",
+};
+
+const btnDelete: React.CSSProperties = {
+  padding: "6px 10px",
+  background: "#dc3545",
+  color: "white",
+  border: "none",
+  borderRadius: "4px",
+  cursor: "pointer",
+};

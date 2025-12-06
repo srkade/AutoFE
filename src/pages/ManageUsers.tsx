@@ -1,64 +1,64 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../Styles/ManageUsers.css";
 import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2 } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  username: string;
-  status: "Active" | "Inactive" | "Pending" | "Banned" | "Suspended";
-  role: "Admin" | "User" | "Guest" | "Moderator";
-  joined: string;
-  lastActive: string;
-}
+import RegisterForm from "./RegistrationForm";
+import { User } from "../components/Schematic/SchematicTypes";
 
 export default function ManageUsersModern() {
-  // Load users from localStorage or start empty
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem("users");
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
+  const filterRef = useRef<HTMLDivElement>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [activeFilter, setActiveFilter] = useState<"role" | "status" | "date" | null>(null);
+  const [roleFilter, setRoleFilter] = useState<User["role"] | null>(null);
+  const [statusFilter, setStatusFilter] = useState<User["status"] | null>(null);
+  const [dateFilter, setDateFilter] = useState<"Last 7 days" | "Last 30 days" | "Last year" | null>(null);
+
+  // Save users to localStorage
   useEffect(() => {
-    // Save users to localStorage whenever they change
     localStorage.setItem("users", JSON.stringify(users));
   }, [users]);
 
-  // Filter users by search
-  const filteredUsers = users.filter(u =>
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.username.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Add a new user
-  const addUser = () => {
-    const newUser: User = {
-      id: Date.now(),
-      name: "New User",
-      email: "newuser@example.com",
-      username: "newuser",
-      status: "Active",
-      role: "User",
-      joined: new Date().toLocaleDateString(),
-      lastActive: "Just now",
+  // Close filter dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setActiveFilter(null);
+      }
     };
-    setUsers(prev => [...prev, newUser]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Add new user
+  const handleAddUser = () => {
+    setEditingUser(null);
+    setShowRegisterForm(true);
   };
 
-  // Edit user
+  // Edit existing user
   const editUser = (user: User) => {
     setEditingUser(user);
+    setShowRegisterForm(true);
   };
 
-  const saveUser = (updatedUser: User) => {
-    setUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
+  // Save user (add or edit)
+  const handleSaveUser = (savedUser: User) => {
+    if (editingUser) {
+      setUsers(prev => prev.map(u => (u.id === savedUser.id ? savedUser : u)));
+    } else {
+      setUsers(prev => [...prev, savedUser]);
+    }
     setEditingUser(null);
+    setShowRegisterForm(false);
   };
 
   // Delete user
@@ -66,18 +66,39 @@ export default function ManageUsersModern() {
     setUsers(prev => prev.filter(u => u.id !== id));
   };
 
+  // Filtered users
+  const filteredUsers = users.filter(u => {
+    const matchesSearch =
+      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.username.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesRole = roleFilter ? u.role === roleFilter : true;
+    const matchesStatus = statusFilter ? u.status === statusFilter : true;
+
+    const matchesDate = (() => {
+      if (!dateFilter) return true;
+      const joinedDate = new Date(u.joined);
+      const now = new Date();
+      const diff = now.getTime() - joinedDate.getTime();
+      if (dateFilter === "Last 7 days") return diff <= 7 * 24 * 60 * 60 * 1000;
+      if (dateFilter === "Last 30 days") return diff <= 30 * 24 * 60 * 60 * 1000;
+      if (dateFilter === "Last year") return diff <= 365 * 24 * 60 * 60 * 1000;
+      return true;
+    })();
+
+    return matchesSearch && matchesRole && matchesStatus && matchesDate;
+  });
+
   return (
     <div className="users-page">
-
-      {/* HEADER */}
       <h1 className="title">User Management</h1>
       <p className="subtitle">
         Manage all users in one place. Control access, assign roles, and monitor activity.
       </p>
 
-      {/* FILTER BAR */}
+      {/* TOOLBAR */}
       <div className="toolbar">
-
         <div className="search-box">
           <FiSearch />
           <input
@@ -88,34 +109,68 @@ export default function ManageUsersModern() {
           />
         </div>
 
-        <div className="filter-chip"><FiFilter /> Role <IoIosArrowDown /></div>
-        <div className="filter-chip"><FiFilter /> Status <IoIosArrowDown /></div>
-        <div className="filter-chip"><FiCalendar /> Date <IoIosArrowDown /></div>
+        <div className="filter-wrapper" ref={filterRef}>
+          {/* ROLE FILTER */}
+          <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "role" ? null : "role")}>
+            <FiFilter /> Role <IoIosArrowDown />
+            {activeFilter === "role" && (
+              <div className="filter-dropdown">
+                {["Admin", "User", "Guest", "Moderator"].map(role => (
+                  <div key={role} onClick={() => { setRoleFilter(role as User["role"]); setActiveFilter(null); }}>
+                    {role}
+                  </div>
+                ))}
+                <div onClick={() => { setRoleFilter(null); setActiveFilter(null); }}>Clear</div>
+              </div>
+            )}
+          </div>
 
+          {/* STATUS FILTER */}
+          <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "status" ? null : "status")}>
+            <FiFilter /> Status <IoIosArrowDown />
+            {activeFilter === "status" && (
+              <div className="filter-dropdown">
+                {["Active", "Inactive", "Pending", "Banned", "Suspended"].map(status => (
+                  <div key={status} onClick={() => { setStatusFilter(status as User["status"]); setActiveFilter(null); }}>
+                    {status}
+                  </div>
+                ))}
+                <div onClick={() => { setStatusFilter(null); setActiveFilter(null); }}>Clear</div>
+              </div>
+            )}
+          </div>
+
+          {/* DATE FILTER */}
+          <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "date" ? null : "date")}>
+            <FiCalendar /> Date <IoIosArrowDown />
+            {activeFilter === "date" && (
+              <div className="filter-dropdown">
+                {["Last 7 days", "Last 30 days", "Last year"].map(date => (
+                  <div key={date} onClick={() => { setDateFilter(date as any); setActiveFilter(null); }}>
+                    {date}
+                  </div>
+                ))}
+                <div onClick={() => { setDateFilter(null); setActiveFilter(null); }}>Clear</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ADD USER BUTTON */}
         <div className="toolbar-right">
-          <button className="export-btn">Export</button>
-          <button className="add-btn" onClick={addUser}>+ Add User</button>
+          <button className="add-btn" onClick={handleAddUser}>+ Add User</button>
         </div>
       </div>
 
-      {/* TABLE */}
+      {/* USER TABLE */}
       <table className="user-table">
         <thead>
           <tr>
-            <th><input type="checkbox" /></th>
-            <th>Full Name</th>
-            <th>Email</th>
-            <th>Username</th>
-            <th>Status</th>
-            <th>Role</th>
-            <th>Joined</th>
-            <th>Last Active</th>
-            <th>Actions</th>
+            <th /><th>Full Name</th><th>Email</th><th>Username</th><th>Status</th><th>Role</th><th>Joined</th><th>Last Active</th><th>Actions</th>
           </tr>
         </thead>
-
         <tbody>
-          {filteredUsers.map((u) => (
+          {filteredUsers.map(u => (
             <tr key={u.id}>
               <td><input type="checkbox" /></td>
               <td>{u.name}</td>
@@ -134,67 +189,14 @@ export default function ManageUsersModern() {
         </tbody>
       </table>
 
-      {/* PAGINATION */}
-      <div className="pagination">
-        <span>Rows per page</span>
-        <select>
-          <option>10</option>
-          <option>20</option>
-        </select>
-
-        <span className="page-number">1 of {Math.ceil(filteredUsers.length / 10)}</span>
-      </div>
-
-      {/* EDIT MODAL */}
-      {editingUser && (
-        <div className="modal">
-          <div className="modal-content">
-            <h2>Edit User</h2>
-            <input
-              type="text"
-              value={editingUser.name}
-              onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
-              placeholder="Full Name"
-            />
-            <input
-              type="email"
-              value={editingUser.email}
-              onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
-              placeholder="Email"
-            />
-            <input
-              type="text"
-              value={editingUser.username}
-              onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
-              placeholder="Username"
-            />
-            <select
-              value={editingUser.status}
-              onChange={(e) => setEditingUser({ ...editingUser, status: e.target.value as any })}
-            >
-              <option>Active</option>
-              <option>Inactive</option>
-              <option>Pending</option>
-              <option>Banned</option>
-              <option>Suspended</option>
-            </select>
-            <select
-              value={editingUser.role}
-              onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as any })}
-            >
-              <option>Admin</option>
-              <option>User</option>
-              <option>Guest</option>
-              <option>Moderator</option>
-            </select>
-            <div className="modal-actions">
-              <button onClick={() => saveUser(editingUser)}>Save</button>
-              <button onClick={() => setEditingUser(null)}>Cancel</button>
-            </div>
-          </div>
-        </div>
+      {/* REGISTER / EDIT FORM MODAL */}
+      {showRegisterForm && (
+        <RegisterForm
+          userToEdit={editingUser}
+          onSave={handleSaveUser}
+          onBackToLogin={() => { setShowRegisterForm(false); setEditingUser(null); }}
+        />
       )}
-
     </div>
   );
 }

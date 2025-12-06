@@ -218,3 +218,14 @@ export interface ExportMetadata {
   totalWires: number;
   totalConnectors: number;
 }
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  username: string;
+  status: "Active" | "Inactive" | "Pending" | "Banned" | "Suspended";
+  role: "Admin" | "User" | "Guest" | "Moderator";
+  joined: string;
+  lastActive: string;
+}

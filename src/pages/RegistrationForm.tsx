@@ -1,10 +1,49 @@
+import { useState } from "react";
 import React from "react";
+import { User } from "../components/Schematic/SchematicTypes";
 
 interface RegisterPageProps {
   onBackToLogin: () => void;
+  onSave?: (newUser: User) => void;
+  userToEdit?: User | null;
 }
 
-export default function RegisterForm({ onBackToLogin }: RegisterPageProps) {
+export default function RegisterForm({ onBackToLogin, onSave, userToEdit }: RegisterPageProps) {
+  // ---------------- FIELDS ----------------
+  const [fullName, setFullName] = useState(userToEdit?.name || "");
+  const [email, setEmail] = useState(userToEdit?.email || "");
+  const [username, setUsername] = useState(userToEdit?.username || "");
+  const [status, setStatus] = useState(userToEdit?.status || "Active");
+  const [role, setRole] = useState(userToEdit?.role || "User");
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(false);
+
+  // ---------------- HANDLE SUBMIT ----------------
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!agreeTerms) {
+      alert("You must agree to the terms and conditions.");
+      return;
+    }
+
+    const newUser: User = {
+      id: userToEdit ? userToEdit.id : Date.now(),
+      name: fullName,
+      email,
+      username,
+      status,
+      role,
+      joined: userToEdit ? userToEdit.joined : new Date().toLocaleDateString(),
+      lastActive: userToEdit ? userToEdit.lastActive : "Just now",
+    };
+
+    if (onSave) onSave(newUser);
+    onBackToLogin();
+  };
+
   return (
     <div
       style={{
@@ -13,22 +52,21 @@ export default function RegisterForm({ onBackToLogin }: RegisterPageProps) {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        fontFamily: "'Segoe UI', Tahoma, Verdana, sans-serif",
       }}
     >
-      
       <div
         style={{
           display: "flex",
           width: "900px",
-          height: "550px",
+          height: "650px",
           borderRadius: "12px",
           overflow: "hidden",
           boxShadow: "0 6px 30px rgba(0,0,0,0.1)",
           backgroundColor: "#ffffff",
         }}
       >
-
+        {/* LEFT SECTION */}
         <div
           style={{
             flex: 1,
@@ -46,13 +84,15 @@ export default function RegisterForm({ onBackToLogin }: RegisterPageProps) {
           <p style={{ fontSize: "18px", lineHeight: 1.5, fontWeight: "bold", maxWidth: "280px" }}>
             Create your account to design, analyze, and perfect your schematics efficiently.
           </p>
-          <p style={{ marginTop: "20px", fontSize: "14px", maxWidth: "280px" }}>
-            Already have an account? Click the button below to go back to login.
+
+          <p style={{ marginTop: "30px", fontSize: "14px", maxWidth: "280px" }}>
+            Already have an account? Click below to go back to login.
           </p>
+
           <button
             onClick={onBackToLogin}
             style={{
-              marginTop: "25px",
+              marginTop: "20px",
               backgroundColor: "#ffffff",
               color: "#4facfe",
               fontWeight: "bold",
@@ -66,6 +106,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterPageProps) {
           </button>
         </div>
 
+        {/* RIGHT SECTION */}
         <div
           style={{
             flex: 1,
@@ -82,77 +123,108 @@ export default function RegisterForm({ onBackToLogin }: RegisterPageProps) {
               maxWidth: "320px",
               display: "flex",
               flexDirection: "column",
-              gap: "15px",
+              gap: "12px",
             }}
+            onSubmit={handleSubmit}
           >
-            <h2 style={{ color: "#007bff", marginBottom: "10px" }}>Create Account</h2>
-            <p style={{ color: "#666", fontSize: "13px", marginBottom: "15px" }}>
-              Fill in the form to get started.
-            </p>
+            <h2 style={{ color: "#007bff", marginBottom: "10px" }}>
+              {userToEdit ? "Edit User" : "Create Account"}
+            </h2>
 
+            {/* FULL NAME */}
             <input
               type="text"
-              placeholder="First Name"
-              autoComplete="given-name"
-              style={{
-                width: "100%",
-                padding: "12px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
+              placeholder="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              style={inputStyle}
             />
-            <input
-              type="text"
-              placeholder="Last Name"
-              autoComplete="family-name"
-              style={{
-                width: "100%",
-                padding: "12px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
-            />
+
+            {/* EMAIL */}
             <input
               type="email"
               placeholder="Email Address"
-              autoComplete="email"
-              style={{
-                width: "100%",
-                padding: "12px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
+              value={email}
+              onChange={(e) => {
+                const val = e.target.value;
+                setEmail(val);
+                setUsername(val.split("@")[0]); // auto username
               }}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              autoComplete="new-password"
-              style={{
-                width: "100%",
-                padding: "12px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
-            />
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              autoComplete="new-password"
-              style={{
-                width: "100%",
-                padding: "12px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
+              style={inputStyle}
             />
 
+            {/* USERNAME */}
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              style={inputStyle}
+            />
+
+            {/* STATUS */}
+            <select
+              value={status}
+              onChange={(e) =>
+                setStatus(e.target.value as User["status"])
+              }
+              style={inputStyle}
+            >
+              <option>Active</option>
+              <option>Inactive</option>
+              <option>Pending</option>
+              <option>Banned</option>
+              <option>Suspended</option>
+            </select>
+
+            {/* ROLE */}
+            <select
+              value={role}
+              onChange={(e) =>
+                setRole(e.target.value as User["role"])
+              }
+              style={inputStyle}
+            >
+              <option>User</option>
+              <option>Admin</option>
+              <option>Guest</option>
+              <option>Moderator</option>
+            </select>
+
+            {/* PASSWORD */}
+            {!userToEdit && (
+              <>
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={inputStyle}
+                />
+
+                <input
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  style={inputStyle}
+                />
+              </>
+            )}
+
+            {/* TERMS */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px" }}>
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={agreeTerms}
+                onChange={(e) => setAgreeTerms(e.target.checked)}
+              />
               <span>
-                I agree to the <span style={{ color: "#007bff" }}>Terms and Conditions</span>
+                I agree to the <span style={{ color: "#007bff" }}>Terms & Conditions</span>
               </span>
             </div>
 
+            {/* SUBMIT */}
             <button
               type="submit"
               style={{
@@ -166,7 +238,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterPageProps) {
                 cursor: "pointer",
               }}
             >
-              Register
+              {userToEdit ? "Save Changes" : "Register"}
             </button>
           </form>
         </div>
@@ -174,3 +246,11 @@ export default function RegisterForm({ onBackToLogin }: RegisterPageProps) {
     </div>
   );
 }
+
+// INPUT STYLES
+const inputStyle = {
+  width: "100%",
+  padding: "12px",
+  borderRadius: "6px",
+  border: "1px solid #ccc",
+};

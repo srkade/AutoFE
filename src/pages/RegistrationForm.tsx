@@ -6,9 +6,19 @@ interface RegisterPageProps {
   onBackToLogin: () => void;
   onSave?: (newUser: User) => void;
   userToEdit?: User | null;
+  showLeftPanel?: boolean;
+  showCloseButton?: boolean;
+  customHeight?: string;
 }
 
-export default function RegisterForm({ onBackToLogin, onSave, userToEdit }: RegisterPageProps) {
+export default function RegisterForm({
+  onBackToLogin,
+  onSave,
+  userToEdit,
+  showLeftPanel = true,
+  showCloseButton = false,
+  customHeight = "650px",
+}: RegisterPageProps) {
   // ---------------- FIELDS ----------------
   const [fullName, setFullName] = useState(userToEdit?.name || "");
   const [email, setEmail] = useState(userToEdit?.email || "");
@@ -48,7 +58,7 @@ export default function RegisterForm({ onBackToLogin, onSave, userToEdit }: Regi
     <div
       style={{
         backgroundColor: "#f4f6f9",
-        height: "100vh",
+        minHeight: "100vh",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -58,8 +68,8 @@ export default function RegisterForm({ onBackToLogin, onSave, userToEdit }: Regi
       <div
         style={{
           display: "flex",
-          width: "900px",
-          height: "650px",
+          width: showLeftPanel ? "900px" : "500px",  // auto resize when left hidden
+          height: "customHeight",
           borderRadius: "12px",
           overflow: "hidden",
           boxShadow: "0 6px 30px rgba(0,0,0,0.1)",
@@ -67,44 +77,56 @@ export default function RegisterForm({ onBackToLogin, onSave, userToEdit }: Regi
         }}
       >
         {/* LEFT SECTION */}
-        <div
-          style={{
-            flex: 1,
-            background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-            color: "white",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            padding: "40px",
-            textAlign: "center",
-          }}
-        >
-          <h1 style={{ fontSize: "32px", marginBottom: "20px" }}>Join Us Today!</h1>
-          <p style={{ fontSize: "18px", lineHeight: 1.5, fontWeight: "bold", maxWidth: "280px" }}>
-            Create your account to design, analyze, and perfect your schematics efficiently.
-          </p>
-
-          <p style={{ marginTop: "30px", fontSize: "14px", maxWidth: "280px" }}>
-            Already have an account? Click below to go back to login.
-          </p>
-
-          <button
-            onClick={onBackToLogin}
+        {showLeftPanel && (
+          <div
             style={{
-              marginTop: "20px",
-              backgroundColor: "#ffffff",
-              color: "#4facfe",
-              fontWeight: "bold",
-              padding: "12px 28px",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
+              flex: 1,
+              background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+              color: "white",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: "40px",
+              textAlign: "center",
             }}
           >
-            Go to Login
-          </button>
-        </div>
+            <h1 style={{ fontSize: "32px", marginBottom: "20px" }}>
+              Join Us Today!
+            </h1>
+            <p
+              style={{
+                fontSize: "18px",
+                lineHeight: 1.5,
+                fontWeight: "bold",
+                maxWidth: "280px",
+              }}
+            >
+              Create your account to design, analyze, and perfect your
+              schematics efficiently.
+            </p>
+
+            <p style={{ marginTop: "30px", fontSize: "14px", maxWidth: "280px" }}>
+              Already have an account? Click below to go back to login.
+            </p>
+
+            <button
+              onClick={onBackToLogin}
+              style={{
+                marginTop: "20px",
+                backgroundColor: "#ffffff",
+                color: "#4facfe",
+                fontWeight: "bold",
+                padding: "12px 28px",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Go to Login
+            </button>
+          </div>
+        )}
 
         {/* RIGHT SECTION */}
         <div
@@ -115,8 +137,28 @@ export default function RegisterForm({ onBackToLogin, onSave, userToEdit }: Regi
             justifyContent: "center",
             alignItems: "center",
             padding: "40px",
+            position: "relative",
           }}
         >
+          {showCloseButton && (
+            <button
+              onClick={onBackToLogin}
+              style={{
+                position: "absolute",
+                top: "20px",
+                right: "20px",
+                background: "transparent",
+                border: "none",
+                fontSize: "22px",
+                cursor: "pointer",
+                fontWeight: "bold",
+                color: "#333",
+              }}
+            >
+              ✖
+            </button>
+          )}
+
           <form
             style={{
               width: "100%",
@@ -165,9 +207,7 @@ export default function RegisterForm({ onBackToLogin, onSave, userToEdit }: Regi
             {/* STATUS */}
             <select
               value={status}
-              onChange={(e) =>
-                setStatus(e.target.value as User["status"])
-              }
+              onChange={(e) => setStatus(e.target.value as User["status"])}
               style={inputStyle}
             >
               <option>Active</option>
@@ -180,18 +220,14 @@ export default function RegisterForm({ onBackToLogin, onSave, userToEdit }: Regi
             {/* ROLE */}
             <select
               value={role}
-              onChange={(e) =>
-                setRole(e.target.value as User["role"])
-              }
+              onChange={(e) => setRole(e.target.value as User["role"])}
               style={inputStyle}
             >
               <option>User</option>
               <option>Admin</option>
-              <option>Guest</option>
-              <option>Moderator</option>
             </select>
 
-            {/* PASSWORD */}
+            {/* PASSWORD (only in create mode) */}
             {!userToEdit && (
               <>
                 <input
@@ -213,14 +249,22 @@ export default function RegisterForm({ onBackToLogin, onSave, userToEdit }: Regi
             )}
 
             {/* TERMS */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "13px",
+              }}
+            >
               <input
                 type="checkbox"
                 checked={agreeTerms}
                 onChange={(e) => setAgreeTerms(e.target.checked)}
               />
               <span>
-                I agree to the <span style={{ color: "#007bff" }}>Terms & Conditions</span>
+                I agree to the{" "}
+                <span style={{ color: "#007bff" }}>Terms & Conditions</span>
               </span>
             </div>
 

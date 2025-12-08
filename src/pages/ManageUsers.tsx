@@ -115,7 +115,7 @@ export default function ManageUsersModern() {
             <FiFilter /> Role <IoIosArrowDown />
             {activeFilter === "role" && (
               <div className="filter-dropdown">
-                {["Admin", "User", "Guest", "Moderator"].map(role => (
+                {["Admin", "User"].map(role => (
                   <div key={role} onClick={() => { setRoleFilter(role as User["role"]); setActiveFilter(null); }}>
                     {role}
                   </div>
@@ -191,11 +191,19 @@ export default function ManageUsersModern() {
 
       {/* REGISTER / EDIT FORM MODAL */}
       {showRegisterForm && (
-        <RegisterForm
-          userToEdit={editingUser}
-          onSave={handleSaveUser}
-          onBackToLogin={() => { setShowRegisterForm(false); setEditingUser(null); }}
-        />
+        <div className="form-modal">
+          <RegisterForm
+            userToEdit={editingUser}
+            onSave={handleSaveUser}
+            onBackToLogin={() => {
+              setShowRegisterForm(false);
+              setEditingUser(null);
+            }}
+            showLeftPanel={false}
+            showCloseButton={true}
+            customHeight="200px"
+          />
+        </div>
       )}
     </div>
   );

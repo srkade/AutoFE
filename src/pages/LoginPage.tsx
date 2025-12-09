@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import logo from "../assets/Images/logo.jpg"
+import { loginUser } from "../services/api";
 
 interface LoginPageProps {
   onLoginSuccess: (role: "admin" | "user") => void;
@@ -11,17 +12,24 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick }: LoginPage
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
-    if (username === "admin" && password === "admin123") {
-      onLoginSuccess("admin");
-    }
-    else if (username === "user" && password === "user123") {
-      onLoginSuccess("user");
-    }
-    else {
-      setError("Invalid username or password");
+    try {
+      const response = await loginUser({ email: username, password }); // call backend
+      console.log("LoginResponse:", response);
+
+      // Store token in localStorage (or state)
+      localStorage.setItem("token", response.token);
+
+      // Call parent callback with role from backend
+      const role = response.role?.toLowerCase(); // "Admin" → "admin", "User" → "user"
+      onLoginSuccess(role === "admin" ? "admin" : "user");
+      console.log(" Login successful, role:", response.role);
+    } catch (err) {
+      console.error("Login failed:", err);
+      setError("Invalid email or password");
     }
   };
 

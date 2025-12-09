@@ -4,12 +4,34 @@ import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2 } from "react-icons/f
 import { IoIosArrowDown } from "react-icons/io";
 import RegisterForm from "./RegistrationForm";
 import { User } from "../components/Schematic/SchematicTypes";
+import { fetchUsers, updateUser, deleteUserById, registerUser } from "../services/api";
 
 export default function ManageUsersModern() {
-  const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem("users");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const data = await fetchUsers();
+
+        // Map backend fields to match table
+        const mappedUsers = data.map((u: any) => ({
+          ...u,
+          joined: u.createdAt,     // map createdAt to joined
+          lastActive: u.updatedAt, // map updatedAt to lastActive
+        }));
+
+        // Sort users by joined date (optional, newest first)
+        mappedUsers.sort((a: any, b: any) => new Date(b.joined).getTime() - new Date(a.joined).getTime());
+
+        setUsers(mappedUsers);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+      }
+    };
+
+    loadUsers();
+  }, []);
 
   const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -51,33 +73,83 @@ export default function ManageUsersModern() {
   };
 
   // Save user (add or edit)
-  const handleSaveUser = (savedUser: User) => {
+ const handleSaveUser = async (savedUser: any) => {
+  try {
     if (editingUser) {
-      setUsers(prev => prev.map(u => (u.id === savedUser.id ? savedUser : u)));
+      // ------- UPDATE USER -------
+      const payload = {
+        firstName: savedUser.firstName,
+        lastName: savedUser.lastName,
+        email: savedUser.email,
+        role: savedUser.role,
+        status: savedUser.status,
+      };
+
+      const updated = await updateUser(editingUser.id, payload);
+
+      const mappedUpdated = {
+        ...updated,
+        joined: updated.createdAt,
+        lastActive: updated.updatedAt,
+      };
+
+      setUsers(prev =>
+        prev.map(u => (u.id === updated.id ? mappedUpdated : u))
+      );
+
     } else {
-      setUsers(prev => [...prev, savedUser]);
+      // ------- CREATE USER -------
+      const payload = {
+        firstName: savedUser.firstName,
+        lastName: savedUser.lastName,
+        email: savedUser.email,
+        password: savedUser.password,
+        confirmPassword: savedUser.confirmPassword,
+        role: savedUser.role,
+        status: savedUser.status,
+      };
+
+      const created = await registerUser(payload);
+
+      const mappedCreated = {
+        ...created,
+        joined: created.createdAt,
+        lastActive: created.updatedAt,
+      };
+
+      setUsers(prev => [...prev, mappedCreated]); // UI updates instantly
     }
+
     setEditingUser(null);
     setShowRegisterForm(false);
-  };
+
+  } catch (err) {
+    console.error("Failed to save user:", err);
+  }
+};
 
   // Delete user
-  const deleteUser = (id: number) => {
-    setUsers(prev => prev.filter(u => u.id !== id));
+  const handleDeleteUser = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+    try {
+      await deleteUserById(id);
+      setUsers(prev => prev.filter(u => u.id !== id));
+    } catch (err) {
+      console.error("Failed to delete user:", err);
+    }
   };
 
-  // Filtered users
   const filteredUsers = users.filter(u => {
     const matchesSearch =
-      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.username.toLowerCase().includes(searchTerm.toLowerCase());
+      (u.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (u.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (u.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
 
     const matchesRole = roleFilter ? u.role === roleFilter : true;
     const matchesStatus = statusFilter ? u.status === statusFilter : true;
 
     const matchesDate = (() => {
-      if (!dateFilter) return true;
+      if (!dateFilter || !u.joined) return true;
       const joinedDate = new Date(u.joined);
       const now = new Date();
       const diff = now.getTime() - joinedDate.getTime();
@@ -115,7 +187,7 @@ export default function ManageUsersModern() {
             <FiFilter /> Role <IoIosArrowDown />
             {activeFilter === "role" && (
               <div className="filter-dropdown">
-                {["Admin", "User"].map(role => (
+                {["admin", "user"].map(role => (
                   <div key={role} onClick={() => { setRoleFilter(role as User["role"]); setActiveFilter(null); }}>
                     {role}
                   </div>
@@ -166,23 +238,23 @@ export default function ManageUsersModern() {
       <table className="user-table">
         <thead>
           <tr>
-            <th /><th>Full Name</th><th>Email</th><th>Username</th><th>Status</th><th>Role</th><th>Joined</th><th>Last Active</th><th>Actions</th>
+            <th /><th>First Name</th><th>Last Name</th><th>Email</th><th>Status</th><th>Role</th><th>Joined</th><th>Last Active</th><th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {filteredUsers.map(u => (
             <tr key={u.id}>
               <td><input type="checkbox" /></td>
-              <td>{u.name}</td>
+              <td>{u.firstName}</td>
+              <td>{u.lastName}</td>
               <td>{u.email}</td>
-              <td>{u.username}</td>
               <td><span className={`status-chip ${u.status.toLowerCase()}`}>{u.status}</span></td>
               <td>{u.role}</td>
-              <td>{u.joined}</td>
-              <td>{u.lastActive}</td>
+              <td>{new Date(u.joined).toLocaleString()}</td>
+              <td>{new Date(u.lastActive).toLocaleString()}</td>
               <td className="actions">
                 <FiEdit2 className="edit-icon" onClick={() => editUser(u)} />
-                <FiTrash2 className="delete-icon" onClick={() => deleteUser(u.id)} />
+                <FiTrash2 className="delete-icon" onClick={() => handleDeleteUser(u.id)} />
               </td>
             </tr>
           ))}

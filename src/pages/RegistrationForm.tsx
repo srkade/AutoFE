@@ -1,6 +1,7 @@
 import { useState } from "react";
 import React from "react";
 import { User } from "../components/Schematic/SchematicTypes";
+import { registerUser } from "../services/api";
 
 interface RegisterPageProps {
   onBackToLogin: () => void;
@@ -20,18 +21,19 @@ export default function RegisterForm({
   customHeight = "650px",
 }: RegisterPageProps) {
   // ---------------- FIELDS ----------------
-  const [fullName, setFullName] = useState(userToEdit?.name || "");
+  const [firstName, setFirstName] = useState(userToEdit?.firstName || "");
+  const [lastName, setLastName] = useState(userToEdit?.lastName || "");
   const [email, setEmail] = useState(userToEdit?.email || "");
   const [username, setUsername] = useState(userToEdit?.username || "");
-  const [status, setStatus] = useState(userToEdit?.status || "Active");
-  const [role, setRole] = useState(userToEdit?.role || "User");
+  const [status, setStatus] = useState(userToEdit?.status || "");
+  const [role, setRole] = useState(userToEdit?.role || "");
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
 
   // ---------------- HANDLE SUBMIT ----------------
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!agreeTerms) {
@@ -39,19 +41,52 @@ export default function RegisterForm({
       return;
     }
 
-    const newUser: User = {
-      id: userToEdit ? userToEdit.id : Date.now(),
-      name: fullName,
+    // Validate password (only when creating)
+    if (!userToEdit && password !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    // Payload for both create and edit
+    const payload: any = {
+      firstName,
+      lastName,
       email,
-      username,
-      status,
       role,
-      joined: userToEdit ? userToEdit.joined : new Date().toLocaleDateString(),
-      lastActive: userToEdit ? userToEdit.lastActive : "Just now",
+      status,
     };
 
-    if (onSave) onSave(newUser);
-    onBackToLogin();
+    // Only include password when creating
+    if (!userToEdit) {
+      payload.password = password;
+      payload.confirmPassword = confirmPassword;
+    }
+
+    try {
+      if (userToEdit && onSave) {
+        // EDIT MODE → call parent callback
+        const updatedUser: User = {
+          ...userToEdit,
+          ...payload,
+          joined: userToEdit.joined,
+          lastActive: new Date().toISOString(),
+        };
+        await onSave(updatedUser);
+        alert("User updated successfully!");
+      } else {
+        // CREATE MODE → register new user
+        const res = await registerUser(payload);
+        console.log("Registration Success:", res);
+        alert("User Registered Successfully!");
+        onBackToLogin();
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(
+        "Operation failed: " +
+        (err.response?.data?.message || "Invalid data or server error")
+      );
+    }
   };
 
   return (
@@ -173,12 +208,21 @@ export default function RegisterForm({
               {userToEdit ? "Edit User" : "Create Account"}
             </h2>
 
-            {/* FULL NAME */}
+            {/* First NAME */}
             <input
               type="text"
-              placeholder="Full Name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Fistrname"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              style={inputStyle}
+            />
+
+            {/* LASTNAME */}
+            <input
+              type="text"
+              placeholder="Lastname"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
               style={inputStyle}
             />
 
@@ -194,38 +238,6 @@ export default function RegisterForm({
               }}
               style={inputStyle}
             />
-
-            {/* USERNAME */}
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              style={inputStyle}
-            />
-
-            {/* STATUS */}
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as User["status"])}
-              style={inputStyle}
-            >
-              <option>Active</option>
-              <option>Inactive</option>
-              <option>Pending</option>
-              <option>Banned</option>
-              <option>Suspended</option>
-            </select>
-
-            {/* ROLE */}
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as User["role"])}
-              style={inputStyle}
-            >
-              <option>User</option>
-              <option>Admin</option>
-            </select>
 
             {/* PASSWORD (only in create mode) */}
             {!userToEdit && (
@@ -247,6 +259,37 @@ export default function RegisterForm({
                 />
               </>
             )}
+
+            {/* ROLE */}
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as User["role"])}
+              style={inputStyle}
+              required
+            >
+              <option value="" disabled hidden>
+                Select Role
+              </option>
+              <option value="User">User</option>
+              <option value="Admin">Admin</option>
+            </select>
+
+            {/* STATUS */}
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as User["status"])}
+              style={inputStyle}
+              required
+            >
+              <option value="" disabled hidden>
+                Select Status
+              </option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Pending">Pending</option>
+              <option value="Banned">Banned</option>
+              <option value="Suspended">Suspended</option>
+            </select>
 
             {/* TERMS */}
             <div

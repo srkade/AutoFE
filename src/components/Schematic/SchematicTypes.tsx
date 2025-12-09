@@ -220,8 +220,9 @@ export interface ExportMetadata {
 }
 
 export interface User {
-  id: number;
-  name: string;
+  id: string;
+  firstName: string;
+  lastName: string;
   email: string;
   username: string;
   status: "Active" | "Inactive" | "Pending" | "Banned" | "Suspended";

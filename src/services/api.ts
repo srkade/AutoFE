@@ -79,12 +79,12 @@ export async function getHarnesses() {
   }
 }
 
-// ✅ NEW: Harness schematic endpoint
+//  Harness schematic endpoint
 export async function getHarnessSchematic(code: string) {
   try {
     console.log(`📡 Calling getHarnessSchematic for: ${code}`);
     const res = await api.get(`/wires/harness/${code}`);
-    console.log(`✅ Harness schematic received:`, res.data);
+    console.log(` Harness schematic received:`, res.data);
     return res.data;
   } catch (err) {
     console.error("API ERROR → getHarnessSchematic:", err);
@@ -92,9 +92,15 @@ export async function getHarnessSchematic(code: string) {
   }
 }
 
+<<<<<<< HEAD
 export async function getVoltageSupply() {
   try {
     const res = await api.get(`/schematics/supply`);
+=======
+export async function getVoltageSupply(){
+  try{
+    const res=await api.get(`/schematics/supply`);
+>>>>>>> 0ec62e11b14612ba7eb555d3d4938942be7f7075
     return res.data;
   } catch (err) {
     console.error("API Error-> getVoltageSupply:", err);
@@ -102,9 +108,78 @@ export async function getVoltageSupply() {
   }
 }
 
+<<<<<<< HEAD
 // ======================
 // SMART AUTO-DETECT IMPORT API
 // ======================
+=======
+export async function registerUser(payload: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: string;
+  status: string;
+}) {
+  try {
+    const res = await api.post(`/auth/register`, payload);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → registerUser:", err);
+    throw err;
+  }
+}
+
+export async function loginUser(payload: { email: string; password: string }) {
+  try {
+    const res = await api.post(`/auth/login`, payload);
+    return res.data; // this should return LoginResponse
+  } catch (err) {
+    console.error("API ERROR → loginUser:", err);
+    throw err;
+  }
+}
+
+export async function fetchUsers() {
+  try {
+    const res = await api.get(`auth/users`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → fetchUsers:", err);
+    throw err;
+  }
+}
+
+// Update a user
+export async function updateUser(id: string, payload: {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  password?: string;
+  role?: string;
+  status?: string;
+}) {
+  try {
+    const res = await api.put(`/auth/users/${id}`, payload);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → updateUser:", err);
+    throw err;
+  }
+}
+
+// Delete a user
+export async function deleteUserById(id: string) {
+  try {
+    const res = await api.delete(`/auth/users/${id}`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → deleteUserById:", err);
+    throw err;
+  }
+}
+>>>>>>> 0ec62e11b14612ba7eb555d3d4938942be7f7075
 
 export interface ImportResponse {
   status: "success" | "error";

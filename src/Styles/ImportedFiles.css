@@ -58,6 +58,8 @@
   background: white;
   border-radius: 14px;
   padding: 18px;
+  max-height: 350px;
+  overflow-y: auto;
 }
 
 .file-table {
@@ -65,7 +67,8 @@
   border-collapse: collapse;
 }
 
-.file-table th, .file-table td {
+.file-table th,
+.file-table td {
   padding: 12px;
   border-bottom: 1px solid #ddd;
 }
@@ -80,9 +83,20 @@
   font-size: 12px;
 }
 
-.status-badge.success { background: #d9fbe5; color: green; }
-.status-badge.error { background: #ffe0e0; color: red; }
-.status-badge.uploading { background: #e1e8ff; color: #333; }
+.status-badge.success {
+  background: #d9fbe5;
+  color: green;
+}
+
+.status-badge.error {
+  background: #ffe0e0;
+  color: red;
+}
+
+.status-badge.uploading {
+  background: #e1e8ff;
+  color: #333;
+}
 
 .status-panel {
   margin-top: 24px;

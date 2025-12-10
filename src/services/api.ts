@@ -92,15 +92,10 @@ export async function getHarnessSchematic(code: string) {
   }
 }
 
-<<<<<<< HEAD
-export async function getVoltageSupply() {
-  try {
-    const res = await api.get(`/schematics/supply`);
-=======
+
 export async function getVoltageSupply(){
   try{
     const res=await api.get(`/schematics/supply`);
->>>>>>> 0ec62e11b14612ba7eb555d3d4938942be7f7075
     return res.data;
   } catch (err) {
     console.error("API Error-> getVoltageSupply:", err);
@@ -108,11 +103,7 @@ export async function getVoltageSupply(){
   }
 }
 
-<<<<<<< HEAD
-// ======================
-// SMART AUTO-DETECT IMPORT API
-// ======================
-=======
+
 export async function registerUser(payload: {
   firstName: string;
   lastName: string;
@@ -179,7 +170,7 @@ export async function deleteUserById(id: string) {
     throw err;
   }
 }
->>>>>>> 0ec62e11b14612ba7eb555d3d4938942be7f7075
+
 
 export interface ImportResponse {
   status: "success" | "error";
@@ -193,14 +184,14 @@ export interface ImportResponse {
 }
 
 /**
- * 🚀 SMART AUTO-DETECT UPLOAD
+ *  SMART AUTO-DETECT UPLOAD
  * 
  * Upload ANY CSV/Excel file - backend automatically:
- * ✅ Extracts column names from file headers
- * ✅ Scans ALL database tables for matching columns
- * ✅ Auto-detects which table this file belongs to
- * ✅ Inserts only matching columns (handles sparse data)
- * ✅ Skips duplicates with ON CONFLICT DO NOTHING
+ *  Extracts column names from file headers
+ *  Scans ALL database tables for matching columns
+ *  Auto-detects which table this file belongs to
+ *  Inserts only matching columns (handles sparse data)
+ *  Skips duplicates with ON CONFLICT DO NOTHING
  * 
  * Works for: wireList, serviceConnector, systems, dtcList, harnesslist, etc.
  * 
@@ -216,7 +207,7 @@ export async function smartFileUpload(
   formData.append("file", file);
 
   try {
-    console.log(`📤 Uploading file for auto-detection: ${file.name}`);
+    console.log(` Uploading file for auto-detection: ${file.name}`);
     
     const res = await api.post<ImportResponse>(`/import/upload`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -224,17 +215,17 @@ export async function smartFileUpload(
         if (evt.total && onProgress) {
           const progress = Math.round((evt.loaded * 100) / evt.total);
           onProgress(progress);
-          console.log(`⬆️  Upload progress: ${progress}%`);
+          console.log(`  Upload progress: ${progress}%`);
         }
       },
     });
 
     console.log(
-      `✅ Upload successful! Detected table: ${res.data.metadata?.detectedTable}`
+      ` Upload successful! Detected table: ${res.data.metadata?.detectedTable}`
     );
     return res.data;
   } catch (err: any) {
-    console.error("❌ API ERROR → smartFileUpload:", err);
+    console.error(" API ERROR → smartFileUpload:", err);
     const msg =
       err?.response?.data?.errorMessages?.[0] ||
       err?.message ||

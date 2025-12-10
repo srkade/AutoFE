@@ -1,0 +1,130 @@
+.import-dashboard {
+  padding: 24px;
+  background: #f6f8fc;
+  min-height: 100vh;
+}
+
+.dashboard-header {
+  margin-bottom: 18px;
+}
+
+.dashboard-header h1 {
+  font-size: 22px;
+}
+
+.upload-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.upload-actions-right {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-outline {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 6px;
+}
+
+.btn-primary {
+  padding: 8px 18px;
+  background: black;
+  color: white;
+  border-radius: 6px;
+  border: none;
+}
+
+.btn-secondary {
+  padding: 8px 14px;
+  background: #e6e9f2;
+  border-radius: 6px;
+  border: none;
+}
+
+.btn-danger {
+  padding: 8px 14px;
+  background: #ffdddd;
+  border-radius: 6px;
+  border: none;
+}
+
+.file-table-wrapper {
+  background: white;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.file-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.file-table th, .file-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.file-table th {
+  background: #f1f3f7;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.status-badge.success { background: #d9fbe5; color: green; }
+.status-badge.error { background: #ffe0e0; color: red; }
+.status-badge.uploading { background: #e1e8ff; color: #333; }
+
+.status-panel {
+  margin-top: 24px;
+  background: #f4f6fb;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.status-card {
+  background: white;
+  padding: 14px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #ddd;
+  border-radius: 6px;
+  margin: 6px 0;
+}
+
+.progress-fill {
+  height: 6px;
+  background: black;
+  border-radius: 6px;
+}
+
+.success-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.error-text {
+  color: red;
+  font-size: 13px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 30px;
+  color: gray;
+}

@@ -92,15 +92,10 @@ export async function getHarnessSchematic(code: string) {
   }
 }
 
-<<<<<<< HEAD
-export async function getVoltageSupply() {
-  try {
-    const res = await api.get(`/schematics/supply`);
-=======
+
 export async function getVoltageSupply(){
   try{
     const res=await api.get(`/schematics/supply`);
->>>>>>> 0ec62e11b14612ba7eb555d3d4938942be7f7075
     return res.data;
   } catch (err) {
     console.error("API Error-> getVoltageSupply:", err);
@@ -108,11 +103,9 @@ export async function getVoltageSupply(){
   }
 }
 
-<<<<<<< HEAD
 // ======================
 // SMART AUTO-DETECT IMPORT API
 // ======================
-=======
 export async function registerUser(payload: {
   firstName: string;
   lastName: string;
@@ -179,7 +172,6 @@ export async function deleteUserById(id: string) {
     throw err;
   }
 }
->>>>>>> 0ec62e11b14612ba7eb555d3d4938942be7f7075
 
 export interface ImportResponse {
   status: "success" | "error";

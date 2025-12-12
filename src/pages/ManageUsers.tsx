@@ -17,8 +17,15 @@ export default function ManageUsersModern() {
         // Map backend fields to match table
         const mappedUsers = data.map((u: any) => ({
           ...u,
-          joined: u.createdAt,     // map createdAt to joined
-          lastActive: u.updatedAt, // map updatedAt to lastActive
+          // ✅ FIX: Ensure fallback for null dates
+          joined: u.createdAt || new Date().toISOString(),
+          lastActive: u.updatedAt || new Date().toISOString(),
+          // ✅ FIX: Ensure string fields are never null
+          firstName: u.firstName || "",
+          lastName: u.lastName || "",
+          email: u.email || "",
+          status: u.status || "Pending", // Default to Pending if null
+          role: u.role || "User"         // Default to User if null
         }));
 
         // Sort users by joined date (optional, newest first)
@@ -73,60 +80,60 @@ export default function ManageUsersModern() {
   };
 
   // Save user (add or edit)
- const handleSaveUser = async (savedUser: any) => {
-  try {
-    if (editingUser) {
-      // ------- UPDATE USER -------
-      const payload = {
-        firstName: savedUser.firstName,
-        lastName: savedUser.lastName,
-        email: savedUser.email,
-        role: savedUser.role,
-        status: savedUser.status,
-      };
+  const handleSaveUser = async (savedUser: any) => {
+    try {
+      if (editingUser) {
+        // ------- UPDATE USER -------
+        const payload = {
+          firstName: savedUser.firstName,
+          lastName: savedUser.lastName,
+          email: savedUser.email,
+          role: savedUser.role,
+          status: savedUser.status,
+        };
 
-      const updated = await updateUser(editingUser.id, payload);
+        const updated = await updateUser(editingUser.id, payload);
 
-      const mappedUpdated = {
-        ...updated,
-        joined: updated.createdAt,
-        lastActive: updated.updatedAt,
-      };
+        const mappedUpdated = {
+          ...updated,
+          joined: updated.createdAt || new Date().toISOString(),
+          lastActive: updated.updatedAt || new Date().toISOString(),
+        };
 
-      setUsers(prev =>
-        prev.map(u => (u.id === updated.id ? mappedUpdated : u))
-      );
+        setUsers(prev =>
+          prev.map(u => (u.id === updated.id ? mappedUpdated : u))
+        );
 
-    } else {
-      // ------- CREATE USER -------
-      const payload = {
-        firstName: savedUser.firstName,
-        lastName: savedUser.lastName,
-        email: savedUser.email,
-        password: savedUser.password,
-        confirmPassword: savedUser.confirmPassword,
-        role: savedUser.role,
-        status: savedUser.status,
-      };
+      } else {
+        // ------- CREATE USER -------
+        const payload = {
+          firstName: savedUser.firstName,
+          lastName: savedUser.lastName,
+          email: savedUser.email,
+          password: savedUser.password,
+          confirmPassword: savedUser.confirmPassword,
+          role: savedUser.role,
+          status: savedUser.status,
+        };
 
-      const created = await registerUser(payload);
+        const created = await registerUser(payload);
 
-      const mappedCreated = {
-        ...created,
-        joined: created.createdAt,
-        lastActive: created.updatedAt,
-      };
+        const mappedCreated = {
+          ...created,
+          joined: created.createdAt || new Date().toISOString(),
+          lastActive: created.updatedAt || new Date().toISOString(),
+        };
 
-      setUsers(prev => [...prev, mappedCreated]); // UI updates instantly
+        setUsers(prev => [...prev, mappedCreated]); // UI updates instantly
+      }
+
+      setEditingUser(null);
+      setShowRegisterForm(false);
+
+    } catch (err) {
+      console.error("Failed to save user:", err);
     }
-
-    setEditingUser(null);
-    setShowRegisterForm(false);
-
-  } catch (err) {
-    console.error("Failed to save user:", err);
-  }
-};
+  };
 
   // Delete user
   const handleDeleteUser = async (id: string) => {
@@ -140,10 +147,11 @@ export default function ManageUsersModern() {
   };
 
   const filteredUsers = users.filter(u => {
+    // ✅ FIX: Use (field || "") to prevent crashes during search
     const matchesSearch =
-      (u.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-      (u.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-      (u.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+      ((u.firstName || "").toLowerCase().includes(searchTerm.toLowerCase())) ||
+      ((u.lastName || "").toLowerCase().includes(searchTerm.toLowerCase())) ||
+      ((u.email || "").toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesRole = roleFilter ? u.role === roleFilter : true;
     const matchesStatus = statusFilter ? u.status === statusFilter : true;
@@ -245,13 +253,18 @@ export default function ManageUsersModern() {
           {filteredUsers.map(u => (
             <tr key={u.id}>
               <td><input type="checkbox" /></td>
-              <td>{u.firstName}</td>
-              <td>{u.lastName}</td>
+              <td>{u.firstName || "-"}</td>
+              <td>{u.lastName || "-"}</td>
               <td>{u.email}</td>
-              <td><span className={`status-chip ${u.status.toLowerCase()}`}>{u.status}</span></td>
-              <td>{u.role}</td>
-              <td>{new Date(u.joined).toLocaleString()}</td>
-              <td>{new Date(u.lastActive).toLocaleString()}</td>
+              <td>
+                {/* ✅ FIX: This line caused your crash. Added safe check || "" */}
+                <span className={`status-chip ${(u.status || "pending").toLowerCase()}`}>
+                  {u.status || "Pending"}
+                </span>
+              </td>
+              <td>{u.role || "User"}</td>
+              <td>{u.joined ? new Date(u.joined).toLocaleString() : "-"}</td>
+              <td>{u.lastActive ? new Date(u.lastActive).toLocaleString() : "-"}</td>
               <td className="actions">
                 <FiEdit2 className="edit-icon" onClick={() => editUser(u)} />
                 <FiTrash2 className="delete-icon" onClick={() => handleDeleteUser(u.id)} />

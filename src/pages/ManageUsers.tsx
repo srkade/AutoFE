@@ -246,15 +246,14 @@ export default function ManageUsersModern() {
       <table className="user-table">
         <thead>
           <tr>
-            <th /><th>First Name</th><th>Last Name</th><th>Email</th><th>Status</th><th>Role</th><th>Joined</th><th>Last Active</th><th>Actions</th>
+           <th>First Name</th><th>Last Name</th><th>Email</th><th>Status</th><th>Role</th><th>Joined</th><th>Last Active</th><th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {filteredUsers.map(u => (
             <tr key={u.id}>
-              <td><input type="checkbox" /></td>
-              <td>{u.firstName || "-"}</td>
-              <td>{u.lastName || "-"}</td>
+              <td>{u.firstName}</td>
+              <td>{u.lastName}</td>
               <td>{u.email}</td>
               <td>
                 {/* ✅ FIX: This line caused your crash. Added safe check || "" */}

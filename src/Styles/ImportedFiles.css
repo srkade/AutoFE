@@ -58,14 +58,19 @@
   background: white;
   border-radius: 14px;
   padding: 18px;
+  max-height: 350px;
+  overflow-y: auto;
 }
 
 .file-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: auto;
+  text-align: center;
 }
 
-.file-table th, .file-table td {
+.file-table th,
+.file-table td {
   padding: 12px;
   border-bottom: 1px solid #ddd;
 }
@@ -80,9 +85,20 @@
   font-size: 12px;
 }
 
-.status-badge.success { background: #d9fbe5; color: green; }
-.status-badge.error { background: #ffe0e0; color: red; }
-.status-badge.uploading { background: #e1e8ff; color: #333; }
+.status-badge.success {
+  background: #d9fbe5;
+  color: green;
+}
+
+.status-badge.error {
+  background: #ffe0e0;
+  color: red;
+}
+
+.status-badge.uploading {
+  background: #e1e8ff;
+  color: #333;
+}
 
 .status-panel {
   margin-top: 24px;
@@ -127,4 +143,40 @@
   text-align: center;
   padding: 30px;
   color: gray;
+}
+
+.choose-file-display {
+  border: 2px solid #4a90e2;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  min-width: 250px;
+  /* Increase width */
+  max-width: 420px;
+  /* Optional */
+  color: #333;
+  background: #f7faff;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.choose-file-display:hover {
+  background: #e8f1ff;
+}
+
+.choose-file-display {
+  border: 2px dashed #ccc;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  min-width: 250px;
+}
+
+.choose-file-display.drag-over {
+  background: #f0f8ff;
+  border-color: #4a90e2;
 }

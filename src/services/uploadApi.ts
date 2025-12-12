@@ -12,3 +12,7 @@ export const createUploadEntry = (data: any) =>
 
 export const updateUploadEntry = (id: string, data: any) =>
   api.put(`/${id}`, data).then(res => res.data); 
+
+export const deleteUploadById = async (id: string) => {
+  await axios.delete(`http://localhost:8080/api/uploads/${id}`);
+};

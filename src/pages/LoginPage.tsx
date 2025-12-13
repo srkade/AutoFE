@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import logo from "../assets/Images/logo.jpg"
+import logo from "../assets/Images/logo.png";
 import { loginUser } from "../services/api";
 
 interface LoginPageProps {
@@ -88,7 +88,7 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick }: LoginPage
             />
           </div>
 
-          <h1 style={{ fontSize: "34px", marginBottom: "15px" }}>Welcome to...</h1>
+          <h1 style={{ fontSize: "34px", marginBottom: "15px" }}>Welcome To CRAZYBEES</h1>
           <p
             style={{
               fontSize: "20px",

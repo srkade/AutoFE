@@ -1,7 +1,7 @@
 import React from "react";
 import "../Styles/AdminNavigationTabs.css";
 import { FiUsers, FiUpload, FiCpu } from "react-icons/fi";
-import logo from "../assets/Images/logo.jpg"
+import logo from "../assets/Images/logo.png";
 
 interface AdminNavigationTabsProps {
   active: string;
@@ -42,7 +42,8 @@ export default function AdminNavigationTabs({
         />
         <h1
           style={{
-            marginRight: "50px",
+            marginRight: "40px",
+            marginLeft: "10px",
             fontSize: "20px",
           }}
         >

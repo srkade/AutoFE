@@ -295,7 +295,8 @@ export default function App() {
       )}
 
       {page === "register" && (
-        <RegisterForm onBackToLogin={() => setPage("login")} />
+        <RegisterForm onBackToLogin={() => setPage("login")} 
+        isAdmin={role === "admin"}/>
       )}
 
       {/* USER DASHBOARD */}

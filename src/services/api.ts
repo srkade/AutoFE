@@ -232,4 +232,26 @@ export async function smartFileUpload(
   }
 }
 
+export async function updateUserStatus(
+  id: string,
+  status: string,
+  token: string
+) {
+  try {
+    const res = await api.put(
+      `/auth/users/${id}/status`,
+      { status },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → updateUserStatus:", err);
+    throw err;
+  }
+}
+
 export default api;

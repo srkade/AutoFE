@@ -4,10 +4,19 @@ import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2 } from "react-icons/f
 import { IoIosArrowDown } from "react-icons/io";
 import RegisterForm from "./RegistrationForm";
 import { User } from "../components/Schematic/SchematicTypes";
-import { fetchUsers, updateUser, deleteUserById, registerUser } from "../services/api";
+import { fetchUsers, updateUser, deleteUserById, registerUser, updateUserStatus as apiUpdateUserStatus } from "../services/api";
 
 export default function ManageUsersModern() {
   const [users, setUsers] = useState<User[]>([]);
+
+  const STATUS_OPTIONS: User["status"][] = [
+    "Active",
+    "Inactive",
+    "Pending",
+    "Suspended",
+    "Banned",
+  ];
+  const [statusEditingUserId, setStatusEditingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -17,10 +26,10 @@ export default function ManageUsersModern() {
         // Map backend fields to match table
         const mappedUsers = data.map((u: any) => ({
           ...u,
-          // ✅ FIX: Ensure fallback for null dates
+          //  FIX: Ensure fallback for null dates
           joined: u.createdAt || new Date().toISOString(),
           lastActive: u.updatedAt || new Date().toISOString(),
-          // ✅ FIX: Ensure string fields are never null
+          // FIX: Ensure string fields are never null
           firstName: u.firstName || "",
           lastName: u.lastName || "",
           email: u.email || "",
@@ -89,7 +98,7 @@ export default function ManageUsersModern() {
           lastName: savedUser.lastName,
           email: savedUser.email,
           role: savedUser.role,
-          status: savedUser.status,
+          status: savedUser.role === "admin" ? "Active" : savedUser.status,
         };
 
         const updated = await updateUser(editingUser.id, payload);
@@ -146,8 +155,24 @@ export default function ManageUsersModern() {
     }
   };
 
+  const handleStatusChange = async (id: string, status: User["status"]) => {
+    try {
+      const token = localStorage.getItem("token") || "";
+      await apiUpdateUserStatus(id, status, token);
+
+      setUsers(prev =>
+        prev.map(u => u.id === id ? { ...u, status } : u)
+      );
+
+      setStatusEditingUserId(null);
+    } catch (err) {
+      console.error("Status update failed:", err);
+    }
+  };
+
+
   const filteredUsers = users.filter(u => {
-    // ✅ FIX: Use (field || "") to prevent crashes during search
+    //  FIX: Use (field || "") to prevent crashes during search
     const matchesSearch =
       ((u.firstName || "").toLowerCase().includes(searchTerm.toLowerCase())) ||
       ((u.lastName || "").toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -169,6 +194,61 @@ export default function ManageUsersModern() {
 
     return matchesSearch && matchesRole && matchesStatus && matchesDate;
   });
+
+  const handleApproveUser = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`/api/auth/users/${id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "Active" }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to approve user");
+      }
+
+      setUsers(prev =>
+        prev.map(u => u.id === id ? { ...u, status: "Active" } : u)
+      );
+
+    } catch (err) {
+      console.error("Approve failed:", err);
+    }
+  };
+
+  const handleRejectUser = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`/api/auth/users/${id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "Rejected" }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to reject user");
+      }
+
+      setUsers(prev =>
+        prev.map(u => u.id === id ? { ...u, status: "Rejected" } : u)
+      );
+
+    } catch (err) {
+      console.error("Reject failed:", err);
+    }
+  };
+
 
   return (
     <div className="users-page">
@@ -246,7 +326,7 @@ export default function ManageUsersModern() {
       <table className="user-table">
         <thead>
           <tr>
-           <th>First Name</th><th>Last Name</th><th>Email</th><th>Status</th><th>Role</th><th>Joined</th><th>Last Active</th><th>Actions</th>
+            <th>First Name</th><th>Last Name</th><th>Email</th><th>Status</th><th>Role</th><th>Joined</th><th>Last Active</th><th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -256,10 +336,30 @@ export default function ManageUsersModern() {
               <td>{u.lastName}</td>
               <td>{u.email}</td>
               <td>
-                {/* ✅ FIX: This line caused your crash. Added safe check || "" */}
-                <span className={`status-chip ${(u.status || "pending").toLowerCase()}`}>
-                  {u.status || "Pending"}
-                </span>
+                {statusEditingUserId === u.id ? (
+                  <select
+                    value={u.status}
+                    autoFocus
+                    onChange={(e) =>
+                      handleStatusChange(u.id, e.target.value as User["status"])
+                    }
+                    onBlur={() => setStatusEditingUserId(null)}
+                  >
+                    {STATUS_OPTIONS.map(status => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span
+                    className={`status-chip ${(u.status || "pending").toLowerCase()}`}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => setStatusEditingUserId(u.id)}
+                  >
+                    {u.status}
+                  </span>
+                )}
               </td>
               <td>{u.role || "User"}</td>
               <td>{u.joined ? new Date(u.joined).toLocaleString() : "-"}</td>
@@ -286,6 +386,7 @@ export default function ManageUsersModern() {
             showLeftPanel={false}
             showCloseButton={true}
             customHeight="200px"
+            isAdmin={true}
           />
         </div>
       )}

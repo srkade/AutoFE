@@ -10,6 +10,7 @@ interface RegisterPageProps {
   showLeftPanel?: boolean;
   showCloseButton?: boolean;
   customHeight?: string;
+  isAdmin?: boolean;
 }
 
 export default function RegisterForm({
@@ -19,6 +20,7 @@ export default function RegisterForm({
   showLeftPanel = true,
   showCloseButton = false,
   customHeight = "650px",
+  isAdmin = false,
 }: RegisterPageProps) {
   // ---------------- FIELDS ----------------
   const [firstName, setFirstName] = useState(userToEdit?.firstName || "");
@@ -36,27 +38,26 @@ export default function RegisterForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // ---------------- Validation ----------------
     if (!agreeTerms) {
       alert("You must agree to the terms and conditions.");
       return;
     }
 
-    // Validate password (only when creating)
     if (!userToEdit && password !== confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
 
-    // Payload for both create and edit
+    // ---------------- Payload ----------------
     const payload: any = {
       firstName,
       lastName,
       email,
       role,
-      status,
+      status: role === "Admin" ? "Active" : "Pending", // Admin active by default, user pending
     };
 
-    // Only include password when creating
     if (!userToEdit) {
       payload.password = password;
       payload.confirmPassword = confirmPassword;
@@ -64,7 +65,7 @@ export default function RegisterForm({
 
     try {
       if (userToEdit && onSave) {
-        // EDIT MODE → call parent callback
+        // ---------------- EDIT MODE ----------------
         const updatedUser: User = {
           ...userToEdit,
           ...payload,
@@ -74,18 +75,36 @@ export default function RegisterForm({
         await onSave(updatedUser);
         alert("User updated successfully!");
       } else {
-        // CREATE MODE → register new user
+        // ---------------- CREATE MODE ----------------
         const res = await registerUser(payload);
         console.log("Registration Success:", res);
-        alert("User Registered Successfully!");
+
+        // ---------------- CONDITIONAL ALERT ----------------
+        if (role === "Admin") {
+          alert("Admin registration successful.");
+        } else {
+          alert(
+            "Your account has been created and is pending admin approval. You will be able to login once approved."
+          );
+        }
+
         onBackToLogin();
       }
-    } catch (err: any) {
-      console.error(err);
-      alert(
-        "Operation failed: " +
-        (err.response?.data?.message || "Invalid data or server error")
-      );
+    }
+    catch (err: any) {
+      console.error("Registration Error:", err);
+
+      if (err.response?.status === 409) {
+        alert("Email already exists. Please use a different email.");
+      } else if (err.response?.status === 403 && err.response?.data?.error) {
+        // Show backend pending approval message
+        alert(err.response.data.error);
+      } else {
+        alert(
+          "Operation failed: " +
+          (err.response?.data?.message || "Invalid data or server error")
+        );
+      }
     }
   };
 
@@ -275,21 +294,23 @@ export default function RegisterForm({
             </select>
 
             {/* STATUS */}
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as User["status"])}
-              style={inputStyle}
-              required
-            >
-              <option value="" disabled hidden>
-                Select Status
-              </option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-              <option value="Pending">Pending</option>
-              <option value="Banned">Banned</option>
-              <option value="Suspended">Suspended</option>
-            </select>
+            {isAdmin && (
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as User["status"])}
+                style={inputStyle}
+                required
+              >
+                <option value="" disabled hidden>
+                  Select Status
+                </option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Pending">Pending</option>
+                <option value="Banned">Banned</option>
+                <option value="Suspended">Suspended</option>
+              </select>
+            )}
 
             {/* TERMS */}
             <div

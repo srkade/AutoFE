@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../Styles/NavigationTabs.css"
-import logo from "../assets/Images/logo.jpg"
+import logo from "../assets/Images/logo.png";
 import {
   Wrench,
   Cpu,
@@ -76,13 +76,15 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, userN
               style={{
                 width: "70px",
                 height: "70px",
+
               }}
               src={logo}
               alt="Logo"
             />
             <h1
               style={{
-                marginRight: "50px",
+                marginRight: "40px",
+                marginLeft: "10px",
                 fontSize: "20px",
               }}
             >
@@ -205,7 +207,7 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, userN
                 <button
                   onClick={onLogout}
                   style={{
-                    background: "#bd5560",
+                    background: "#ae8c8fff",
                     color: "white",
                     border: "none",
                     padding: "8px 16px",
@@ -219,9 +221,7 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, userN
                   onMouseEnter={(e) =>
                     ((e.target as HTMLButtonElement).style.background = "#a74550")
                   }
-                  onMouseLeave={(e) =>
-                    ((e.target as HTMLButtonElement).style.background = "#bd5560")
-                  }
+                 
                 >
                   Logout
                 </button>

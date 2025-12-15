@@ -14,7 +14,7 @@ import {
   ConnectorMapping,
   ExportMetadata,
 } from "./SchematicTypes";
-import logoImage from '../../assets/Images/logo.jpg';
+import logoImage from '../../assets/Images/logo.png';
 class SchematicExportManager {
   private async captureSchematicDiv(
     resolution: number = 300,

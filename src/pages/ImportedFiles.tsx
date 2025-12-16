@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { smartFileUpload, ImportResponse } from '../services/api';
 import '../Styles/ImportedFiles.css';
-import { getAllUploads, deleteUploadById } from "../services/uploadApi";  // only this one we keep
+import "../Styles/ManageUsers.css";
+import { getAllUploads, deleteUploadById ,fetchUploadFile} from "../services/uploadApi";  // only this one we keep
+import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2, FiEye } from "react-icons/fi";
 
 interface UploadStatus {
   id: string;
@@ -82,6 +84,17 @@ const ImportedFiles: React.FC = () => {
       },
       ...prev,
     ]);
+  };
+
+  const handleViewFile = async (id: string) => {
+    try {
+      const fileBlob = await fetchUploadFile(id); // call your API
+      const fileURL = URL.createObjectURL(fileBlob); // create temporary URL
+      window.open(fileURL, "_blank"); // open in new tab
+    } catch (error) {
+      console.error("Error fetching file:", error);
+      alert("Failed to fetch the file.");
+    }
   };
 
   /**
@@ -213,9 +226,9 @@ const ImportedFiles: React.FC = () => {
 
   const formatTimestamp = (isoString: string) => {
     try {
-      const date = new Date(isoString); 
+      const date = new Date(isoString);
       const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0'); 
+      const month = String(date.getMonth() + 1).padStart(2, '0');
       const year = date.getFullYear();
       const hours = String(date.getHours()).padStart(2, '0');
       const minutes = String(date.getMinutes()).padStart(2, '0');
@@ -312,14 +325,16 @@ const ImportedFiles: React.FC = () => {
                   </span>
                 </td>
 
-                <td>
-                  <select className="action-dropdown">
-                    <option>Action</option>
-                    <option>View</option>
-                    <option>Delete</option>
-                    <option>Re-upload</option>
-                  </select>
+                <td className="actions">
+                  <FiEdit2 className="edit-icon"/>
+                  <FiTrash2 className="delete-icon"/>
+                  <FiEye
+                    className="edit-icon"
+                    title="View file"
+                    onClick={() => handleViewFile(upload.id)}
+                  />
                 </td>
+
               </tr>
             ))}
           </tbody>

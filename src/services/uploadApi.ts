@@ -16,3 +16,14 @@ export const updateUploadEntry = (id: string, data: any) =>
 export const deleteUploadById = async (id: string) => {
   await axios.delete(`http://localhost:8080/api/uploads/${id}`);
 };
+export const fetchUploadFile = async (id: string) => {
+  const res = await api.get(`/${id}/view`, {
+    responseType: "blob",
+  });
+  return res.data;
+};
+
+
+
+
+

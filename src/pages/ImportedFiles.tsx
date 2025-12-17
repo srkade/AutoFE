@@ -281,9 +281,11 @@ const ImportedFiles: React.FC = () => {
         </button>
 
         <div className="upload-actions-right">
-          <button onClick={deleteSelected} className="btn-danger">
-            🗑️ Delete
-          </button>
+          {selectedUploads.size > 0 && (
+            <button onClick={deleteSelected} className="btn-danger">
+              🗑️ Delete ({selectedUploads.size})
+            </button>
+          )}
         </div>
       </div>
 

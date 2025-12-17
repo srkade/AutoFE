@@ -212,15 +212,32 @@ const ImportedFiles: React.FC = () => {
   const deleteSelected = async () => {
     for (const id of Array.from(selectedUploads)) {
       try {
-        await deleteUploadById(id); // delete from backend
+        await deleteUploadById(id); 
       } catch (err) {
         console.error("Failed to delete upload", id, err);
       }
     }
-
-    // Remove from UI after backend deletion
     setUploads((prev) => prev.filter((upload) => !selectedUploads.has(upload.id)));
     setSelectedUploads(new Set());
+  };
+
+  const deleteSingle = async (id: string) => {
+    const confirm = window.confirm("Delete this upload?");
+    if (!confirm) return;
+
+    try {
+      await deleteUploadById(id);
+
+      setUploads(prev => prev.filter(u => u.id !== id));
+
+      setSelectedUploads(prev => {
+        const set = new Set(prev);
+        set.delete(id);
+        return set;
+      });
+    } catch (err) {
+      console.error("Delete failed", err);
+    }
   };
 
   const formatTimestamp = (isoString: string) => {
@@ -328,7 +345,11 @@ const ImportedFiles: React.FC = () => {
 
                 <td className="actions">
                   <FiEdit2 className="edit-icon" />
-                  <FiTrash2 className="delete-icon" />
+                  <FiTrash2
+                    className="delete-icon"
+                    title="Delete file"
+                    onClick={() => deleteSingle(upload.id)}
+                  />
                   <FiDownload
                     className="edit-icon"
                     title="Download file"

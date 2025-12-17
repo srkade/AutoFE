@@ -2,9 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { smartFileUpload, ImportResponse } from '../services/api';
 import '../Styles/ImportedFiles.css';
-import "../Styles/ManageUsers.css";
-import { getAllUploads, deleteUploadById ,fetchUploadFile} from "../services/uploadApi";  // only this one we keep
-import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2, FiEye } from "react-icons/fi";
+import { getAllUploads, deleteUploadById, fetchUploadFile } from "../services/uploadApi";  // only this one we keep
+import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2, FiDownload } from "react-icons/fi";
 
 interface UploadStatus {
   id: string;
@@ -326,11 +325,11 @@ const ImportedFiles: React.FC = () => {
                 </td>
 
                 <td className="actions">
-                  <FiEdit2 className="edit-icon"/>
-                  <FiTrash2 className="delete-icon"/>
-                  <FiEye
+                  <FiEdit2 className="edit-icon" />
+                  <FiTrash2 className="delete-icon" />
+                  <FiDownload
                     className="edit-icon"
-                    title="View file"
+                    title="Download file"
                     onClick={() => handleViewFile(upload.id)}
                   />
                 </td>

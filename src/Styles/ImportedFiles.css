@@ -12,6 +12,8 @@
   font-size: 22px;
 }
 
+/* ================= Upload Bar ================= */
+
 .upload-bar {
   display: flex;
   align-items: center;
@@ -54,30 +56,56 @@
   border: none;
 }
 
+/* ================= Table Wrapper ================= */
+
 .file-table-wrapper {
   background: white;
   border-radius: 14px;
   padding: 18px;
   max-height: 350px;
   overflow-y: auto;
+  scrollbar-gutter: stable;
 }
+
+/* ================= Table ================= */
 
 .file-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: auto;
   text-align: center;
+  table-layout: fixed;
 }
 
-.file-table th,
-.file-table td {
-  padding: 12px;
+.file-table tbody tr {
   border-bottom: 1px solid #ddd;
+}
+
+.file-table td {
+  padding: 16px 12px; 
 }
 
 .file-table th {
   background: #f1f3f7;
+  padding: 14px 12px;  
+  font-weight: 600;
 }
+
+
+.file-table th:first-child,
+.file-table td:first-child {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+}
+
+.file-table th:last-child,
+.file-table td:last-child {
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+}
+
+/* ================= Status Badge ================= */
 
 .status-badge {
   padding: 4px 10px;
@@ -99,6 +127,24 @@
   background: #e1e8ff;
   color: #333;
 }
+
+/* ================= Actions Column ================= */
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.edit-icon,
+.delete-icon {
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* ================= Status Panel ================= */
 
 .status-panel {
   margin-top: 24px;
@@ -145,26 +191,7 @@
   color: gray;
 }
 
-.choose-file-display {
-  border: 2px solid #4a90e2;
-  padding: 10px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  min-width: 250px;
-  /* Increase width */
-  max-width: 420px;
-  /* Optional */
-  color: #333;
-  background: #f7faff;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.choose-file-display:hover {
-  background: #e8f1ff;
-}
+/* ================= Upload Box ================= */
 
 .choose-file-display {
   border: 2px dashed #ccc;
@@ -174,39 +201,14 @@
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
   min-width: 250px;
+  background: #f7faff;
+}
+
+.choose-file-display:hover {
+  background: #e8f1ff;
 }
 
 .choose-file-display.drag-over {
   background: #f0f8ff;
   border-color: #4a90e2;
 }
-
-.file-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: auto;
-  text-align: center;
-
-  table-layout: fixed;
-}
-
-.file-table th:last-child,
-.file-table td:last-child {
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
-}
-
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.edit-icon,
-.delete-icon {
-  font-size: 16px;
-  cursor: pointer;
-}
-

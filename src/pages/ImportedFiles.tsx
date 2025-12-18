@@ -3,7 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { smartFileUpload, ImportResponse } from '../services/api';
 import '../Styles/ImportedFiles.css';
 import { getAllUploads, deleteUploadById, fetchUploadFile } from "../services/uploadApi";  // only this one we keep
-import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2, FiDownload } from "react-icons/fi";
+import {
+  FiSearch,
+  FiEdit2,
+  FiTrash2,
+  FiDownload,
+  FiChevronDown,
+  FiArrowUp,
+  FiArrowDown
+} from "react-icons/fi";
 
 interface UploadStatus {
   id: string;
@@ -21,6 +29,11 @@ const ImportedFiles: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [selectedUploads, setSelectedUploads] = useState<Set<string>>(new Set());
   const [dragOver, setDragOver] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  type sortField = 'fileName' | 'timestamp' | 'status' | 'filesize';
+  const [sortBy, setSortBy] = useState<sortField>('timestamp');
+  const [sortAsc, setSortAsc] = useState<boolean>(false);
+  const [showSort, setShowSort] = useState<boolean>(false);
 
   useEffect(() => {
     loadBackendUploads();
@@ -212,7 +225,7 @@ const ImportedFiles: React.FC = () => {
   const deleteSelected = async () => {
     for (const id of Array.from(selectedUploads)) {
       try {
-        await deleteUploadById(id); 
+        await deleteUploadById(id);
       } catch (err) {
         console.error("Failed to delete upload", id, err);
       }
@@ -256,6 +269,41 @@ const ImportedFiles: React.FC = () => {
     }
   };
 
+  const filteredAndSortedUploads = [...uploads]
+    .filter(upload =>
+      upload.fileName.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      let valA: any;
+      let valB: any;
+
+      switch (sortBy) {
+        case 'fileName':
+          valA = a.fileName.toLowerCase();
+          valB = b.fileName.toLowerCase();
+          break;
+
+        case 'status':
+          valA = a.status;
+          valB = b.status;
+          break;
+
+        case 'filesize':
+          valA = a.filesize ?? 0;
+          valB = b.filesize ?? 0;
+          break;
+
+        case 'timestamp':
+        default:
+          valA = new Date(a.timestamp).getTime();
+          valB = new Date(b.timestamp).getTime();
+          break;
+      }
+
+      return sortAsc ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
+    });
+
+
   return (
     <div className="import-dashboard">
       {/* HEADER */}
@@ -265,45 +313,85 @@ const ImportedFiles: React.FC = () => {
       </div>
 
       {/* TOP UPLOAD BAR */}
-      <div className="upload-bar">
-        <input
-          id="file-input"
-          type="file"
-          multiple
-          accept=".csv,.xlsx,.xls"
-          onChange={handleInputChange}
-          hidden
-        />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div className="upload-bar">
+          <input
+            id="file-input"
+            type="file"
+            multiple
+            accept=".csv,.xlsx,.xls"
+            onChange={handleInputChange}
+            hidden
+          />
 
-        <div
-          className={`choose-file-display ${dragOver ? "drag-over" : ""}`}
-          onClick={() => document.getElementById('file-input')?.click()}
-          onDragOver={handleDrag}
-          onDragLeave={handleDrag}
-          onDrop={handleDrop}
-        >
-          <div style={{ fontSize: "24px", marginBottom: "8px" }}>☁️</div>
-          <div>
-            Drag & drop files here or <span style={{ color: "#4a90e2", textDecoration: "underline" }}>Browse Files</span>
-          </div>
-          {selectedFiles && selectedFiles.length > 0 && (
-            <div style={{ marginTop: "8px", fontSize: "13px", color: "#333" }}>
-              {Array.from(selectedFiles).map(f => f.name).join(', ')}
+          <div
+            className={`choose-file-display ${dragOver ? "drag-over" : ""}`}
+            onClick={() => document.getElementById('file-input')?.click()}
+            onDragOver={handleDrag}
+            onDragLeave={handleDrag}
+            onDrop={handleDrop}
+          >
+            <div style={{ fontSize: "24px", marginBottom: "8px" }}>☁️</div>
+            <div>
+              Drag & drop files here or <span style={{ color: "#4a90e2", textDecoration: "underline" }}>Browse Files</span>
             </div>
-          )}
+            {selectedFiles && selectedFiles.length > 0 && (
+              <div style={{ marginTop: "8px", fontSize: "13px", color: "#333" }}>
+                {Array.from(selectedFiles).map(f => f.name).join(', ')}
+              </div>
+            )}
+          </div>
+
+          <button className="btn-primary" onClick={handleUpload}>
+            Upload
+          </button>
+
+          <div className="upload-actions-right">
+            {selectedUploads.size > 0 && (
+              <button onClick={deleteSelected} className="btn-danger">
+                🗑️ Delete ({selectedUploads.size})
+              </button>
+            )}
+          </div>
         </div>
 
-        <button className="btn-primary" onClick={handleUpload}>
-          Upload
-        </button>
-
-        <div className="upload-actions-right">
-          {selectedUploads.size > 0 && (
-            <button onClick={deleteSelected} className="btn-danger">
-              🗑️ Delete ({selectedUploads.size})
+        <div className="top-right-controls">
+          <div className="sort-wrapper">
+            <button
+              className="btn-outline sort-btn"
+              onClick={() => setShowSort(prev => !prev)}
+            >
+              Sort&nbsp;&nbsp;
+              {sortAsc ? <FiArrowUp /> : <FiArrowDown />}
+              <FiChevronDown />
             </button>
-          )}
+
+            {showSort && (
+              <div className="sort-dropdown">
+                <div onClick={() => { setSortBy('fileName'); setShowSort(false); }}>Name</div>
+                <div onClick={() => { setSortBy('timestamp'); setShowSort(false); }}>Date modified</div>
+                <div onClick={() => { setSortBy('filesize'); setShowSort(false); }}>Size</div>
+                <div onClick={() => { setSortBy('status'); setShowSort(false); }}>Status</div>
+
+                <hr />
+
+                <div onClick={() => { setSortAsc(true); setShowSort(false); }}>Ascending</div>
+                <div onClick={() => { setSortAsc(false); setShowSort(false); }}>Descending</div>
+              </div>
+            )}
+          </div>
+
+          <div className="search-box compact-search">
+            <FiSearch />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
+
       </div>
 
       {/* FILE TABLE */}
@@ -321,7 +409,7 @@ const ImportedFiles: React.FC = () => {
           </thead>
 
           <tbody>
-            {uploads.map((upload, index) => (
+            {filteredAndSortedUploads.map((upload, index) => (
               <tr key={upload.id ?? index}>
                 <td>
                   <input
@@ -359,6 +447,11 @@ const ImportedFiles: React.FC = () => {
 
               </tr>
             ))}
+            {filteredAndSortedUploads.length === 0 && (
+              <div className="empty-state">
+                🔍 No matching files found
+              </div>
+            )}
           </tbody>
         </table>
 

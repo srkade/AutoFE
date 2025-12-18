@@ -345,14 +345,6 @@ const ImportedFiles: React.FC = () => {
           <button className="btn-primary" onClick={handleUpload}>
             Upload
           </button>
-
-          <div className="upload-actions-right">
-            {selectedUploads.size > 0 && (
-              <button onClick={deleteSelected} className="btn-danger">
-                🗑️ Delete ({selectedUploads.size})
-              </button>
-            )}
-          </div>
         </div>
 
         <div className="top-right-controls">
@@ -389,6 +381,14 @@ const ImportedFiles: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+          </div>
+
+          <div className="upload-actions-right">
+            {selectedUploads.size > 0 && (
+              <button onClick={deleteSelected} className="btn-danger">
+                🗑️ Delete ({selectedUploads.size})
+              </button>
+            )}
           </div>
         </div>
 

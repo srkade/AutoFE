@@ -92,7 +92,6 @@ export async function getHarnessSchematic(code: string) {
   }
 }
 
-
 export async function getVoltageSupply(){
   try{
     const res=await api.get(`/schematics/supply`);

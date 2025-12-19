@@ -41,7 +41,7 @@ export async function getSystems() {
 
 export async function getSystemFormula(code: number) {
   try {
-    const res = await api.get(`/schematics/formula/json/${code}`);
+    const res = await api.get(`/schematics/formula/System/${code}`);
     return res.data;
   } catch (err) {
     console.error("API ERROR → getSystemFormula:", err);
@@ -181,22 +181,7 @@ export interface ImportResponse {
   metadata?: Record<string, any>;
 }
 
-/**
- *  SMART AUTO-DETECT UPLOAD
- * 
- * Upload ANY CSV/Excel file - backend automatically:
- *  Extracts column names from file headers
- *  Scans ALL database tables for matching columns
- *  Auto-detects which table this file belongs to
- *  Inserts only matching columns (handles sparse data)
- *  Skips duplicates with ON CONFLICT DO NOTHING
- * 
- * Works for: wireList, serviceConnector, systems, dtcList, harnesslist, etc.
- * 
- * @param file CSV or Excel file to upload
- * @param onProgress Optional callback for upload progress (0-100)
- * @returns ImportResponse with detected table name and results
- */
+
 export async function smartFileUpload(
   file: File,
   onProgress?: (progress: number) => void

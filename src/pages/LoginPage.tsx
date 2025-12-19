@@ -3,11 +3,12 @@ import logo from "../assets/Images/logo.png";
 import { loginUser } from "../services/api";
 
 interface LoginPageProps {
-  onLoginSuccess: (role: "admin" | "user") => void;
+  onLoginSuccess: (role: "admin" | "user",user:any) => void;
   onRegisterClick: () => void;
+  setToken: (token: string) => void;
 }
 
-export default function LoginPage({ onLoginSuccess, onRegisterClick }: LoginPageProps) {
+export default function LoginPage({ onLoginSuccess, onRegisterClick,setToken }: LoginPageProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -16,26 +17,28 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick }: LoginPage
     e.preventDefault();
     setError("");
 
- try {
-  const response = await loginUser({ email: username, password }); 
-  console.log("LoginResponse:", response);
+    try {
+      const response = await loginUser({ email: username, password });
+      console.log("LoginResponse:", response);
 
-  // Check user status
-  if (response.status?.toLowerCase() !== "active") {
-    setError("Your account is pending admin approval.");
-    return; // do NOT proceed
-  }
+      // Check user status
+      if (response.status?.toLowerCase() !== "active") {
+        setError("Your account is pending admin approval.");
+        return; // do NOT proceed
+      }
 
-  // Store token in localStorage (or state)
-  localStorage.setItem("token", response.token);
+      // Store token in localStorage (or state)
+      localStorage.setItem("token", response.token);
+      setToken(response.token);
+      // window.location.reload();
 
-  // Call parent callback with role from backend
-  const role = response.role?.toLowerCase(); 
-  onLoginSuccess(role === "admin" ? "admin" : "user");
-} catch (err) {
-  console.error("Login failed:", err);
-  setError("Invalid email or password");
-}
+      // Call parent callback with role from backend
+      const role = response.role?.toLowerCase();
+      onLoginSuccess(role === "admin" ? "admin" : "user",response);
+    } catch (err) {
+      console.error("Login failed:", err);
+      setError("Invalid email or password");
+    }
 
   };
 

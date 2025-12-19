@@ -12,6 +12,7 @@ import { getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarn
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 import RegisterForm from "./pages/RegistrationForm";
 import AdminDashboard from "./pages/AdminDashboard";
+
 export type DashboardItem = {
   code: string;
   name: string;
@@ -30,10 +31,20 @@ export default function App() {
   const [page, setPage] = useState<"login" | "register" | "dashboard">("login");
   const [role, setRole] = useState<"admin" | "user" | null>(null);
 
-  const handleLoginSuccess = (loggedInRole: "admin" | "user") => {
+  const handleLoginSuccess = (loggedInRole: "admin" | "user", user: any) => {
     setRole(loggedInRole);
+
+    if (loggedInRole === "admin") {
+      setAdminUser({
+        name: `${user.firstName} ${user.lastName}`,
+        username: user.email,
+        role: user.role,
+      });
+    }
+
     setPage("dashboard");
   };
+
   const [activeTab, setActiveTab] = useState("components");
   const [adminTab, setAdminTab] = useState("manage-users");
   const [schematicTab, setSchematicTab] = useState("components");
@@ -53,6 +64,8 @@ export default function App() {
   const [harnessesList, setHarnessesList] = useState<any[]>([]);
   const [supplyList, setVoltageSupplyList] = useState<any[]>([]);
   const [systemsList, setSystemsList] = useState<any[]>([]);
+  const [adminUser, setAdminUser] = useState<any>(null);
+
 
   const dtcItems: DashboardItem[] = dtcList.map((d) => ({
     code: d.code,
@@ -254,6 +267,10 @@ export default function App() {
     }
   }
 
+  const [token, setToken] = useState<string | null>(
+    localStorage.getItem("token")
+  );
+
 
   const filteredItems = dashboardItems.filter((item) => {
     const filterBase = role === "admin" ? schematicTab : activeTab;
@@ -278,25 +295,19 @@ export default function App() {
     }
   });
 
-  // if (!loggedIn) {
-  //   return <LoginPage
-  //     onLoginSuccess={() => setLoggedIn(true)}
-  //     onRegisterClick={() => setPage("login")}
-  //   />;
-  // }
-
   return (
     <div>
       {page === "login" && (
         <LoginPage
           onLoginSuccess={handleLoginSuccess}
           onRegisterClick={() => setPage("register")}
+          setToken={setToken}
         />
       )}
 
       {page === "register" && (
-        <RegisterForm onBackToLogin={() => setPage("login")} 
-        isAdmin={role === "admin"}/>
+        <RegisterForm onBackToLogin={() => setPage("login")}
+          isAdmin={role === "admin"} />
       )}
 
       {/* USER DASHBOARD */}
@@ -444,6 +455,7 @@ export default function App() {
               setRole(null);
               setPage("login");
             }}
+            user={adminUser ?? {name:"",username:"",role:""}}
           />
 
           {/* TAB CONTENT */}

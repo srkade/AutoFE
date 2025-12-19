@@ -3,9 +3,16 @@ import AdminNavigationTabs from "./AdminNavigationTabs";
 import "../Styles/AdminNavigationTabs.css";
 import ManageUsers from "./ManageUsers";
 import ImportFiles from "./ImportedFiles";
+import { useEffect } from "react";
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ token }: { token: string | null }) {
     const [activeTab, setActiveTab] = useState("manage-users");
+    const [userInfo, setUserInfo] = useState<{
+        name: string;
+        username: string;
+        email: string;
+        role: string;
+    } | null>(null);
 
     const handleLogout = () => {
         console.log("Logout clicked");
@@ -30,6 +37,7 @@ export default function AdminDashboard() {
                 active={activeTab}
                 onChange={setActiveTab}
                 onLogout={handleLogout}
+                user={userInfo}
             />
             <div
                 className="content-panel"

@@ -1,6 +1,5 @@
-/* Sidebar container */
 .admin-nav {
-  display: flex;
+   display: flex;
   flex-direction: column;
   width: 220px;
   background-color: #1e2a47;
@@ -10,78 +9,61 @@
   color: #cbd5e1;
   height: 100vh;
   box-shadow: 2px 0 8px rgba(0,0,0,0.2);
-  flex-shrink: 0;
 }
 
-/* Tabs container */
 .tabs {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 20px;
 }
 
-/* Each tab */
 .tab-item {
   display: flex;
-  align-items: center;
   gap: 10px;
-  padding: 10px 15px;
-  border-radius: 8px;
+  padding: 10px;
   cursor: pointer;
-  transition: all 0.3s ease;
   color: #cbd5e1;
-  font-size: 14px;
-}
-
-.tab-item:hover {
-  background-color: #2c3e70;
-  color: #ffffff;
 }
 
 .tab-item.active {
   background-color: #3b82f6;
-  color: #ffffff;
-  font-weight: 600;
+  color: white;
 }
 
 .logout {
-  margin-top: 95%;
-  padding: 10px 15px;
-  background-color: transparent;
-  border: none;
-  color: #000000;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  background-color: #f396a9;
-  width:50px;
+  margin-top: 90%;
+  width: 50px;
   margin-left: 30%;
+  padding: 10px;
+  background-color: #f396a9;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
 }
 
-.logout:hover {
-  background-color: #2c3e70;
-  color: #ffffff;
+/*  POPUP FIX */
+.user-popup {
+  position: absolute;
+  top: 60px; 
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  color: #000;
+  padding: 12px;
+  border-radius: 8px;
+  width: 200px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 999;
 }
 
-/* Main container for sidebar + content */
-.admin-container {
-  display: flex;          /* Makes sidebar + content side by side */
-  height: 100vh;
-  gap: 20px;
-  background-color: #f5f6fa;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-/* Content panel */
-.content-panel {
-  flex: 1;
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  overflow-y: auto;
+.user-popup button {
+  margin-top: 10px;
+  padding: 6px;
+  background: #f396a9;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }

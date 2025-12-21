@@ -41,7 +41,7 @@ export async function getSystems() {
 
 export async function getSystemFormula(code: number) {
   try {
-    const res = await api.get(`/schematics/formula/System/${code}`);
+    const res = await api.get(`wires/schematic/system/${code}`);
     return res.data;
   } catch (err) {
     console.error("API ERROR → getSystemFormula:", err);

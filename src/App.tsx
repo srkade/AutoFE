@@ -161,7 +161,6 @@ export default function App() {
     }
   }));
 
-
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener("resize", handleResize);
@@ -183,7 +182,6 @@ export default function App() {
     loadSchematics();
   }, []);
 
-
   useEffect(() => {
     async function loadSystems() {
       try {
@@ -197,7 +195,6 @@ export default function App() {
 
     loadSystems();
   }, []);
-
 
   useEffect(() => {
     async function loadDtcs() {
@@ -243,7 +240,7 @@ export default function App() {
     ...apiSchematics.map((api) => ({
       code: api.code,
       name: api.name,
-      type: api.type || api.category || "Component",
+      type: api.code === "ICC" ? "Controller" : api.type || api.category || "Component",
       status: "Active" as const,
       voltage: "12V",
       description: `Schematic for ${api.name}`,
@@ -304,15 +301,16 @@ export default function App() {
     localStorage.getItem("token")
   );
 
+  const iccComponent = dashboardItems.find(item => item.name === "ICC") || null;
 
   const filteredItems = dashboardItems.filter((item) => {
     const filterBase = role === "admin" ? schematicTab : activeTab;
 
     switch (filterBase) {
       case "components":
-        return item.type === "Component";
+        return item.type === "Component" || item.code === "ICC";
       case "controllers":
-        return item.type === "Controller";
+        return item.type === "Controller" || item.code === "ICC";
       case "systems":
         return item.type === "System";
       case "voltage":

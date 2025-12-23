@@ -326,6 +326,8 @@ export default function App() {
               setActiveTab(tabId);
               setSelectedItem(null);
               setShowWelcome(false);
+              setMergedSchematic(null);
+              setSelectedCodes([]);
             }}
             onLogout={() => {
               setRole(null);

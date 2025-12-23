@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 
 import { DashboardItem } from "../App";
 
@@ -54,6 +54,9 @@ export default function LeftPanel({
     return name.includes(search) || code.includes(search);
   });
 
+  useEffect(()=>{
+    setSearchTerm("");
+  },[activeTab]);
 
   const selectedSet = new Set(selectedCodes);
 

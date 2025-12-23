@@ -47,7 +47,7 @@ export default function App() {
     setRole(loggedInRole);
 
     localStorage.setItem("currentUser", JSON.stringify(userData));
-    localStorage.setItem("role", loggedInRole); // ✅ ADD THIS
+    localStorage.setItem("role", loggedInRole);
 
     if (loggedInRole === "admin") {
       setAdminUser(userData);
@@ -522,6 +522,8 @@ export default function App() {
                     setSchematicTab(tabId);
                     setSelectedItem(null);
                     setShowWelcome(false);
+                    setMergedSchematic(null);
+                    setSelectedCodes([]);
                   }}
                   onLogout={handleLogout}
                   user={currentUser}
@@ -539,7 +541,7 @@ export default function App() {
                 ) : (
                   <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
                     <LeftPanel
-                      activeTab={activeTab}
+                      activeTab={schematicTab}
                       data={filteredItems}
                       onItemSelect={async (item) => {
                         try {

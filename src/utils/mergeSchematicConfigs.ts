@@ -89,11 +89,11 @@ export function mergeSchematicConfigs(...configs: SchematicConfig[]): SchematicD
   };
 }
 
-// Example usage function
-export function mergeB3AndS4Configs() {
-  // Import the configs (you'll need to adjust the import paths as needed)
-  const B3 = require('../components/Schematic/tests/B3.ts').default;
-  const S4 = require('../components/Schematic/tests/S4.ts').default;
+// // Example usage function
+// export function mergeB3AndS4Configs() {
+//   // Import the configs (you'll need to adjust the import paths as needed)
+//   const B3 = require('../components/Schematic/tests/B3.ts').default;
+//   const S4 = require('../components/Schematic/tests/S4.ts').default;
 
-  return mergeSchematicConfigs(B3, S4);
-}
+//   return mergeSchematicConfigs(B3, S4);
+// }

@@ -1,6 +1,5 @@
 import React from "react";
 import Schematic from "../components/Schematic/Schematic";
-import { ICC, S4, S9, S8, B3 } from "../components/Schematic/tests";
 import { DashboardItem } from "../App";
 import "../Styles/MainPanel.css"
 
@@ -10,7 +9,6 @@ interface MainPanelProps {
   isMultipleComponents?: boolean; 
   isMobile: boolean;
 }
-
 
 export default function MainPanel({ selectedItem, activeTab, isMobile }: MainPanelProps) {
 

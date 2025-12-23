@@ -55,7 +55,6 @@ import {
   Minimize,
   Download,
 } from "lucide-react";
-import { DTC_MAP } from "./tests/DTCs";
 import { schematicExportManager } from "./SchematicExport";
 
 // ...existing code...
@@ -140,28 +139,6 @@ export default function Schematic({
     });
     setPopupWire(null);
   };
-  useEffect(() => {
-    if (!popupConnector || !popupConnector.connectorCode) return;
-
-    const connectorCode = popupConnector.connectorCode.toUpperCase();
-    // console.log("Clicked connector:", connectorCode);
-
-    const dtcData = Object.values(DTC_MAP).find((dtc: any) =>
-      dtc.connections.some(
-        (conn: any) =>
-          conn.from.connectorId.toUpperCase() === connectorCode ||
-          conn.to.connectorId.toUpperCase() === connectorCode
-      )
-    );
-
-    if (dtcData) {
-      //console.log(" Matched DTC:", dtcData.code);
-      setSelectedDTC(dtcData);
-    } else {
-      //console.warn(" No DTC details found for this connector:", connectorCode);
-      setSelectedDTC(null);
-    }
-  }, [popupConnector]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {

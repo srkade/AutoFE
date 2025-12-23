@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { PopupConnectorType } from "../Schematic/SchematicTypes";
-import { DTC_MAP } from "../Schematic/tests/DTCs";
 
 interface PopupConnectorDetailsProps {
   popupConnector: PopupConnectorType | null;
@@ -140,13 +139,11 @@ export default function PopupConnectorDetails({
     boxShadow: "0px 3px 8px rgba(0,123,255,0.3)",
     transition: "all 0.3s ease",
   };
-  const dtcData = DTC_MAP[dtcCode || ""] || null;
 
   // ---------- Component JSX ----------
   return (
     <div style={containerStyle}>
       <div style={{ marginBottom: "10px", fontWeight: "bold", fontSize: "20px", textAlign: "center" }}>Connector Information</div>
-      {/* HEADER */}
       {/* HEADER SECTION */}
       <div style={headerContainerStyle}>
         <div style={tabWrapperStyle}>

@@ -79,6 +79,16 @@ export async function getHarnesses() {
   }
 }
 
+export async function getWires() {
+  try {
+    const res = await api.get(`/schematics/wires`); 
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getWires:", err);
+    throw err;
+  }
+}
+
 //  Harness schematic endpoint
 export async function getHarnessSchematic(code: string) {
   try {

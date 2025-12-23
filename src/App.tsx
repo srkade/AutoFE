@@ -8,7 +8,7 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarnesses, getVoltageSupply, getSystems, getSystemFormula, getHarnessSchematic } from "./services/api";
+import { getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarnesses, getVoltageSupply, getSystems, getSystemFormula, getHarnessSchematic, getWires } from "./services/api";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 import RegisterForm from "./pages/RegistrationForm";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -63,8 +63,10 @@ export default function App() {
   const [dtcList, setDtcList] = useState<any[]>([]);
   const [harnessesList, setHarnessesList] = useState<any[]>([]);
   const [supplyList, setVoltageSupplyList] = useState<any[]>([]);
+  const [wireList, setWireList] = useState<any[]>([]);
   const [systemsList, setSystemsList] = useState<any[]>([]);
   const [adminUser, setAdminUser] = useState<any>(null);
+  
 
 
   const dtcItems: DashboardItem[] = dtcList.map((d) => ({
@@ -125,6 +127,21 @@ export default function App() {
       components: [],
       connections: [],
       name: s.name
+    }
+  }));
+
+  const wiresItems: DashboardItem[] = wireList.map((w) => ({
+    code: w.code,
+    name: w.name,
+    type: "wire",
+    status: "Active",
+    voltage: "N/A",
+    description: w.description || "No description available",
+    schematicData: {
+      masterComponents: [],
+      components: [],
+      connections: [],
+      name: w.name
     }
   }));
 
@@ -205,7 +222,21 @@ export default function App() {
     }
     loadSupply();
   }, []);
+
+  useEffect(() => {
+    async function loadWires() {
+      try {
+        const data = await getWires();
+        console.log("Row API Wires List:", data);
+        setWireList(data);
+      } catch (err) {
+        console.log("failed to load harness: ", err);
+      }
+    }
+    loadWires();
+  }, []);
   const dashboardItems: DashboardItem[] = [
+    
     // Components
     ...apiSchematics.map((api) => ({
       code: api.code,
@@ -230,6 +261,9 @@ export default function App() {
     ...harnessItems,
     //voltage supply
     ...supplyItems,
+    //wires
+    ...wiresItems
+
   ];
 
   async function handleViewSchematic(codes: string[]) {
@@ -279,15 +313,15 @@ export default function App() {
       case "components":
         return item.type === "Component";
       case "controllers":
-        return item.type === "Controller";
+        return item.type === "Component";
       case "systems":
         return item.type === "System";
       case "voltage":
         return item.type === "Supply";
       case "DTC":
         return item.type === "DTC";
-      case "signals":
-        return false;
+      case "wire":
+        return item.type === "wire";
       case "harnesses":
         return item.type === "Harness";
       default:

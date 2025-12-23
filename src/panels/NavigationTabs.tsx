@@ -26,7 +26,7 @@ const tabs = [
   { id: "systems", label: "Systems", icon: Layers },
   { id: "voltage", label: "Supply", icon: Zap },
   { id: "DTC", label: "Trouble Code", icon: AlertTriangle },
-  { id: "signals", label: "Wires", icon: Cable },
+  { id: "wire", label: "Wires", icon: Cable },
   { id: "harnesses", label: "Harnesses", icon: Cable },
 ];
 

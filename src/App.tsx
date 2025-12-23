@@ -30,20 +30,53 @@ export default function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [page, setPage] = useState<"login" | "register" | "dashboard">("login");
   const [role, setRole] = useState<"admin" | "user" | null>(null);
+  const [currentUser, setCurrentUser] = useState<{
+    name: string;
+    email: string;
+    role: "admin" | "user";
+  } | null>(null);
 
   const handleLoginSuccess = (loggedInRole: "admin" | "user", user: any) => {
+    const userData = {
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      role: loggedInRole,
+    };
+
+    setCurrentUser(userData);
     setRole(loggedInRole);
 
+    localStorage.setItem("currentUser", JSON.stringify(userData));
+    localStorage.setItem("role", loggedInRole);
+
     if (loggedInRole === "admin") {
-      setAdminUser({
-        name: `${user.firstName} ${user.lastName}`,
-        username: user.email,
-        role: user.role,
-      });
+      setAdminUser(userData);
     }
 
     setPage("dashboard");
   };
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("currentUser");
+    const storedRole = localStorage.getItem("role");
+
+    if (storedUser && storedRole) {
+      setCurrentUser(JSON.parse(storedUser));
+      setRole(storedRole as "admin" | "user");
+      setPage("dashboard");
+    }
+  }, []);
+
+  const handleLogout = () => {
+    setRole(null);
+    setCurrentUser(null);
+    setPage("login");
+
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("role");
+    localStorage.removeItem("token");
+  };
+
 
   const [activeTab, setActiveTab] = useState("components");
   const [adminTab, setAdminTab] = useState("manage-users");
@@ -167,7 +200,6 @@ export default function App() {
     loadSchematics();
   }, []);
 
-
   useEffect(() => {
     async function loadSystems() {
       try {
@@ -181,7 +213,6 @@ export default function App() {
 
     loadSystems();
   }, []);
-
 
   useEffect(() => {
     async function loadDtcs() {
@@ -241,7 +272,7 @@ export default function App() {
     ...apiSchematics.map((api) => ({
       code: api.code,
       name: api.name,
-      type: api.type || api.category || "Component",
+      type: api.code === "ICC" ? "Controller" : api.type || api.category || "Component",
       status: "Active" as const,
       voltage: "12V",
       description: `Schematic for ${api.name}`,
@@ -305,15 +336,16 @@ export default function App() {
     localStorage.getItem("token")
   );
 
+  const iccComponent = dashboardItems.find(item => item.name === "ICC") || null;
 
   const filteredItems = dashboardItems.filter((item) => {
     const filterBase = role === "admin" ? schematicTab : activeTab;
 
     switch (filterBase) {
       case "components":
-        return item.type === "Component";
+        return item.type === "Component" || item.code === "ICC";
       case "controllers":
-        return item.type === "Component";
+        return item.type === "Controller" || item.code === "ICC";
       case "systems":
         return item.type === "System";
       case "voltage":
@@ -360,12 +392,14 @@ export default function App() {
               setActiveTab(tabId);
               setSelectedItem(null);
               setShowWelcome(false);
+              setMergedSchematic(null);
+              setSelectedCodes([]);
             }}
             onLogout={() => {
               setRole(null);
               setPage("login");
             }}
-            userName="User"
+            user={currentUser}
           />
 
           {showWelcome ? (
@@ -489,7 +523,7 @@ export default function App() {
               setRole(null);
               setPage("login");
             }}
-            user={adminUser ?? {name:"",username:"",role:""}}
+            user={adminUser ?? { name: "", username: "", role: "" }}
           />
 
           {/* TAB CONTENT */}
@@ -521,12 +555,11 @@ export default function App() {
                     setSchematicTab(tabId);
                     setSelectedItem(null);
                     setShowWelcome(false);
+                    setMergedSchematic(null);
+                    setSelectedCodes([]);
                   }}
-                  onLogout={() => {
-                    setRole(null);
-                    setPage("login");
-                  }}
-                  userName="Admin"
+                  onLogout={handleLogout}
+                  user={currentUser}
                   hideLogout={true}
                   hideLogo={true}
                 />
@@ -541,7 +574,7 @@ export default function App() {
                 ) : (
                   <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
                     <LeftPanel
-                      activeTab={activeTab}
+                      activeTab={schematicTab}
                       data={filteredItems}
                       onItemSelect={async (item) => {
                         try {

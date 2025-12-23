@@ -10,12 +10,15 @@ import {
   Cable
 } from "lucide-react";
 
-
 interface NavigationTabsProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onLogout: () => void;
-  userName: string;
+  user: {
+    name: string;
+    email: string;
+    role: string;
+  } | null;
   hideLogout?: boolean;
   hideLogo?: boolean;
 }
@@ -30,11 +33,11 @@ const tabs = [
   { id: "harnesses", label: "Harnesses", icon: Cable },
 ];
 
-export default function NavigationTabs({ activeTab, onTabChange, onLogout, userName, hideLogout = false,hideLogo }: NavigationTabsProps) {
-  const [menuOpen, setMenuOpen] = useState(false);  //change to dispaly hamberger icon at the time of the mobile screen
-  const [userMenuOpen, setUserMenuOpen] = useState(false); //  new state for dropdown toggle
+export default function NavigationTabs({ activeTab, onTabChange, onLogout, user, hideLogout = false, hideLogo }: NavigationTabsProps) {
+  const [menuOpen, setMenuOpen] = useState(false);  
+  const [userMenuOpen, setUserMenuOpen] = useState(false); 
   const userMenuRef = useRef<HTMLDivElement>(null);
-  // close menu when clicking outside
+  
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -54,7 +57,7 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, userN
         ☰
       </div>
       <nav
-        className={`nav-tabs ${menuOpen ? "open" : ""}`} //change to toggle when click on icon
+        className={`nav-tabs ${menuOpen ? "open" : ""}`} 
         style={{
           background: "white",
           borderBottom: "1px solid #e9ecef",
@@ -101,7 +104,7 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, userN
               className={`nav-tab ${activeTab === tab.id ? "active" : ""}`}
               onClick={() => {
                 onTabChange(tab.id);
-                setMenuOpen(false); // close menu on mobile after selecting a tab
+                setMenuOpen(false); 
               }}
               style={{
                 display: "flex",
@@ -196,10 +199,9 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, userN
                     marginBottom: "10px",
                   }}
                 >
-                  <div style={{ fontWeight: "bold", color: "#212529" }}>{userName}</div>
-                  {/* <div style={{ fontSize: "13px", color: "#6c757d" }}>
-                  user@example.com
-                </div> */}
+                  <div style={{ fontWeight: "bold", color: "#212529" }}><span>Name:{user?.name}</span></div>
+                  <div style={{ fontSize: "bold", color: "#212529" }}><span>Email:{user?.email}</span></div>
+                  <div style={{ fontSize: "bold", color: "#212529"}}><span>Role:{user?.role}</span></div>
                 </div>
 
                 <hr style={{ border: "none", borderTop: "1px solid #e9ecef" }} />
@@ -221,7 +223,7 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, userN
                   onMouseEnter={(e) =>
                     ((e.target as HTMLButtonElement).style.background = "#a74550")
                   }
-                 
+
                 >
                   Logout
                 </button>

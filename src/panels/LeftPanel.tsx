@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 
 import { DashboardItem } from "../App";
 
@@ -41,14 +41,22 @@ export default function LeftPanel({
     new Map(data.map((item) => [item.code, item])).values()
   );
 
-  const filtered = uniqueData.filter((item) => {
+  const sortedData = uniqueData.sort((a, b) => {
+    // If code is numeric
+    return Number(a.code) - Number(b.code);
+  });
+
+  const filtered = sortedData.filter((item) => {
     const name = getName(item);
     const code = getCode(item);
 
     if (!search) return true;
-
     return name.includes(search) || code.includes(search);
   });
+
+  useEffect(()=>{
+    setSearchTerm("");
+  },[activeTab]);
 
   const selectedSet = new Set(selectedCodes);
 
@@ -102,17 +110,17 @@ export default function LeftPanel({
 
   return (
     <div
-  className="left_panel"
-  style={{
-    width: "320px",
-    minWidth: "320px",
-    background: "white",
-    borderRight: "1px solid #e9ecef",
-    display: "flex",
-    flexDirection: "column",
-    height: "100%",
-  }}
->
+      className="left_panel"
+      style={{
+        width: "320px",
+        minWidth: "320px",
+        background: "white",
+        borderRight: "1px solid #e9ecef",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+      }}
+    >
 
       {/* Header */}
       <div style={{ padding: "20px", borderBottom: "1px solid #e9ecef" }}>
@@ -205,13 +213,13 @@ export default function LeftPanel({
 
       {/* Items List */}
       <div
-  style={{
-    flex: 1,
-    overflowY: "auto",
-    padding: "16px",
-    paddingBottom: "30px", 
-  }}
->
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "16px",
+          paddingBottom: "30px",
+        }}
+      >
 
         {/* FIXED "No items found" */}
         {filteredData.length === 0 ? (
@@ -244,10 +252,10 @@ export default function LeftPanel({
                     padding: "16px",
                     marginBottom: "12px",
                     border: `2px solid ${isSelected
+                      ? "#007bff"
+                      : isChecked
                         ? "#007bff"
-                        : isChecked
-                          ? "#007bff"
-                          : "#e9ecef"
+                        : "#e9ecef"
                       }`,
                     borderRadius: "12px",
                     background: isSelected

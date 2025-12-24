@@ -531,10 +531,6 @@ export default function App() {
               <ImportFiles />
             )}
 
-            {/* {activeTab === "uploaded-files" && (
-              <UploadedFiles />
-            )} */}
-
             {adminTab === "view-schematic" && (
               <div
                 style={{
@@ -542,6 +538,7 @@ export default function App() {
                   background: "#f8f9fa",
                   display: "flex",
                   flexDirection: "column",
+                  marginTop: "30px",
                 }}
               >
                 <NavigationTabs

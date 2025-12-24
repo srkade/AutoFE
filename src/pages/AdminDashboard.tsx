@@ -21,9 +21,9 @@ export default function AdminDashboard({ token }: { token: string | null }) {
     const renderContent = () => {
         switch (activeTab) {
             case "manage-users":
-                return <ManageUsers />;  // Render ManageUsers component
+                return <ManageUsers />; 
             case "import-files":
-                return <ImportFiles />;  // Render ImportFiles component
+                return <ImportFiles />; 
             case "view-schematic":
                 return <div>View Schematic Page Content</div>;
             default:

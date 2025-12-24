@@ -7,10 +7,11 @@ interface AdminNavigationTabsProps {
   active: string;
   onChange: (tabId: string) => void;
   onLogout: () => void;
-  user?: 
-  { name: string; 
-    email: string; 
-    role: string 
+  user?:
+  {
+    name: string;
+    email: string;
+    role: string
   } | null;
 }
 
@@ -35,60 +36,63 @@ export default function AdminNavigationTabs({
 
 
   return (
-    <div className="admin-nav">
-      {/* Logo */}
-      <div
-        style={{
-          width: "320px",
-          display: "flex",
-          height: "80px",
-          alignItems: "center",
-          marginBottom: "40px",
-        }}
-      >
-        <img src={logo} alt="Logo" style={{ width: 50, height: 50 }} />
-        <h1 style={{ marginLeft: 10, fontSize: 20 }}>CRAZYBEES</h1>
-      </div>
+    <div>
+      <div className="admin-topbar">
+        {/* User Icon */}
+        <div
+          className="logout"
+          onClick={() => {
+            console.log("User icon clicked");
+            console.log("showPopup BEFORE:", showPopup);
+            console.log("user at click time:", user);
+            setShowPopup(prev => !prev);
+          }}
+        >
+          {/* <FiUser size={24} /> */}
+          👤
+          {/* POPUP */}
+          {showPopup && (
+            <div className="user-popup">
+              <div><span><b>Name:</b>{user?.name ?? "Loading..."}</span></div>
+              <div><span><b>Email:</b>{user?.email ?? "loadnig..."}</span></div>
+              <div><span><b>Role:</b>{user?.role ?? "loading..."}</span></div>
 
-      {/* Tabs */}
-      <div className="tabs">
-        {tabs.map((t) => {
-          const Icon = t.icon;
-          return (
-            <div
-              key={t.id}
-              className={`tab-item ${active === t.id ? "active" : ""}`}
-              onClick={() => onChange(t.id)}
-            >
-              <Icon size={18} />
-              <span>{t.label}</span>
+              <button onClick={onLogout}>Logout</button>
             </div>
-          );
-        })}
+          )}
+        </div>
       </div>
+      <div className="admin-nav">
+        {/* Logo */}
+        <div
+          style={{
+            width: "320px",
+            display: "flex",
+            height: "80px",
+            alignItems: "center",
+            marginBottom: "40px",
+          }}
+        >
+          <img src={logo} alt="Logo" style={{ width: 50, height: 50 }} />
+          <h1 style={{ marginLeft: 10, fontSize: 20 }}>CRAZYBEES</h1>
+        </div>
 
-      {/* User Icon */}
-      <div
-        className="logout"
-        onClick={() => {
-          console.log("User icon clicked");
-          console.log("showPopup BEFORE:", showPopup);
-          console.log("user at click time:", user);
-          setShowPopup(prev => !prev);
-        }}
-      >
-        <FiUser size={24} />
-
-        {/* POPUP */}
-        {showPopup && (
-          <div className="user-popup">
-            <div><span><b>Name:</b>{user?.name ?? "Loading..."}</span></div>
-            <div><span><b>Email:</b>{user?.email ?? "loadnig..."}</span></div>
-            <div><span><b>Role:</b>{user?.role ?? "loading..."}</span></div>
-
-            <button onClick={onLogout}>Logout</button>
-          </div>
-        )}
+        {/* Tabs */}
+        <div className="tabs">
+          {tabs.map((t) => {
+            const Icon = t.icon;
+            return (
+              <div
+                key={t.id}
+                className={`tab-item ${active === t.id ? "active" : ""}`}
+                onClick={() => onChange(t.id)}
+              >
+                <Icon size={18} />
+                <span>{t.label}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

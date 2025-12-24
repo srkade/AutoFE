@@ -60,9 +60,9 @@ export default function ManageUsersModern() {
   const [statusFilter, setStatusFilter] = useState<User["status"] | null>(null);
   const [dateFilter, setDateFilter] = useState<"Last 7 days" | "Last 30 days" | "Last year" | null>(null);
 
-  // Save users to localStorage
+  // Save users to sessionStorage
   useEffect(() => {
-    localStorage.setItem("users", JSON.stringify(users));
+    sessionStorage.setItem("users", JSON.stringify(users));
   }, [users]);
 
   // Close filter dropdown on outside click
@@ -157,7 +157,7 @@ export default function ManageUsersModern() {
 
   const handleStatusChange = async (id: string, status: User["status"]) => {
     try {
-      const token = localStorage.getItem("token") || "";
+      const token = sessionStorage.getItem("token") || "";
       await apiUpdateUserStatus(id, status, token);
 
       setUsers(prev =>
@@ -197,7 +197,7 @@ export default function ManageUsersModern() {
 
   const handleApproveUser = async (id: string) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const res = await fetch(`/api/auth/users/${id}/status`, {
         method: "PUT",
@@ -224,7 +224,7 @@ export default function ManageUsersModern() {
 
   const handleRejectUser = async (id: string) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const res = await fetch(`/api/auth/users/${id}/status`, {
         method: "PUT",

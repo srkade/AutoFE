@@ -27,8 +27,8 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick,setToken }: 
         return; // do NOT proceed
       }
 
-      // Store token in localStorage (or state)
-      localStorage.setItem("token", response.token);
+      // Store token in sessionStorage (or state)
+      sessionStorage.setItem("token", response.token);
       setToken(response.token);
       // window.location.reload();
 

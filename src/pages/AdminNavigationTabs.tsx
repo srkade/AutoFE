@@ -7,7 +7,11 @@ interface AdminNavigationTabsProps {
   active: string;
   onChange: (tabId: string) => void;
   onLogout: () => void;
-  user?: { name: string; username: string; role: string } | null;
+  user?: 
+  { name: string; 
+    email: string; 
+    role: string 
+  } | null;
 }
 
 export default function AdminNavigationTabs({
@@ -79,7 +83,7 @@ export default function AdminNavigationTabs({
         {showPopup && (
           <div className="user-popup">
             <div><span><b>Name:</b>{user?.name ?? "Loading..."}</span></div>
-            <div><span><b>Username:</b>{user?.username ?? "loadnig..."}</span></div>
+            <div><span><b>Email:</b>{user?.email ?? "loadnig..."}</span></div>
             <div><span><b>Role:</b>{user?.role ?? "loading..."}</span></div>
 
             <button onClick={onLogout}>Logout</button>

@@ -46,35 +46,36 @@ export default function App() {
     setCurrentUser(userData);
     setRole(loggedInRole);
 
-    localStorage.setItem("currentUser", JSON.stringify(userData));
-    localStorage.setItem("role", loggedInRole);
-
-    if (loggedInRole === "admin") {
-      setAdminUser(userData);
-    }
+    sessionStorage.setItem("currentUser", JSON.stringify(userData));
+    sessionStorage.setItem("role", loggedInRole);
 
     setPage("dashboard");
   };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser");
-    const storedRole = localStorage.getItem("role");
+    const storedUser = sessionStorage.getItem("currentUser");
+    const storedRole = sessionStorage.getItem("role");
+    const storedToken = sessionStorage.getItem("token");
 
-    if (storedUser && storedRole) {
+    if (storedUser && storedRole && storedToken) {
       setCurrentUser(JSON.parse(storedUser));
       setRole(storedRole as "admin" | "user");
       setPage("dashboard");
+    } else {
+      setPage("login");
     }
   }, []);
 
   const handleLogout = () => {
+    // Clear session storage
+    sessionStorage.clear();
+    // Clear React state
     setRole(null);
     setCurrentUser(null);
-    setPage("login");
+    setToken(null);
 
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
+    // Redirect to login
+    setPage("login");
   };
 
 
@@ -98,8 +99,8 @@ export default function App() {
   const [supplyList, setVoltageSupplyList] = useState<any[]>([]);
   const [wireList, setWireList] = useState<any[]>([]);
   const [systemsList, setSystemsList] = useState<any[]>([]);
-  const [adminUser, setAdminUser] = useState<any>(null);
-  
+  // const [adminUser, setAdminUser] = useState<any>(null);
+
 
 
   const dtcItems: DashboardItem[] = dtcList.map((d) => ({
@@ -267,7 +268,7 @@ export default function App() {
     loadWires();
   }, []);
   const dashboardItems: DashboardItem[] = [
-    
+
     // Components
     ...apiSchematics.map((api) => ({
       code: api.code,
@@ -333,7 +334,7 @@ export default function App() {
   }
 
   const [token, setToken] = useState<string | null>(
-    localStorage.getItem("token")
+    sessionStorage.getItem("token")
   );
 
   const iccComponent = dashboardItems.find(item => item.name === "ICC") || null;
@@ -377,7 +378,7 @@ export default function App() {
       )}
 
       {/* USER DASHBOARD */}
-      {page === "dashboard" && role === "user" && (
+      {page === "dashboard" && role === "user" &&  token &&(
         <div
           style={{
             height: "100vh",
@@ -395,10 +396,7 @@ export default function App() {
               setMergedSchematic(null);
               setSelectedCodes([]);
             }}
-            onLogout={() => {
-              setRole(null);
-              setPage("login");
-            }}
+            onLogout={handleLogout}
             user={currentUser}
           />
 
@@ -513,17 +511,14 @@ export default function App() {
         </div>
       )}
       {/* Admin DASHBOARD */}
-      {page === "dashboard" && role === "admin" && (
+      {page === "dashboard" && role === "admin" && token && (
         <div style={{ height: "100vh", display: "flex", flexDirection: "row" }}>
 
           <AdminNavigationTabs
             active={adminTab}
             onChange={setAdminTab}
-            onLogout={() => {
-              setRole(null);
-              setPage("login");
-            }}
-            user={adminUser ?? { name: "", username: "", role: "" }}
+            onLogout={handleLogout}
+            user={currentUser}
           />
 
           {/* TAB CONTENT */}

@@ -112,6 +112,16 @@ export async function getVoltageSupply(){
   }
 }
 
+export async function getSupplyFormula(code: string) {
+  try {
+    const res = await api.get(`/wires/schematic/supply/${code}`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getSupplyFormula:", err);
+    throw err;
+  }
+}
+
 export async function registerUser(payload: {
   firstName: string;
   lastName: string;

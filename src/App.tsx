@@ -8,10 +8,9 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarnesses, getVoltageSupply, getSystems, getSystemFormula, getHarnessSchematic, getWires } from "./services/api";
+import { getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarnesses, getVoltageSupply, getSupplyFormula , getSystems, getSystemFormula, getHarnessSchematic, getWires } from "./services/api";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 import RegisterForm from "./pages/RegistrationForm";
-import AdminDashboard from "./pages/AdminDashboard";
 
 export type DashboardItem = {
   code: string;
@@ -447,7 +446,7 @@ export default function App() {
                     }
                     if (item.type === "DTC") {
                       const dtcData = await getDtcSchematic(item.code);
-                      console
+                      
 
                       const converted = normalizeSchematic(dtcData);
 
@@ -601,6 +600,25 @@ export default function App() {
                           } else {
                             schematicData = await getComponentSchematic(item.code);
                           }
+
+                          if (item.type === "Supply") {
+                            const supplyData = await getSupplyFormula(String(item.code));
+                            console
+
+                            const converted = normalizeSchematic(supplyData);
+
+                            const updatedItem = {
+                              ...item,
+                              schematicData: converted,
+                            };
+
+                            setSelectedItem(updatedItem);
+                            setMergedSchematic(null);
+                            console.log("Voltage Supply schematic set and ready to render");
+                            return;
+                          }
+                          console.log("Loaded schematic:", schematicData);
+                          
                           if (item.type === "DTC") {
                             const dtcData = await getDtcSchematic(item.code);
                             console

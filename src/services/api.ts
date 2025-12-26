@@ -122,6 +122,19 @@ export async function getSupplyFormula(code: string) {
   }
 }
 
+
+export async function getWireDetailsByWireCode(wireCode: string) {
+  try {
+    const res = await api.get(
+      `/wires/schematic/wire/${wireCode}`
+    );
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getWireDetailsByWireCode:", err);
+    throw err;
+  }
+}
+
 export async function registerUser(payload: {
   firstName: string;
   lastName: string;

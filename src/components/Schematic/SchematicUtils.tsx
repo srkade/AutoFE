@@ -8,7 +8,7 @@ import {
 } from "./SchematicTypes";
 
 export function spaceForWires(data: SchematicData) {
-    let connectionsCount = data.connections.length;
+    let connectionsCount = data.connections?.length ?? 0;
     return connectionsCount * 20 + 40; // 20px per connection + padding
 }
 
@@ -54,13 +54,13 @@ export function getIntersection(
     return null;
 }
 export function getConnectionsForComponent(component: ComponentType, data: SchematicData) {
-    return data.connections.filter(
+    return (data.connections ?? []).filter(
         (c) =>
             c.from.componentId === component.id || c.to.componentId === component.id
     );
 }
 export function getConnectionsForConnector(conn: ConnectorType, data: SchematicData): ConnectionType[] {
-    return data.connections.filter(
+    return (data.connections ?? []).filter(
         (c) => c.from.connectorId === conn.id || c.to.connectorId === conn.id
     );
 }
@@ -85,7 +85,7 @@ export function getComponentConnectorTupleFromConnectionPoint(
 
 export function calculateCavityCountForConnector(conn: ConnectorType,data:SchematicData): number {
     // Count all connections where this connector is involved
-    const count = data.connections.filter(
+    const count = (data.connections ?? []).filter(
         (connection) =>
             connection.from.connectorId === conn.id ||
             connection.to.connectorId === conn.id

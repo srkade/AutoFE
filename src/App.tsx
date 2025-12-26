@@ -8,7 +8,10 @@ import "../src/Styles/global.css";
 import WelcomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
-import { getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarnesses, getVoltageSupply, getSupplyFormula , getSystems, getSystemFormula, getHarnessSchematic, getWires } from "./services/api";
+import {
+  getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarnesses,
+  getVoltageSupply, getSupplyFormula, getSystems, getSystemFormula, getHarnessSchematic, getWires, getWireDetailsByWireCode
+} from "./services/api";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 import RegisterForm from "./pages/RegistrationForm";
 
@@ -377,7 +380,7 @@ export default function App() {
       )}
 
       {/* USER DASHBOARD */}
-      {page === "dashboard" && role === "user" &&  token &&(
+      {page === "dashboard" && role === "user" && token && (
         <div
           style={{
             height: "100vh",
@@ -446,7 +449,7 @@ export default function App() {
                     }
                     if (item.type === "DTC") {
                       const dtcData = await getDtcSchematic(item.code);
-                      
+
 
                       const converted = normalizeSchematic(dtcData);
 
@@ -458,6 +461,44 @@ export default function App() {
                       setSelectedItem(updatedItem);
                       setMergedSchematic(null);
                       console.log("DTC schematic set and ready to render");
+                      return;
+                    }
+                    if (item.type === "Supply") {
+                      const supplyData = await getSupplyFormula(String(item.code));
+                      console
+
+                      const converted = normalizeSchematic(supplyData);
+
+                      const updatedItem = {
+                        ...item,
+                        schematicData: converted,
+                      };
+
+                      setSelectedItem(updatedItem);
+                      setMergedSchematic(null);
+                      console.log("Voltage Supply schematic set and ready to render");
+                      return;
+                    }
+
+                    if (item.type === "wire") {
+                      console.log(" Loading wire circuit for:", item.code);
+
+                      const wireDetails = await getWireDetailsByWireCode(item.code);
+                      console.log("Wire details received:", wireDetails);
+
+                      // Convert wireList rows → schematic
+                      const schematicData = normalizeSchematic({
+                        name: `Wire ${item.code}`,
+                        wires: wireDetails
+                      });
+
+                      const updatedItem = {
+                        ...item,
+                        schematicData
+                      };
+
+                      setSelectedItem(updatedItem);
+                      setMergedSchematic(null);
                       return;
                     }
                     console.log("Loaded schematic:", schematicData);
@@ -484,7 +525,7 @@ export default function App() {
               />
 
               {!isMobile && selectedItem?.schematicData && (
-                <Schematic data={selectedItem.schematicData} activeTab={activeTab} />
+                <Schematic key={selectedItem.code} data={selectedItem.schematicData} activeTab={activeTab} />
               )}
 
               <MainPanel
@@ -618,7 +659,7 @@ export default function App() {
                             return;
                           }
                           console.log("Loaded schematic:", schematicData);
-                          
+
                           if (item.type === "DTC") {
                             const dtcData = await getDtcSchematic(item.code);
                             console
@@ -633,6 +674,27 @@ export default function App() {
                             setSelectedItem(updatedItem);
                             setMergedSchematic(null);
                             console.log("DTC schematic set and ready to render");
+                            return;
+                          }
+                          if (item.type === "wire") {
+                            console.log(" Loading wire circuit for:", item.code);
+
+                            const wireDetails = await getWireDetailsByWireCode(item.code);
+                            console.log("Wire details received:", wireDetails);
+
+                            // Convert wireList rows → schematic
+                            const schematicData = normalizeSchematic({
+                              name: `Wire ${item.code}`,
+                              wires: wireDetails
+                            });
+
+                            const updatedItem = {
+                              ...item,
+                              schematicData
+                            };
+
+                            setSelectedItem(updatedItem);
+                            setMergedSchematic(null);
                             return;
                           }
                           console.log("Loaded schematic:", schematicData);
@@ -659,7 +721,7 @@ export default function App() {
                     />
 
                     {!isMobile && selectedItem?.schematicData && (
-                      <Schematic data={selectedItem.schematicData} activeTab={schematicTab} />
+                      <Schematic key={selectedItem.code} data={selectedItem.schematicData} activeTab={schematicTab} />
                     )}
 
                     <MainPanel

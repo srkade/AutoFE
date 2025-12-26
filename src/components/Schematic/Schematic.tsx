@@ -231,6 +231,13 @@ export default function Schematic({
     }
   }, [fitViewBox]);
 
+  // Reset view when data changes
+  useEffect(() => {
+    if (fitViewBox) {
+      resetView(svgWrapperRef, fitViewBox, setViewBox);
+    }
+  }, [data, fitViewBox]);
+
   // Attach wheel listener with { passive: false } to allow preventDefault
   useEffect(() => {
     const svgElement = svgWrapperRef.current?.querySelector("svg");
@@ -270,20 +277,20 @@ export default function Schematic({
   const connectorNamePadding = 25;
   const connectorSpacing = 30; //change to add spacing between greenbox
 
-  var maxX = 0;
-  var maxY =
-    padding +
-    componentSize.height +
-    spaceForWires(data) +
-    componentSize.height +
-    padding;
-
   useLayoutEffect(() => {
+    // Calculate maxY based on current data
+    var maxY =
+      padding +
+      componentSize.height +
+      spaceForWires(data) +
+      componentSize.height +
+      padding;
+
     let newWidths: { [id: string]: number } = {};
     let connWidths: { [id: string]: number } = {};
     let tempMaxX = 0;
 
-    data.components.forEach((comp) => {
+    (data.components || []).forEach((comp) => {
       const ref = componentNameRefs.current[comp.id];
       if (ref) {
         newWidths[comp.id] = ref.getBBox().width;
@@ -292,7 +299,7 @@ export default function Schematic({
       }
       tempMaxX += newWidths[comp.id];
 
-      comp.connectors.forEach((conn) => {
+      (comp.connectors || []).forEach((conn) => {
         const ref = connectorNameRefs.current[conn.id];
         if (ref) {
           connWidths[conn.id] = ref.getBBox().width;
@@ -305,7 +312,7 @@ export default function Schematic({
     setConnectorNameWidths(connWidths);
     // Connections count
     const connCount: { [id: string]: number } = {};
-    data.connections.forEach((conn) => {
+    data.connections?.forEach((conn) => {
       connCount[conn.from.connectorId] =
         (connCount[conn.from.connectorId] || 0) + 1;
       connCount[conn.to.connectorId] =
@@ -352,7 +359,7 @@ export default function Schematic({
     y2: number
   ): JSX.Element | undefined {
     let intersection = null;
-    for (let j = 0; j < data.connections.length; j++) {
+    for (let j = 0; j < (data.connections?.length ?? 0); j++) {
       if (i === j) continue;
       const w2 = data.connections[j];
       const f2 = w2.from;
@@ -441,7 +448,7 @@ export default function Schematic({
       const connectionCount = componentConnections.length;
       if (connectionCount > 1) {
         let connectorWidth = connectorSpacing;
-        component.connectors.forEach((conn) => {
+        (component.connectors || []).forEach((conn) => {
           connectorWidth += getWidthForConnector(conn, component) + connectorSpacing;
         });
         width = Math.max(width, connectorWidth, width); // take the largest of fuse width, connectors, default
@@ -452,17 +459,19 @@ export default function Schematic({
   }
 
   function getXForComponent(component: ComponentType): number {
-    const index = data.components.findIndex((c) => c.id === component.id);
+    const index = (data.components || []).findIndex((c) => c.id === component.id);
     let x = padding;
     for (let i = 0; i < index; i++) {
-      const compBefore = data.components[i];
-      x += getWidthForComponent(compBefore) + padding;
+      const compBefore = data.components?.[i];
+      if (compBefore) {
+        x += getWidthForComponent(compBefore) + padding;
+      }
     }
     return x;
   }
 
   function getYForComponent(component: ComponentType): number {
-    let isMasterComponent = data.masterComponents.includes(component.id);
+    let isMasterComponent = (data.masterComponents || []).includes(component.id);
     const y = isMasterComponent
       ? padding
       : padding +
@@ -489,15 +498,17 @@ export default function Schematic({
   ): number {
     let x = getXForComponent(component);
     if (component.shape === "rectangle") {
-      let connectorCount = component.connectors.length;
-      let index = component.connectors.findIndex((c) => c.id === connector.id);
+      let connectorCount = component.connectors?.length || 0;
+      let index = (component.connectors || []).findIndex((c) => c.id === connector.id);
       var connWidth = 0;
       if (connectorCount > 1) {
         connWidth += connectorSpacing;
         for (var i = 0; i < index; i++) {
-          let conn = component.connectors[i];
-          connWidth += getWidthForConnector(conn, component);
-          connWidth += connectorSpacing;
+          let conn = component.connectors?.[i];
+          if (conn) {
+            connWidth += getWidthForConnector(conn, component);
+            connWidth += connectorSpacing;
+          }
         }
         return x + connWidth;
       }
@@ -505,7 +516,9 @@ export default function Schematic({
     return (
       x +
       getWidthForComponent(component) / 2 -
-      getWidthForConnector(component.connectors[0], component) / 2
+      (component.connectors && component.connectors.length > 0 
+        ? getWidthForConnector(component.connectors[0], component) / 2 
+        : 0)
     );
   }
 
@@ -513,14 +526,14 @@ export default function Schematic({
     connector: ConnectorType,
     component: ComponentType
   ): number {
-    let isMasterComponent = data.masterComponents.includes(component.id);
+    let isMasterComponent = (data.masterComponents || []).includes(component.id);
     return isMasterComponent
       ? getYForComponent(component) + componentSize.height
       : getYForComponent(component) - 20;
   }
 
   function getSpliceCenterY(component: ComponentType): number {
-    const isMasterComponent = data.masterComponents.includes(component.id);
+    const isMasterComponent = (data.masterComponents || []).includes(component.id);
     const baseY = getYForComponent(component);
     const offset = connectorHeight / 2 + 2;
 
@@ -961,7 +974,7 @@ export default function Schematic({
                 handleMouseUp();
               }}
             >
-              {data.components.map((comp, componentIndex) => (
+              {(data.components || []).map((comp, componentIndex) => (
                 <g key={comp.id}>
                   {(comp.componentType?.toLowerCase() === "splice" ||
                     comp.label?.toLowerCase() === "splice")
@@ -1182,9 +1195,9 @@ export default function Schematic({
                   >
                     {comp.label + ` (${comp.id})`}
                   </text>
-                  {comp.connectors.map((conn) => (
+                  {(comp.connectors || []).map((conn) => (
                     <g key={conn.id}>
-                      {/* open conditional rendering when the component is not splice */}
+                      {/* render connector box only if component is not a splice */}
                       {comp.componentType?.toLowerCase() !== "splice" && (
                         <rect
                           x={safe(getXForConnector(conn, comp), padding)}
@@ -1228,7 +1241,7 @@ export default function Schematic({
                 </g>
               ))}
 
-              {data.connections.map((wire, i) => {
+              {(data.connections ?? []).map((wire, i) => {
                 const fromConn = wire.from;
                 const toConn = wire.to;
 
@@ -1277,10 +1290,10 @@ export default function Schematic({
 
                 if (!from || !to) return null;
 
-                let isFromMasterComponent = data.masterComponents.includes(
+                let isFromMasterComponent = (data.masterComponents || []).includes(
                   fromComponent!.id
                 );
-                let isToMasterComponent = data.masterComponents.includes(
+                let isToMasterComponent = (data.masterComponents || []).includes(
                   toComponent!.id
                 );
 
@@ -1438,7 +1451,7 @@ export default function Schematic({
                   // Default behavior
                   const offset = getConnectionOffset(
                     i,
-                    data.connections.length,
+                    data.connections?.length ?? 0,
                     fromY,
                     toY,
                     20

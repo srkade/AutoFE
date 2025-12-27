@@ -71,13 +71,17 @@ export default function LeftPanel({
   const filteredData = [...selectedPart, ...otherPart];
 
   const handleItemClick = (item: DashboardItem) => {
-    onItemSelect(item);
+    if (showCheckbox && selectedCodes.length > 0) {
+      if (!selectedCodes.includes(item.code)) {
+        handleCheckboxChange(item);
+      }
+    } else {
+      onItemSelect(item);
+    }
   };
 
   const handleCheckboxChange = (item: DashboardItem) => {
     const code = item.code;
-
-    // If item already checked → uncheck normally
     if (selectedCodes.includes(code)) {
       const newSelectedCodes = selectedCodes.filter((c) => c !== code);
       setSelectedCodes(newSelectedCodes);

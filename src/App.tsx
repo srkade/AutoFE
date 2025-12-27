@@ -318,16 +318,72 @@ export default function App() {
         return;
       }
 
-      // Existing behavior for components, DTC, etc.
-      const fetchedSchematics = await Promise.all(
+      // Determine the type of each code based on the current tab context
+      const fetchResults = await Promise.all(
         codes.map(async (code) => {
-
-          const data = await getComponentSchematic(code);
-          return normalizeSchematic(data);
+          // Find the dashboard item to determine the type
+          // First, try to find an item that matches the current tab context
+          let dashboardItem;
+          
+          if (tab === "voltage") {
+            // When in voltage tab, prioritize supply items with the same code
+            dashboardItem = dashboardItems.find(item => item.code === code && item.type === "Supply");
+          }
+          
+          // If no supply item found in voltage tab or not in voltage tab, find any item with the code
+          if (!dashboardItem) {
+            dashboardItem = dashboardItems.find(item => item.code === code);
+          }
+                
+          let data;
+          let sourceType: string | undefined;
+                
+          if (dashboardItem) {
+            switch (dashboardItem.type) {
+              case "Supply":
+                data = await getSupplyFormula(code);
+                sourceType = "Supply";
+                break;
+              case "DTC":
+                data = await getDtcSchematic(code);
+                sourceType = "DTC";
+                break;
+              case "System":
+                data = await getSystemFormula(Number(code));
+                sourceType = "System";
+                break;
+              case "Harness":
+                data = await getHarnessSchematic(code);
+                sourceType = "Harness";
+                break;
+              default: // Component, Controller, etc.
+                data = await getComponentSchematic(code);
+                sourceType = "Component";
+                break;
+            }
+          } else {
+            // Fallback to component schematic if type is unknown
+            data = await getComponentSchematic(code);
+            sourceType = "Component";
+          }
+                
+          const normalized = normalizeSchematic(data);
+          // Add source type information to the normalized data
+          return { ...normalized, sourceType };
         })
       );
+            
+      // Extract the actual schematic data for merging
+      const fetchedSchematics = fetchResults.map(result => {
+        const { sourceType, ...schematicData } = result;
+        return schematicData;
+      });
+            
+      // Pass source information to the merge function
+      const sourceTypes = fetchResults.map(result => result.sourceType);
 
-      const merged = mergeSchematicConfigs(...fetchedSchematics);
+      const currentTab = role === "admin" ? schematicTab : activeTab;
+      const merged = mergeSchematicConfigs(fetchedSchematics, undefined, currentTab);
       setMergedSchematic(merged);
       setSelectedItem(null);
     } catch (err) {
@@ -418,6 +474,9 @@ export default function App() {
                   try {
                     console.log("🔗 Item clicked:", item.code, "Type:", item.type);
 
+                    // Clear any merged schematic when selecting a single item
+                    setMergedSchematic(null);
+
                     //  HARNESS CHECK
                     if (item.type === "Harness") {
                       console.log(" Loading harness schematic for:", item.code);
@@ -434,7 +493,6 @@ export default function App() {
                       };
 
                       setSelectedItem(updatedItem);
-                      setMergedSchematic(null);
                       console.log(" Harness schematic set and ready to render");
                       return;
                     }
@@ -444,28 +502,10 @@ export default function App() {
 
                     if (item.type === "System") {
                       schematicData = await getSystemFormula(Number(item.code));
-                    } else {
-                      schematicData = await getComponentSchematic(item.code);
-                    }
-                    if (item.type === "DTC") {
-                      const dtcData = await getDtcSchematic(item.code);
-
-
-                      const converted = normalizeSchematic(dtcData);
-
-                      const updatedItem = {
-                        ...item,
-                        schematicData: converted,
-                      };
-
-                      setSelectedItem(updatedItem);
-                      setMergedSchematic(null);
-                      console.log("DTC schematic set and ready to render");
-                      return;
-                    }
-                    if (item.type === "Supply") {
+                    } else if (item.type === "Supply") {
+                      // For supply components (including fuses), get the supply formula
                       const supplyData = await getSupplyFormula(String(item.code));
-                      console
+                      console.log("Fuse connections", supplyData);
 
                       const converted = normalizeSchematic(supplyData);
 
@@ -475,9 +515,23 @@ export default function App() {
                       };
 
                       setSelectedItem(updatedItem);
-                      setMergedSchematic(null);
                       console.log("Voltage Supply schematic set and ready to render");
                       return;
+                    } else if (item.type === "DTC") {
+                      const dtcData = await getDtcSchematic(item.code);
+
+                      const converted = normalizeSchematic(dtcData);
+
+                      const updatedItem = {
+                        ...item,
+                        schematicData: converted,
+                      };
+
+                      setSelectedItem(updatedItem);
+                      console.log("DTC schematic set and ready to render");
+                      return;
+                    } else {
+                      schematicData = await getComponentSchematic(item.code);
                     }
 
                     if (item.type === "wire") {
@@ -498,7 +552,6 @@ export default function App() {
                       };
 
                       setSelectedItem(updatedItem);
-                      setMergedSchematic(null);
                       return;
                     }
                     console.log("Loaded schematic:", schematicData);
@@ -510,7 +563,6 @@ export default function App() {
                     };
 
                     setSelectedItem(updatedItem);
-                    setMergedSchematic(null);
                     console.log("Updated Item with schematic data:", updatedItem);
 
                   } catch (err) {
@@ -524,7 +576,8 @@ export default function App() {
                 isMobile={isMobile}
               />
 
-              {!isMobile && selectedItem?.schematicData && (
+              {/* Render single item schematic only if no merged schematic is present */}
+              {!isMobile && selectedItem?.schematicData && !mergedSchematic && (
                 <Schematic key={selectedItem.code} data={selectedItem.schematicData} activeTab={activeTab} />
               )}
 
@@ -612,6 +665,9 @@ export default function App() {
                         try {
                           console.log("🔗 Item clicked:", item.code, "Type:", item.type);
 
+                          // Clear any merged schematic when selecting a single item
+                          setMergedSchematic(null);
+
                           //  HARNESS CHECK
                           if (item.type === "Harness") {
                             console.log(" Loading harness schematic for:", item.code);
@@ -628,7 +684,6 @@ export default function App() {
                             };
 
                             setSelectedItem(updatedItem);
-                            setMergedSchematic(null);
                             console.log(" Harness schematic set and ready to render");
                             return;
                           }
@@ -638,13 +693,10 @@ export default function App() {
 
                           if (item.type === "System") {
                             schematicData = await getSystemFormula(Number(item.code));
-                          } else {
-                            schematicData = await getComponentSchematic(item.code);
-                          }
-
-                          if (item.type === "Supply") {
+                          } else if (item.type === "Supply") {
+                            // For supply components (including fuses), get the supply formula
                             const supplyData = await getSupplyFormula(String(item.code));
-                            console
+                            console.log("Fuse connections", supplyData);
 
                             const converted = normalizeSchematic(supplyData);
 
@@ -654,15 +706,11 @@ export default function App() {
                             };
 
                             setSelectedItem(updatedItem);
-                            setMergedSchematic(null);
                             console.log("Voltage Supply schematic set and ready to render");
                             return;
-                          }
-                          console.log("Loaded schematic:", schematicData);
-
-                          if (item.type === "DTC") {
+                          } else if (item.type === "DTC") {
                             const dtcData = await getDtcSchematic(item.code);
-                            console
+                            console.log("DTC data received:", dtcData);
 
                             const converted = normalizeSchematic(dtcData);
 
@@ -672,10 +720,13 @@ export default function App() {
                             };
 
                             setSelectedItem(updatedItem);
-                            setMergedSchematic(null);
                             console.log("DTC schematic set and ready to render");
                             return;
+                          } else {
+                            schematicData = await getComponentSchematic(item.code);
                           }
+                          console.log("Loaded schematic:", schematicData);
+
                           if (item.type === "wire") {
                             console.log(" Loading wire circuit for:", item.code);
 
@@ -694,7 +745,6 @@ export default function App() {
                             };
 
                             setSelectedItem(updatedItem);
-                            setMergedSchematic(null);
                             return;
                           }
                           console.log("Loaded schematic:", schematicData);
@@ -706,7 +756,6 @@ export default function App() {
                           };
 
                           setSelectedItem(updatedItem);
-                          setMergedSchematic(null);
                           console.log("Updated Item with schematic data:", updatedItem);
 
                         } catch (err) {
@@ -720,7 +769,8 @@ export default function App() {
                       isMobile={isMobile}
                     />
 
-                    {!isMobile && selectedItem?.schematicData && (
+                    {/* Render single item schematic only if no merged schematic is present */}
+                    {!isMobile && selectedItem?.schematicData && !mergedSchematic && (
                       <Schematic key={selectedItem.code} data={selectedItem.schematicData} activeTab={schematicTab} />
                     )}
 

@@ -15,7 +15,7 @@ export default function MainPanel({ selectedItem, activeTab, isMobile }: MainPan
   const placeholderMessages: Record<string, string> = {
     Components: "Choose a component from the left panel to view its schematic diagram with interactive controls.",
     System: "Choose a system from the left panel to view system formula and details.",
-    Fuse: "Choose a fuse from the left panel to view fuse connections.",
+    voltage: "Choose a voltage supply/fuse from the left panel to view fuse connections.",
     Wire: "Choose a wire from the left panel to view wire details.",
   };
 
@@ -85,7 +85,9 @@ export default function MainPanel({ selectedItem, activeTab, isMobile }: MainPan
             justifyContent: "center",
           }}
         >
-          <Schematic data={selectedItem.schematicData} />
+          {selectedItem?.schematicData && (
+            <Schematic data={selectedItem.schematicData} />
+          )}
         </div>
       )}
     </div>

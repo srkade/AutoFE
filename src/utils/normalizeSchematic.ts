@@ -1,11 +1,11 @@
 export function normalizeSchematic(apiData: any) {
   // Handle case where data is already in the expected format
   if (!apiData) return apiData;
-  
+
   // If it has schematicData property, use that
   if (apiData.schematicData) {
     const data = apiData.schematicData;
-    
+
     // Wire color mapping
     const colorMap: Record<string, string> = {
       'OG': 'orange',
@@ -29,7 +29,7 @@ export function normalizeSchematic(apiData: any) {
       if (component.componentCode && component.componentCode !== component.id) {
         return component.componentCode;
       }
-      
+
       // Try to extract from engineeringConnectorCode (e.g., "XJ1" -> "ICC", "XB3" -> "B3")
       if (component.engineeringConnectorCode) {
         const connCode = component.engineeringConnectorCode;
@@ -64,17 +64,32 @@ export function normalizeSchematic(apiData: any) {
       componentCodeMap[c.id] = shortCode;
     });
 
+    const resolveCategory = (c: any) => {
+      if (c.category) return c.category;
+      if (c.componentCategory) return c.componentCategory;
+      if (apiData.type === "Supply") return "Supply";
+      if (apiData.type === "Harness") return "Harness";
+      return "Component";
+    };
+
+    const resolveId = (c: any) => {
+      return c.id || c.code || `${resolveCategory(c)}-${c.label}`;
+    };
+
     return {
       code: data.code,
       name: data.name,
       masterComponents: data.masterComponents || [],
       components: (data.components || []).map((c: any) => {
-        const shortCode = extractComponentCode(c);
-        
+        const category = resolveCategory(c);
+        const id = category === "Component"
+          ? extractComponentCode(c)
+          : resolveId(c);
+
         return {
-          id: shortCode,
-          label: c.label || c.engineeringComponentName || shortCode,
-          category: c.componentCategory || c.category || 'Component',
+          id,
+          label: c.label || c.engineeringComponentName || id,
+          category,
           shape: c.shape || 'rectangle',
           componentType: c.componentType,
           connectors: c.connectors?.map((conn: any) => ({
@@ -141,7 +156,7 @@ export function normalizeSchematic(apiData: any) {
   else if (apiData.wires) {
     // The wire details already have the expected structure
     const wireData = apiData.wires;
-    
+
     return {
       code: wireData.code,
       name: apiData.name || wireData.name || 'Wire Schematic',
@@ -178,12 +193,12 @@ export function normalizeSchematic(apiData: any) {
       }))
     };
   }
-  
+
   // If data doesn't have expected properties, return as-is
   if (!apiData.components && !apiData.connections && !apiData.masterComponents) {
     return apiData;
   }
-  
+
   // If none of the above conditions match, assume apiData is already in the expected format
   return {
     code: apiData.code,

@@ -516,8 +516,8 @@ export default function Schematic({
     return (
       x +
       getWidthForComponent(component) / 2 -
-      (component.connectors && component.connectors.length > 0 
-        ? getWidthForConnector(component.connectors[0], component) / 2 
+      (component.connectors && component.connectors.length > 0
+        ? getWidthForConnector(component.connectors[0], component) / 2
         : 0)
     );
   }
@@ -1258,6 +1258,11 @@ export default function Schematic({
                 );
                 const toComponent = toData[0];
                 var to = toData[1];
+                console.log(
+                  wire.wireDetails?.fuse,
+                  fromComponent?.id,
+                  fromComponent?.category
+                );
                 if (fromComponent?.componentType?.toLowerCase() === "splice" && !from) {
                   const centerX =
                     getXForComponent(fromComponent) + getWidthForComponent(fromComponent) / 2;
@@ -1473,8 +1478,8 @@ export default function Schematic({
                   getXForConnector(from, fromComponent!) +
                   getWidthForConnector(from, fromComponent!) / 2;
                 const fuseY = getYForConnector(from, fromComponent!) - 10; // small offset above connector
-                const allowedCavities = [42, 46, 43, 47, 44, 48, 36, 40, 35, 39, 34, 38, 26, 30];
                 const fromCavity = Number(wire.from.cavity); // get cavity of "from" connector
+                const toCavity = Number(wire.to.cavity); // get cavity of "to" connector
 
                 let wireElement;
                 wireElement = (
@@ -1490,14 +1495,12 @@ export default function Schematic({
                               color={wire.color}
                               size={10}
                             />
-                            {fromComponent?.category?.toLowerCase() === "supply" &&
-                              fromComponent?.label?.toLowerCase().includes("load center") &&
-                              wire.wireDetails?.fuse &&
-                              allowedCavities.includes(fromCavity) && (  //  only show for allowed cavities
+                            {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator")) &&
+                              wire.wireDetails?.fuse && (
                                 <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY - 45, 0)})`}>
 
                                   {/* LEFT NORMAL TEXT (not flipped) */}
-                                  {wire.wireDetails.fuse.code && (
+                                  {wire.wireDetails?.fuse?.code && (
                                     <text
                                       x={-10}
                                       y={4}
@@ -1517,7 +1520,7 @@ export default function Schematic({
                                   </g>
 
                                   {/* RIGHT NORMAL TEXT (not flipped) */}
-                                  {wire.wireDetails.fuse.ampere && (
+                                  {wire.wireDetails?.fuse?.ampere && (
                                     <text
                                       x={10}
                                       y={4}
@@ -1550,14 +1553,12 @@ export default function Schematic({
                             </g>
 
                             {/* Fuse Code + Symbol + Amp (Bottom Side, normal orientation) */}
-                            {fromComponent?.category?.toLowerCase() === "supply" &&
-                              fromComponent?.label?.toLowerCase().includes("load center") &&
-                              wire.wireDetails?.fuse &&
-                              allowedCavities.includes(fromCavity) && (
+                            {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator")) &&
+                              wire.wireDetails?.fuse && (
                                 <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY + 28, 0)})`}>
 
                                   {/* CODE (left) */}
-                                  {wire.wireDetails.fuse.code && (
+                                  {wire.wireDetails?.fuse?.code && (
                                     <text
                                       x={-22}
                                       y={4}
@@ -1575,7 +1576,7 @@ export default function Schematic({
                                   <FuseSymbol cx={0} cy={0} size={12} color="black" />
 
                                   {/* AMP (right) */}
-                                  {wire.wireDetails.fuse.ampere && (
+                                  {wire.wireDetails?.fuse?.ampere && (
                                     <text
                                       x={22}
                                       y={4}
@@ -1649,10 +1650,8 @@ export default function Schematic({
                             />
 
                             {/* Fuse flipped when trident on top */}
-                            {toComponent?.category?.toLowerCase() === "supply" &&
-                              toComponent?.label
-                                ?.toLowerCase()
-                                .includes("load center") && (
+                            {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator")) &&
+                              wire.wireDetails?.fuse && (
                                 <g
                                   transform={`translate(${safe(toX, 0)}, ${safe(toY - 10, 0)
                                     }) scale(1, -1)`}
@@ -1680,10 +1679,8 @@ export default function Schematic({
                               />
                             </g>
 
-                            {toComponent?.category?.toLowerCase() === "supply" &&
-                              toComponent?.label
-                                ?.toLowerCase()
-                                .includes("load center") && (
+                            {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator")) &&
+                              wire.wireDetails?.fuse && (
                                 <FuseSymbol
                                   cx={safe(toX, 0)}
                                   cy={safe(toY + 35, 0)}

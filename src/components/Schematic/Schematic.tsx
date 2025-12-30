@@ -1495,7 +1495,7 @@ export default function Schematic({
                               color={wire.color}
                               size={10}
                             />
-                            {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator")) &&
+                            {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && fromComponent?.label?.toLowerCase().includes("load center"))) &&
                               wire.wireDetails?.fuse && (
                                 <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY - 45, 0)})`}>
 
@@ -1553,7 +1553,7 @@ export default function Schematic({
                             </g>
 
                             {/* Fuse Code + Symbol + Amp (Bottom Side, normal orientation) */}
-                            {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator")) &&
+                            {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && fromComponent?.label?.toLowerCase().includes("load center"))) &&
                               wire.wireDetails?.fuse && (
                                 <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY + 28, 0)})`}>
 
@@ -1650,7 +1650,7 @@ export default function Schematic({
                             />
 
                             {/* Fuse flipped when trident on top */}
-                            {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator")) &&
+                            {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && toComponent?.label?.toLowerCase().includes("load center"))) &&
                               wire.wireDetails?.fuse && (
                                 <g
                                   transform={`translate(${safe(toX, 0)}, ${safe(toY - 10, 0)
@@ -1679,7 +1679,7 @@ export default function Schematic({
                               />
                             </g>
 
-                            {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator")) &&
+                            {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && toComponent?.label?.toLowerCase().includes("load center"))) &&
                               wire.wireDetails?.fuse && (
                                 <FuseSymbol
                                   cx={safe(toX, 0)}

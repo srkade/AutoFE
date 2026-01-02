@@ -3,7 +3,7 @@ import logo from "../assets/Images/logo.png";
 import { loginUser } from "../services/api";
 
 interface LoginPageProps {
-  onLoginSuccess: (role: "author" | "user",user:any) => void;
+  onLoginSuccess: (role: "superadmin" | "author" | "user",user:any) => void;
   onRegisterClick: () => void;
   setToken: (token: string) => void;
 }
@@ -17,6 +17,29 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick,setToken }: 
     e.preventDefault();
     setError("");
 
+    // Check for hardcoded super admin credentials
+    if (username === "superadmin@example.com" && password === "SuperAdmin123!") {
+      // Hardcoded super admin credentials
+      const superAdminResponse = {
+        token: "hardcoded-superadmin-token",
+        user: {
+          firstName: "Super",
+          lastName: "Admin",
+          email: "superadmin@example.com",
+          role: "Super Admin",
+          status: "Active"
+        }
+      };
+      
+      // Store token in sessionStorage
+      sessionStorage.setItem("token", superAdminResponse.token);
+      setToken(superAdminResponse.token);
+      
+      // Call parent callback with superadmin role
+      onLoginSuccess("superadmin", superAdminResponse.user);
+      return;
+    }
+    
     try {
       const response = await loginUser({ email: username, password });
       console.log("LoginResponse:", response);
@@ -33,8 +56,15 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick,setToken }: 
       // window.location.reload();
 
       // Call parent callback with role from backend
-      const role = response.role?.toLowerCase();
-      onLoginSuccess(role === "author" ? "author" : "user",response);
+      const userRole = response.role?.toLowerCase();
+      
+      onLoginSuccess(
+        userRole === "author" ? "author" : 
+        userRole === "admin" ? "author" : 
+        userRole === "super admin" || response.role === "Super Admin" ? "superadmin" : 
+        "user",
+        response
+      );
     } catch (err) {
       console.error("Login failed:", err);
       setError("Invalid email or password");

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import NavigationTabs from "./panels/NavigationTabs";
 import LeftPanel from "./panels/LeftPanel";
 import MainPanel from "./panels/MainPanel";
@@ -25,20 +25,22 @@ export type DashboardItem = {
   schematicData: SchematicData;
 };
 import AdminNavigationTabs from "./pages/AdminNavigationTabs";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import ManageUsers from "./pages/ManageUsers";
 import ImportFiles from "./pages/ImportedFiles";
 export default function App() {
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [page, setPage] = useState<"login" | "register" | "dashboard">("login");
-  const [role, setRole] = useState<"author" | "user" | null>(null);
+  const [role, setRole] = useState<"superadmin" | "author" | "user" | null>(null);
   const [currentUser, setCurrentUser] = useState<{
     name: string;
     email: string;
-    role: "author" | "user";
+    role: "superadmin" | "author" | "user";
   } | null>(null);
 
-  const handleLoginSuccess = (loggedInRole: "author" | "user", user: any) => {
+
+  const handleLoginSuccess = (loggedInRole: "superadmin" | "author" | "user", user: any) => {
     const userData = {
       name: `${user.firstName} ${user.lastName}`,
       email: user.email,
@@ -61,12 +63,14 @@ export default function App() {
 
     if (storedUser && storedRole && storedToken) {
       setCurrentUser(JSON.parse(storedUser));
-      setRole(storedRole as "author" | "user");
+      setRole(storedRole as "superadmin" | "author" | "user");
       setPage("dashboard");
     } else {
       setPage("login");
     }
   }, []);
+  
+
 
   const handleLogout = () => {
     // Clear session storage
@@ -798,6 +802,11 @@ export default function App() {
             )}
           </div>
         </div>
+      )}
+      
+      {/* SUPER ADMIN DASHBOARD */}
+      {page === "dashboard" && role === "superadmin" && token && (
+        <SuperAdminDashboard token={token} />
       )}
     </div>
   );

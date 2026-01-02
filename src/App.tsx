@@ -31,14 +31,14 @@ export default function App() {
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [page, setPage] = useState<"login" | "register" | "dashboard">("login");
-  const [role, setRole] = useState<"admin" | "user" | null>(null);
+  const [role, setRole] = useState<"author" | "user" | null>(null);
   const [currentUser, setCurrentUser] = useState<{
     name: string;
     email: string;
-    role: "admin" | "user";
+    role: "author" | "user";
   } | null>(null);
 
-  const handleLoginSuccess = (loggedInRole: "admin" | "user", user: any) => {
+  const handleLoginSuccess = (loggedInRole: "author" | "user", user: any) => {
     const userData = {
       name: `${user.firstName} ${user.lastName}`,
       email: user.email,
@@ -61,7 +61,7 @@ export default function App() {
 
     if (storedUser && storedRole && storedToken) {
       setCurrentUser(JSON.parse(storedUser));
-      setRole(storedRole as "admin" | "user");
+      setRole(storedRole as "author" | "user");
       setPage("dashboard");
     } else {
       setPage("login");
@@ -302,7 +302,7 @@ export default function App() {
 
   async function handleViewSchematic(codes: string[]) {
     try {
-      const tab = role === "admin" ? schematicTab : activeTab;
+      const tab = role === "author" ? schematicTab : activeTab;
 
       if (tab === "harnesses" && codes.length > 0) {
 
@@ -382,7 +382,7 @@ export default function App() {
       // Pass source information to the merge function
       const sourceTypes = fetchResults.map(result => result.sourceType);
 
-      const currentTab = role === "admin" ? schematicTab : activeTab;
+      const currentTab = role === "author" ? schematicTab : activeTab;
       const merged = mergeSchematicConfigs(fetchedSchematics, undefined, currentTab);
       setMergedSchematic(merged);
       setSelectedItem(null);
@@ -398,7 +398,7 @@ export default function App() {
   const iccComponent = dashboardItems.find(item => item.name === "ICC") || null;
 
   const filteredItems = dashboardItems.filter((item) => {
-    const filterBase = role === "admin" ? schematicTab : activeTab;
+    const filterBase = role === "author" ? schematicTab : activeTab;
 
     switch (filterBase) {
       case "components":
@@ -432,7 +432,7 @@ export default function App() {
 
       {page === "register" && (
         <RegisterForm onBackToLogin={() => setPage("login")}
-          isAdmin={role === "admin"} />
+          isAuthor={role === "author"} />
       )}
 
       {/* USER DASHBOARD */}
@@ -603,8 +603,8 @@ export default function App() {
           )}
         </div>
       )}
-      {/* Admin DASHBOARD */}
-      {page === "dashboard" && role === "admin" && token && (
+      {/* Author DASHBOARD */}
+      {page === "dashboard" && role === "author" && token && (
         <div style={{ height: "100vh", display: "flex", flexDirection: "row" }}>
 
           <AdminNavigationTabs

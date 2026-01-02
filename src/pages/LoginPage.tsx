@@ -3,7 +3,7 @@ import logo from "../assets/Images/logo.png";
 import { loginUser } from "../services/api";
 
 interface LoginPageProps {
-  onLoginSuccess: (role: "admin" | "user",user:any) => void;
+  onLoginSuccess: (role: "author" | "user",user:any) => void;
   onRegisterClick: () => void;
   setToken: (token: string) => void;
 }
@@ -34,7 +34,7 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick,setToken }: 
 
       // Call parent callback with role from backend
       const role = response.role?.toLowerCase();
-      onLoginSuccess(role === "admin" ? "admin" : "user",response);
+      onLoginSuccess(role === "author" ? "author" : "user",response);
     } catch (err) {
       console.error("Login failed:", err);
       setError("Invalid email or password");

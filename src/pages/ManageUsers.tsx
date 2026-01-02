@@ -386,7 +386,7 @@ export default function ManageUsersModern() {
             showLeftPanel={false}
             showCloseButton={true}
             customHeight="200px"
-            isAdmin={true}
+            isAuthor={true}
           />
         </div>
       )}

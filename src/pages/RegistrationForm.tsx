@@ -10,7 +10,7 @@ interface RegisterPageProps {
   showLeftPanel?: boolean;
   showCloseButton?: boolean;
   customHeight?: string;
-  isAdmin?: boolean;
+  isAuthor?: boolean;
 }
 
 export default function RegisterForm({
@@ -20,7 +20,7 @@ export default function RegisterForm({
   showLeftPanel = true,
   showCloseButton = false,
   customHeight = "650px",
-  isAdmin = false,
+  isAuthor = false,
 }: RegisterPageProps) {
   // ---------------- FIELDS ----------------
   const [firstName, setFirstName] = useState(userToEdit?.firstName || "");
@@ -55,7 +55,7 @@ export default function RegisterForm({
       lastName,
       email,
       role,
-      status: role === "Admin" ? "Active" : "Pending", // Admin active by default, user pending
+      status: role === "Author" ? "Active" : "Pending", // Author active by default, user pending
     };
 
     if (!userToEdit) {
@@ -80,11 +80,11 @@ export default function RegisterForm({
         console.log("Registration Success:", res);
 
         // ---------------- CONDITIONAL ALERT ----------------
-        if (role === "Admin") {
-          alert("Admin registration successful.");
+        if (role === "Author") {
+          alert("Author registration successful.");
         } else {
           alert(
-            "Your account has been created and is pending admin approval. You will be able to login once approved."
+            "Your account has been created and is pending author approval. You will be able to login once approved."
           );
         }
 
@@ -290,11 +290,11 @@ export default function RegisterForm({
                 Select Role
               </option>
               <option value="User">User</option>
-              <option value="Admin">Admin</option>
+              <option value="Author">Author</option>
             </select>
 
             {/* STATUS */}
-            {isAdmin && (
+            {isAuthor && (
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as User["status"])}

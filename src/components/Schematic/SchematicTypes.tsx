@@ -226,7 +226,7 @@ export interface User {
   email: string;
   username: string;
   status: "Active" | "Inactive" | "Pending" | "Banned" | "Suspended"|"Rejected";
-  role: "Admin" | "User" | "Guest" | "Moderator";
+  role: "Admin" | "User" | "Author";
   joined: string;
   lastActive: string;
 }

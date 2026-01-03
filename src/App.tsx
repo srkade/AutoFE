@@ -14,6 +14,7 @@ import {
 } from "./services/api";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 import RegisterForm from "./pages/RegistrationForm";
+import { useTraceNavigation } from './hooks/useTraceNavigation';
 
 export type DashboardItem = {
   code: string;
@@ -28,7 +29,13 @@ import AdminNavigationTabs from "./pages/AdminNavigationTabs";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import ManageUsers from "./pages/ManageUsers";
 import ImportFiles from "./pages/ImportedFiles";
+import { useCallback } from "react";
+
+
 export default function App() {
+  const trace = useTraceNavigation();
+  const [isTraceMode, setIsTraceMode] = useState(false);
+const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [page, setPage] = useState<"login" | "register" | "dashboard">("login");
@@ -38,6 +45,8 @@ export default function App() {
     email: string;
     role: "superadmin" | "author" | "user";
   } | null>(null);
+
+  
 
 
   const handleLoginSuccess = (loggedInRole: "superadmin" | "author" | "user", user: any) => {
@@ -107,6 +116,7 @@ export default function App() {
   const [systemsList, setSystemsList] = useState<any[]>([]);
   // const [adminUser, setAdminUser] = useState<any>(null);
 
+  
 
 
   const dtcItems: DashboardItem[] = dtcList.map((d) => ({
@@ -398,8 +408,59 @@ export default function App() {
   const [token, setToken] = useState<string | null>(
     sessionStorage.getItem("token")
   );
+  
 
   const iccComponent = dashboardItems.find(item => item.name === "ICC") || null;
+  // Inside App.tsx - Replace handleComponentRightClick
+const handleComponentRightClick = useCallback(async (component: any) => {
+  console.log("🔍 TRACE 1: App.tsx - handleComponentRightClick triggered", component);
+  
+  const componentCode = component.id;
+  const itemName = component.label || component.id;
+  
+  // Find the item in dashboardItems
+  const dashboardItem = dashboardItems.find(i => i.code === componentCode);
+  
+  if (!dashboardItem) {
+    console.error("❌ TRACE 2: Component code not found in dashboardItems:", componentCode);
+    return;
+  }
+
+  console.log("✅ TRACE 3: Found Dashboard Item:", dashboardItem.name, "Type:", dashboardItem.type);
+
+  let targetTab = 'components';
+  if (dashboardItem.type === 'System') targetTab = 'systems';
+  if (dashboardItem.type === 'Harness') targetTab = 'harnesses';
+  if (dashboardItem.type === 'DTC') targetTab = 'DTC';
+  if (dashboardItem.type === 'Supply') targetTab = 'voltage';
+
+  console.log("🚀 TRACE 4: Switching to Tab:", targetTab);
+
+  // Enter Trace Mode
+  trace.enterTrace(targetTab, componentCode, itemName, activeTab);
+  setActiveTab(targetTab);
+
+  try {
+    let rawData;
+    if (targetTab === 'harnesses') rawData = await getHarnessSchematic(componentCode);
+    else if (targetTab === 'voltage') rawData = await getSupplyFormula(componentCode);
+    else if (targetTab === 'DTC') rawData = await getDtcSchematic(componentCode);
+    else if (targetTab === 'systems') rawData = await getSystemFormula(Number(componentCode));
+    else rawData = await getComponentSchematic(componentCode);
+
+    console.log("📥 TRACE 5: API Data Received:", rawData);
+
+    const normalized = normalizeSchematic(rawData);
+    
+    setMergedSchematic(null); 
+    setSelectedItem({ ...dashboardItem, schematicData: normalized });
+    setSelectedCodes([componentCode]);
+    
+    console.log("✨ TRACE 6: SelectedItem Updated. UI should re-render now.");
+  } catch (error) {
+    console.error("❌ TRACE ERROR: API fetch failed", error);
+  }
+}, [dashboardItems, activeTab, trace]);
 
   const filteredItems = dashboardItems.filter((item) => {
     const filterBase = role === "author" ? schematicTab : activeTab;
@@ -423,6 +484,7 @@ export default function App() {
         return true;
     }
   });
+  
 
   return (
     <div>
@@ -581,9 +643,10 @@ export default function App() {
               />
 
               {/* Render single item schematic only if no merged schematic is present */}
-              {!isMobile && selectedItem?.schematicData && !mergedSchematic && (
+              {/* {!isMobile && selectedItem?.schematicData && !mergedSchematic && (
                 <Schematic key={selectedItem.code} data={selectedItem.schematicData} activeTab={activeTab} />
-              )}
+              )} */}
+              
 
               <MainPanel
                 selectedItem={
@@ -602,6 +665,18 @@ export default function App() {
                 activeTab={activeTab}
                 isMultipleComponents={!!mergedSchematic}
                 isMobile={isMobile}
+
+                onComponentRightClick={handleComponentRightClick}
+  traceMode={trace.isTraceMode}
+  traceBreadcrumb={trace.getBreadcrumb()}
+  onBackClick={() => {
+    const prevTab = trace.exitTrace();
+    setActiveTab(prevTab);
+    setSelectedItem(null); 
+    setSelectedItem(null); 
+    setSelectedCodes([]);
+
+  }}
               />
             </div>
           )}
@@ -774,9 +849,9 @@ export default function App() {
                     />
 
                     {/* Render single item schematic only if no merged schematic is present */}
-                    {!isMobile && selectedItem?.schematicData && !mergedSchematic && (
+                    {/* {!isMobile && selectedItem?.schematicData && !mergedSchematic && (
                       <Schematic key={selectedItem.code} data={selectedItem.schematicData} activeTab={schematicTab} />
-                    )}
+                    )} */}
 
                     <MainPanel
                       selectedItem={
@@ -795,6 +870,15 @@ export default function App() {
                       activeTab={schematicTab}
                       isMultipleComponents={!!mergedSchematic}
                       isMobile={isMobile}
+                      onComponentRightClick={handleComponentRightClick}
+  traceMode={trace.isTraceMode}
+  traceBreadcrumb={trace.getBreadcrumb()}
+  onBackClick={() => {
+    const prevTab = trace.exitTrace();
+    setActiveTab(prevTab);
+    setSelectedItem(null); 
+    setSelectedCodes([]);
+  }}
                     />
                   </div>
                 )}

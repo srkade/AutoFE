@@ -71,13 +71,16 @@ export default function Schematic({
   data,
   scale = 1,
   activeTab,
+  onComponentRightClick,
 }: {
   data: SchematicData;
   scale?: number;
   activeTab?: string;
+  onComponentRightClick?: (component: ComponentType, pos: { x: number; y: number }) => void; // <-- ADDED
 }) {
   const svgWrapperRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, component: ComponentType } | null>(null);
 
   // Dragging state
   const [dragging, setDragging] = useState(false);
@@ -140,6 +143,11 @@ export default function Schematic({
     setPopupWire(null);
   };
 
+  useEffect(() => {
+    const closeMenu = () => setContextMenu(null);
+    window.addEventListener('click', closeMenu);
+    return () => window.removeEventListener('click', closeMenu);
+  }, []);
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -915,6 +923,7 @@ export default function Schematic({
 
             <svg
               onClick={(e) => {
+                setContextMenu(null)
                 // Only deselect if click is on the SVG itself, not on components
                 if ((e.target as SVGElement).tagName === "svg") {
                   setSelectedComponentIds([]);
@@ -974,6 +983,7 @@ export default function Schematic({
                 handleMouseUp();
               }}
             >
+              
               {(data.components || []).map((comp, componentIndex) => (
                 <g key={comp.id}>
                   {(comp.componentType?.toLowerCase() === "splice" ||
@@ -1040,10 +1050,22 @@ export default function Schematic({
                             strokeDasharray={
                               componentIndex !== 0 ? "6,4" : undefined
                             }
-                            onClick={() => {
-                              console.log("Rectangle clicked!", comp.id);
-                            }}
+                            
                             style={{ cursor: "pointer" }}
+                            onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const pos = { x: e.clientX, y: e.clientY };
+                    console.log("🖱️ TRACE: Right-click on component:", comp.id);
+                    setContextMenu({ x: e.clientX, y: e.clientY, component: comp });
+                    if (onComponentRightClick) onComponentRightClick(comp, pos);
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedComponentIds([comp.id]);
+                    setPopupComponent(comp);
+                    // ... rest of existing click logic
+                  }}
                           />
                           {selectedComponentIds.includes(comp.id) && (
                             <rect
@@ -1258,11 +1280,7 @@ export default function Schematic({
                 );
                 const toComponent = toData[0];
                 var to = toData[1];
-                console.log(
-                  wire.wireDetails?.fuse,
-                  fromComponent?.id,
-                  fromComponent?.category
-                );
+                
                 if (fromComponent?.componentType?.toLowerCase() === "splice" && !from) {
                   const centerX =
                     getXForComponent(fromComponent) + getWidthForComponent(fromComponent) / 2;
@@ -1719,6 +1737,31 @@ export default function Schematic({
                 return <g key={i}>{wireElement}</g>;
               })}
             </svg>
+            {/* 3. THE CONTEXT MENU UI */}
+      {contextMenu && (
+        <div style={{
+          position: 'fixed', top: contextMenu.y, left: contextMenu.x,
+          background: 'white', border: '1px solid #ccc', borderRadius: '4px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 1000, padding: '8px 0', minWidth: '160px'
+        }}>
+          <div style={{ padding: '4px 16px', color: '#888', fontSize: '12px' }}>{contextMenu.component.label}</div>
+          <button
+            onClick={() => {
+        console.log("🔘 TRACE: 'Open Component' button clicked for:", contextMenu.component.id);
+        if (onComponentRightClick) {
+          onComponentRightClick(contextMenu.component, { x: contextMenu.x, y: contextMenu.y });
+        } else {
+          console.error("❌ TRACE: onComponentRightClick prop is MISSING in Schematic.tsx!");
+        }
+        setContextMenu(null);
+      }}
+      style={{ width: '100%', padding: '10px', cursor: 'pointer' }}
+          >
+            📍 Open Component
+          </button>
+        </div>
+      )}
+            
           </div>
         </div>
         <PopupComponentDetails

@@ -281,4 +281,26 @@ export async function updateUserStatus(
   }
 }
 
+// Request password reset
+export async function requestPasswordReset(payload: { identifier: string }) {
+  try {
+    const res = await api.post(`/auth/forgot-password`, payload);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → requestPasswordReset:", err);
+    throw err;
+  }
+}
+
+// Reset password with token
+export async function resetPassword(payload: { token: string; newPassword: string }) {
+  try {
+    const res = await api.post(`/auth/reset-password`, payload);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → resetPassword:", err);
+    throw err;
+  }
+}
+
 export default api;

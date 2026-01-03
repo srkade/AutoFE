@@ -157,9 +157,19 @@ export async function loginUser(payload: { email: string; password: string }) {
   try {
     const res = await api.post(`/auth/login`, payload);
     return res.data; // this should return LoginResponse
-  } catch (err) {
+  } catch (err: any) {
     console.error("API ERROR → loginUser:", err);
-    throw err;
+    // Re-throw the error but ensure we preserve any response data
+    if (err.response) {
+      // Server responded with error status
+      throw err;
+    } else if (err.request) {
+      // Request was made but no response received
+      throw new Error("Network error: Unable to connect to server");
+    } else {
+      // Something else happened
+      throw new Error("An unexpected error occurred");
+    }
   }
 }
 
@@ -267,6 +277,28 @@ export async function updateUserStatus(
     return res.data;
   } catch (err) {
     console.error("API ERROR → updateUserStatus:", err);
+    throw err;
+  }
+}
+
+// Request password reset
+export async function requestPasswordReset(payload: { identifier: string }) {
+  try {
+    const res = await api.post(`/auth/forgot-password`, payload);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → requestPasswordReset:", err);
+    throw err;
+  }
+}
+
+// Reset password with token
+export async function resetPassword(payload: { token: string; newPassword: string }) {
+  try {
+    const res = await api.post(`/auth/reset-password`, payload);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → resetPassword:", err);
     throw err;
   }
 }

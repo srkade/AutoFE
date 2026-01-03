@@ -1,17 +1,21 @@
 import React, { useState } from "react";
 import logo from "../assets/Images/logo.png";
-import { loginUser } from "../services/api";
+import { loginUser, requestPasswordReset } from "../services/api";
 
 interface LoginPageProps {
   onLoginSuccess: (role: "superadmin" | "author" | "user",user:any) => void;
   onRegisterClick: () => void;
   setToken: (token: string) => void;
+  onForgotPasswordClick?: () => void;
 }
 
-export default function LoginPage({ onLoginSuccess, onRegisterClick,setToken }: LoginPageProps) {
+export default function LoginPage({ onLoginSuccess, onRegisterClick, setToken, onForgotPasswordClick }: LoginPageProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSuccess, setResetSuccess] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +51,7 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick,setToken }: 
       // Check user status
       if (response.status?.toLowerCase() !== "active") {
         setError("Your account is pending admin approval.");
-        return; // do NOT proceed
+        return; 
       }
 
       // Store token in sessionStorage (or state)
@@ -65,12 +69,105 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick,setToken }: 
         "user",
         response
       );
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login failed:", err);
-      setError("Invalid email or password");
+      
+      // Check if the error response contains specific information about account status
+      if (err?.response?.data) {
+        // Check various possible response formats for account status
+        const errorData = err.response.data;
+        
+        // Check for message field
+        if (errorData.message && typeof errorData.message === 'string') {
+          if (errorData.message.toLowerCase().includes('pending') || 
+              errorData.message.toLowerCase().includes('approval') ||
+              errorData.message.toLowerCase().includes('inactive') ||
+              errorData.message.toLowerCase().includes('not active') ||
+              errorData.message.toLowerCase().includes('not activated')) {
+            setError("Your account is pending admin approval.");
+            return;
+          } else {
+            setError(errorData.message);
+            return;
+          }
+        }
+        
+        // Check for other possible field names that might contain status info
+        if (errorData.error && typeof errorData.error === 'string') {
+          if (errorData.error.toLowerCase().includes('pending') || 
+              errorData.error.toLowerCase().includes('approval') ||
+              errorData.error.toLowerCase().includes('inactive') ||
+              errorData.error.toLowerCase().includes('not active') ||
+              errorData.error.toLowerCase().includes('not activated')) {
+            setError("Your account is pending admin approval.");
+            return;
+          } else {
+            setError(errorData.error);
+            return;
+          }
+        }
+        
+        // Check if response contains status field
+        if (errorData.status && typeof errorData.status === 'string') {
+          if (errorData.status.toLowerCase().includes('pending') || 
+              errorData.status.toLowerCase().includes('approval') ||
+              errorData.status.toLowerCase().includes('inactive') ||
+              errorData.status.toLowerCase().includes('not active') ||
+              errorData.status.toLowerCase().includes('not activated')) {
+            setError("Your account is pending admin approval.");
+            return;
+          }
+        }
+      }
+      
+      // Check response status codes
+      if (err?.response?.status === 401) {
+        // Check if it's a 401 Unauthorized error
+        setError("Invalid email or password");
+      } else if (err?.response?.status === 403) {
+        // 403 might indicate account is inactive/pending
+        setError("Your account is pending admin approval.");
+      } else {
+        // Default error message for other errors
+        setError("Login failed. Please try again.");
+      }
     }
 
   };
+
+  const handleForgotPassword = () => {
+    if (onForgotPasswordClick) {
+      onForgotPasswordClick();
+    } else {
+      // Show the password reset form
+      setShowForgotPassword(true);
+      setError("");
+      setResetSuccess("");
+    }
+  };
+
+  const handlePasswordResetRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await requestPasswordReset({ identifier: resetEmail });
+      setResetSuccess("Password reset link has been sent to your email address.");
+      setError("");
+      // Optionally reset the email field
+      // setResetEmail("");
+    } catch (err) {
+      console.error("Password reset request failed:", err);
+      setError("Failed to send password reset email. Please try again.");
+      setResetSuccess("");
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setShowForgotPassword(false);
+    setResetEmail("");
+    setResetSuccess("");
+    setError("");
+  };
+
 
 
   return (
@@ -152,104 +249,189 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick,setToken }: 
             padding: "30px",
           }}
         >
-          <form
-            onSubmit={handleLogin}
-            style={{
-              width: "100%",
-              maxWidth: "320px",
-            }}
-          >
-            <h2
+          {!showForgotPassword ? (
+            // Login Form
+            <form
+              onSubmit={handleLogin}
               style={{
-                color: "#007bff",
-                marginBottom: "10px",
+                width: "100%",
+                maxWidth: "320px",
               }}
             >
-              Login
-            </h2>
-            <p style={{ color: "#666", fontSize: "13px", marginBottom: "20px" }}>
-              Welcome! Login to continue.
-            </p>
-
-            <input
-              type="text"
-              placeholder="Enter Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
-              style={{
-                width: "100%",
-                padding: "12px",
-                marginBottom: "15px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
-            />
-
-            <input
-              type="password"
-              placeholder="Enter Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              style={{
-                width: "100%",
-                padding: "12px",
-                marginBottom: "10px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
-            />
-
-            {error && <p style={{ color: "red", marginBottom: "10px" }}>{error}</p>}
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                width: "100%",
-              }}
-            >
-              <button
-                type="submit"
+              <h2
                 style={{
-                  width: "60%",
-                  padding: "12px",
-                  borderRadius: "6px",
-                  border: "none",
-                  background: "#007bff",
-                  color: "white",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  marginTop: "5px"
+                  color: "#007bff",
+                  marginBottom: "10px",
                 }}
               >
-                LOGIN
-              </button>
-            </div>
-            <div
+                Login
+              </h2>
+              <p style={{ color: "#666", fontSize: "13px", marginBottom: "20px" }}>
+                Welcome! Login to continue.
+              </p>
+
+              <input
+                type="text"
+                placeholder="Enter Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  marginBottom: "15px",
+                  borderRadius: "6px",
+                  border: "1px solid #ccc",
+                }}
+              />
+
+              <input
+                type="password"
+                placeholder="Enter Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  marginBottom: "10px",
+                  borderRadius: "6px",
+                  border: "1px solid #ccc",
+                }}
+              />
+
+              {error && <p style={{ color: "red", marginBottom: "10px" }}>{error}</p>}
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: "100%",
+                }}
+              >
+                <button
+                  type="submit"
+                  style={{
+                    width: "60%",
+                    padding: "12px",
+                    borderRadius: "6px",
+                    border: "none",
+                    background: "#007bff",
+                    color: "white",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                    marginTop: "5px"
+                  }}
+                >
+                  LOGIN
+                </button>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "15px",
+                  fontSize: "13px",
+                }}
+              >
+                <p>
+                  New User?{" "}
+                  <span
+                    style={{ color: "#007bff", cursor: "pointer" }}
+                    onClick={onRegisterClick}
+                  >
+                    SignUp
+                  </span>
+                </p>
+                <p style={{ color: "#007bff", cursor: "pointer" }} onClick={handleForgotPassword}>
+                  Forgot Password?
+                </p>
+              </div>
+            </form>
+          ) : (
+            // Forgot Password Form
+            <form
+              onSubmit={handlePasswordResetRequest}
               style={{
+                width: "100%",
+                maxWidth: "320px",
                 display: "flex",
-                justifyContent: "space-between",
-                marginTop: "15px",
-                fontSize: "13px",
+                flexDirection: "column",
               }}
             >
-              <p>
-                New User?{" "}
-                <span
-                  style={{ color: "#007bff", cursor: "pointer" }}
-                  onClick={onRegisterClick}
+              <h2
+                style={{
+                  color: "#007bff",
+                  marginBottom: "10px",
+                }}
+              >
+                Reset Password
+              </h2>
+              <p style={{ color: "#666", fontSize: "13px", marginBottom: "20px" }}>
+                Enter your email to receive a password reset link.
+              </p>
+
+              <input
+                type="email"
+                placeholder="Enter your email address"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                required
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  marginBottom: "15px",
+                  borderRadius: "6px",
+                  border: "1px solid #ccc",
+                }}
+              />
+
+              {resetSuccess && <p style={{ color: "green", marginBottom: "10px" }}>{resetSuccess}</p>}
+              {error && <p style={{ color: "red", marginBottom: "10px" }}>{error}</p>}
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  width: "100%",
+                  marginTop: "10px",
+                  gap: "10px",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={handleBackToLogin}
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    borderRadius: "6px",
+                    border: "1px solid #ccc",
+                    background: "white",
+                    color: "#333",
+                    cursor: "pointer",
+                  }}
                 >
-                  SignUp
-                </span>
-              </p>
-              <p style={{ color: "#007bff", cursor: "pointer" }}>
-                Forgot Password?
-              </p>
-            </div>
-          </form>
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    borderRadius: "6px",
+                    border: "none",
+                    background: "#28a745",
+                    color: "white",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                  }}
+                >
+                  Send Reset Link
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>

@@ -47,7 +47,7 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick,setToken }: 
       // Check user status
       if (response.status?.toLowerCase() !== "active") {
         setError("Your account is pending admin approval.");
-        return; // do NOT proceed
+        return; 
       }
 
       // Store token in sessionStorage (or state)
@@ -65,9 +65,68 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick,setToken }: 
         "user",
         response
       );
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login failed:", err);
-      setError("Invalid email or password");
+      
+      // Check if the error response contains specific information about account status
+      if (err?.response?.data) {
+        // Check various possible response formats for account status
+        const errorData = err.response.data;
+        
+        // Check for message field
+        if (errorData.message && typeof errorData.message === 'string') {
+          if (errorData.message.toLowerCase().includes('pending') || 
+              errorData.message.toLowerCase().includes('approval') ||
+              errorData.message.toLowerCase().includes('inactive') ||
+              errorData.message.toLowerCase().includes('not active') ||
+              errorData.message.toLowerCase().includes('not activated')) {
+            setError("Your account is pending admin approval.");
+            return;
+          } else {
+            setError(errorData.message);
+            return;
+          }
+        }
+        
+        // Check for other possible field names that might contain status info
+        if (errorData.error && typeof errorData.error === 'string') {
+          if (errorData.error.toLowerCase().includes('pending') || 
+              errorData.error.toLowerCase().includes('approval') ||
+              errorData.error.toLowerCase().includes('inactive') ||
+              errorData.error.toLowerCase().includes('not active') ||
+              errorData.error.toLowerCase().includes('not activated')) {
+            setError("Your account is pending admin approval.");
+            return;
+          } else {
+            setError(errorData.error);
+            return;
+          }
+        }
+        
+        // Check if response contains status field
+        if (errorData.status && typeof errorData.status === 'string') {
+          if (errorData.status.toLowerCase().includes('pending') || 
+              errorData.status.toLowerCase().includes('approval') ||
+              errorData.status.toLowerCase().includes('inactive') ||
+              errorData.status.toLowerCase().includes('not active') ||
+              errorData.status.toLowerCase().includes('not activated')) {
+            setError("Your account is pending admin approval.");
+            return;
+          }
+        }
+      }
+      
+      // Check response status codes
+      if (err?.response?.status === 401) {
+        // Check if it's a 401 Unauthorized error
+        setError("Invalid email or password");
+      } else if (err?.response?.status === 403) {
+        // 403 might indicate account is inactive/pending
+        setError("Your account is pending admin approval.");
+      } else {
+        // Default error message for other errors
+        setError("Login failed. Please try again.");
+      }
     }
 
   };

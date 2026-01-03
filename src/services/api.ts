@@ -157,9 +157,19 @@ export async function loginUser(payload: { email: string; password: string }) {
   try {
     const res = await api.post(`/auth/login`, payload);
     return res.data; // this should return LoginResponse
-  } catch (err) {
+  } catch (err: any) {
     console.error("API ERROR → loginUser:", err);
-    throw err;
+    // Re-throw the error but ensure we preserve any response data
+    if (err.response) {
+      // Server responded with error status
+      throw err;
+    } else if (err.request) {
+      // Request was made but no response received
+      throw new Error("Network error: Unable to connect to server");
+    } else {
+      // Something else happened
+      throw new Error("An unexpected error occurred");
+    }
   }
 }
 

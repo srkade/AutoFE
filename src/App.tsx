@@ -15,6 +15,7 @@ import {
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 import RegisterForm from "./pages/RegistrationForm";
 import { useTraceNavigation } from './hooks/useTraceNavigation';
+import PasswordResetPage from './pages/PasswordResetPage';
 
 export type DashboardItem = {
   code: string;
@@ -38,7 +39,7 @@ export default function App() {
 const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
 
   const [loggedIn, setLoggedIn] = useState(false);
-  const [page, setPage] = useState<"login" | "register" | "dashboard">("login");
+  const [page, setPage] = useState<"login" | "register" | "dashboard" | "password-reset">("login");
   const [role, setRole] = useState<"superadmin" | "author" | "user" | null>(null);
   const [currentUser, setCurrentUser] = useState<{
     name: string;
@@ -66,6 +67,16 @@ const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
   };
 
   useEffect(() => {
+    // Check if we're on the password reset page (has token in URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetToken = urlParams.get('token');
+    
+    if (resetToken) {
+      // We're on the password reset page
+      setPage("password-reset");
+      return;
+    }
+    
     const storedUser = sessionStorage.getItem("currentUser");
     const storedRole = sessionStorage.getItem("role");
     const storedToken = sessionStorage.getItem("token");
@@ -499,6 +510,10 @@ const handleComponentRightClick = useCallback(async (component: any) => {
       {page === "register" && (
         <RegisterForm onBackToLogin={() => setPage("login")}
           isAuthor={role === "author"} />
+      )}
+
+      {page === "password-reset" && (
+        <PasswordResetPage />
       )}
 
       {/* USER DASHBOARD */}

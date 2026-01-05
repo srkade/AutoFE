@@ -108,7 +108,7 @@ export default function MainPanel({ selectedItem, activeTab, isMobile, onCompone
             fontWeight: '500'
           }}
         >
-          ← Back to System
+          ← Back to {activeTab}
         </button>
         <div style={{ fontSize: '16px', fontWeight: '500', letterSpacing: '0.5px' }}>
           {traceBreadcrumb}

@@ -436,8 +436,8 @@ const handleComponentRightClick = useCallback(async (component: any) => {
 
   console.log("🚀 TRACE 4: Switching to Tab:", targetTab);
 
-  // Enter Trace Mode
-  trace.enterTrace(targetTab, componentCode, itemName, activeTab);
+  // Enter Trace Mode - now with the original state
+  trace.enterTrace(targetTab, componentCode, itemName, activeTab, selectedItem, mergedSchematic);
   setActiveTab(targetTab);
 
   try {
@@ -460,7 +460,7 @@ const handleComponentRightClick = useCallback(async (component: any) => {
   } catch (error) {
     console.error("❌ TRACE ERROR: API fetch failed", error);
   }
-}, [dashboardItems, activeTab, trace]);
+}, [dashboardItems, activeTab, selectedItem, mergedSchematic, trace]);
 
   const filteredItems = dashboardItems.filter((item) => {
     const filterBase = role === "author" ? schematicTab : activeTab;
@@ -670,12 +670,11 @@ const handleComponentRightClick = useCallback(async (component: any) => {
   traceMode={trace.isTraceMode}
   traceBreadcrumb={trace.getBreadcrumb()}
   onBackClick={() => {
-    const prevTab = trace.exitTrace();
-    setActiveTab(prevTab);
-    setSelectedItem(null); 
-    setSelectedItem(null); 
+    const prevState = trace.exitTrace();
+    setActiveTab(prevState.tab);
+    setSelectedItem(prevState.selectedItem); 
+    setMergedSchematic(prevState.mergedSchematic);
     setSelectedCodes([]);
-
   }}
               />
             </div>
@@ -874,9 +873,10 @@ const handleComponentRightClick = useCallback(async (component: any) => {
   traceMode={trace.isTraceMode}
   traceBreadcrumb={trace.getBreadcrumb()}
   onBackClick={() => {
-    const prevTab = trace.exitTrace();
-    setActiveTab(prevTab);
-    setSelectedItem(null); 
+    const prevState = trace.exitTrace();
+    setActiveTab(prevState.tab);
+    setSelectedItem(prevState.selectedItem); 
+    setMergedSchematic(prevState.mergedSchematic);
     setSelectedCodes([]);
   }}
                     />

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { smartFileUpload, ImportResponse } from '../services/api';
 import '../Styles/ImportedFiles.css';
-import { getAllUploads, deleteUploadById, fetchUploadFile } from "../services/uploadApi";  // only this one we keep
+import { getAllUploads, deleteUploadById, fetchUploadFile, trackSuccessfulUpload, trackFailedUpload } from "../services/uploadApi";  // only this one we keep
 import {
   FiSearch,
   FiEdit2,
@@ -165,10 +165,16 @@ const ImportedFiles: React.FC = () => {
 
         // Reload uploads from backend so the newly persisted row appears in the table
         await loadBackendUploads();
+        
+        // Track successful upload in system statistics
+        await trackSuccessfulUpload();
 
       } catch (err: any) {
         console.error('Upload/import failed', err);
         updateUploadStatus(uiId, 'error', err?.message || 'Upload failed');
+        
+        // Track failed upload in system statistics
+        await trackFailedUpload();
       }
     }
   };

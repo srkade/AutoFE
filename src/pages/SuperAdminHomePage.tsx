@@ -1,7 +1,112 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FiServer, FiShield, FiDatabase, FiUsers, FiActivity, FiBarChart2, FiSettings } from "react-icons/fi";
+import { getSystemUptime } from "../services/api";
+
+interface SystemUptime {
+  status: string;
+  lastCheck: string;
+  uptimeSeconds: number;
+  message: string;
+  healthDetails: {
+    databaseConnected: boolean;
+    fileSystemAccessible: boolean;
+    processingEngineAvailable: boolean;
+    activeUploads: number;
+    pendingJobs: number;
+    additionalMetrics: {
+      currentTime: string;
+      startTime: string;
+      processedUploads: number;
+      failedUploads: number;
+    };
+  };
+}
+
+const formatDate = (dateString: string): string => {
+  if (!dateString || dateString === 'N/A') return 'N/A';
+  
+  try {
+    // Try to create date object - handle different possible formats
+    let date: Date;
+    
+    // If it's already an ISO string, use directly
+    if (typeof dateString === 'string' && dateString.includes('T')) {
+      date = new Date(dateString);
+    } else {
+      // If it's a different format, try to parse it
+      date = new Date(dateString);
+    }
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      // If it's not a valid date, return the original string
+      return dateString;
+    }
+    
+    return date.toLocaleDateString();
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateString;
+  }
+};
+
+const formatUptime = (uptimeSeconds: number): string => {
+  if (!uptimeSeconds) return 'N/A';
+  
+  const days = Math.floor(uptimeSeconds / 86400);
+  const hours = Math.floor((uptimeSeconds % 86400) / 3600);
+  const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+  const seconds = uptimeSeconds % 60;
+  
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
+  
+  return parts.join(' '); 
+};
 
 export default function SuperAdminHomePage() {
+  const [systemUptime, setSystemUptime] = useState<SystemUptime | null>(null);
+  
+  useEffect(() => {
+    const fetchUptime = async () => {
+      try {
+        const uptimeData = await getSystemUptime();
+        setSystemUptime(uptimeData);
+      } catch (error) {
+        console.error("Error fetching system uptime:", error);
+        // Set a default value or handle the error as needed
+        setSystemUptime({
+          status: "--",
+          lastCheck: "--",
+          uptimeSeconds: 0,
+          message: "--",
+          healthDetails: {
+            databaseConnected: false,
+            fileSystemAccessible: false,
+            processingEngineAvailable: false,
+            activeUploads: 0,
+            pendingJobs: 0,
+            additionalMetrics: {
+              currentTime: "--",
+              startTime: "--",
+              processedUploads: 0,
+              failedUploads: 0
+            }
+          }
+        });
+      }
+    };
+    
+    fetchUptime();
+    
+    // Set up polling to refresh data every 60 seconds
+    const intervalId = setInterval(fetchUptime, 60000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
     return (
         <div>
             <div style={{
@@ -74,12 +179,12 @@ export default function SuperAdminHomePage() {
                                 fontSize: "24px",
                                 fontWeight: "700",
                                 color: "#007bff"
-                            }}>99.98%</h3>
+                            }}>{formatUptime(systemUptime?.uptimeSeconds || 0)}</h3>
                             <p style={{
                                 margin: 0,
                                 fontSize: "14px",
                                 color: "#6c757d"
-                            }}>Schematic Engine Uptime</p>
+                            }}>{systemUptime ? `Started: ${formatDate(systemUptime.healthDetails.additionalMetrics.startTime)}` : "System Uptime"}</p>
                         </div>
                     </div>
                 </div>

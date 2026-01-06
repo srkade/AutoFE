@@ -303,4 +303,55 @@ export async function resetPassword(payload: { token: string; newPassword: strin
   }
 }
 
+// System monitoring APIs
+export async function getSystemUptime() {
+  try {
+    const res = await api.get(`/system/uptime`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getSystemUptime:", err);
+    throw err;
+  }
+}
+
+export async function getSystemHealth() {
+  try {
+    const res = await api.get(`/system/health`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getSystemHealth:", err);
+    throw err;
+  }
+}
+
+export async function getSystemStatus() {
+  try {
+    const res = await api.get(`/system/status`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getSystemStatus:", err);
+    throw err;
+  }
+}
+
+export async function incrementUploadSuccess() {
+  try {
+    const res = await api.post(`/system/stats/upload-success`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → incrementUploadSuccess:", err);
+    throw err;
+  }
+}
+
+export async function incrementUploadFailure() {
+  try {
+    const res = await api.post(`/system/stats/upload-failure`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → incrementUploadFailure:", err);
+    throw err;
+  }
+}
+
 export default api;

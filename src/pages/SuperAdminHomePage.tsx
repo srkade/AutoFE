@@ -79,7 +79,7 @@ export default function SuperAdminHomePage() {
                                 margin: 0,
                                 fontSize: "14px",
                                 color: "#6c757d"
-                            }}>System Uptime</p>
+                            }}>Schematic Engine Uptime</p>
                         </div>
                     </div>
                 </div>

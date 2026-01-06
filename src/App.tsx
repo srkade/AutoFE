@@ -26,7 +26,8 @@ export type DashboardItem = {
   description: string;
   schematicData: SchematicData;
 };
-import AdminNavigationTabs from "./pages/AdminNavigationTabs";
+import AuthorDashboard from "./pages/AuthorDashboard";
+import AuthorNavigationTabs from "./pages/AuthorNavigationTabs";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import ManageUsers from "./pages/ManageUsers";
 import ImportFiles from "./pages/ImportedFiles";
@@ -106,7 +107,7 @@ const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
 
 
   const [activeTab, setActiveTab] = useState("components");
-  const [adminTab, setAdminTab] = useState("manage-users");
+  const [authorTab, setAuthorTab] = useState("manage-users");
   const [schematicTab, setSchematicTab] = useState("components");
   const [selectedItem, setSelectedItem] = useState<DashboardItem | null>(null);
 
@@ -700,24 +701,24 @@ const handleComponentRightClick = useCallback(async (component: any) => {
       {page === "dashboard" && role === "author" && token && (
         <div style={{ height: "100vh", display: "flex", flexDirection: "row" }}>
 
-          <AdminNavigationTabs
-            active={adminTab}
-            onChange={setAdminTab}
+          <AuthorNavigationTabs
+            active={authorTab}
+            onChange={setAuthorTab}
             onLogout={handleLogout}
             user={currentUser}
           />
 
           {/* TAB CONTENT */}
           <div style={{ flex: 1 }}>
-            {adminTab === "manage-users" && (
+            {authorTab === "manage-users" && (
               <ManageUsers />
             )}
 
-            {adminTab === "import-files" && (
+            {authorTab === "import-files" && (
               <ImportFiles />
             )}
 
-            {adminTab === "view-schematic" && (
+            {authorTab === "view-schematic" && (
               <div
                 style={{
                   height: "100vh",

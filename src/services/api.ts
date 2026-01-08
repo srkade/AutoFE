@@ -226,16 +226,27 @@ export interface ImportResponse {
 
 export async function smartFileUpload(
   file: File,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  authorName?: string
 ): Promise<ImportResponse> {
   const formData = new FormData();
   formData.append("file", file);
+  if (authorName && authorName !== "unknown") {
+    // Send the author name to the backend
+    formData.append("uploadedBy", authorName);
+  }
 
   try {
-    console.log(` Uploading file for auto-detection: ${file.name}`);
+    console.log(` Uploading file for auto-detection: ${file.name} by author: ${authorName || 'unknown'}`);
+    
+    // Get the JWT token from session storage
+    const token = sessionStorage.getItem('token');
     
     const res = await api.post<ImportResponse>(`/import/upload`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      headers: { 
+        "Content-Type": "multipart/form-data",
+        ...(token && { "Authorization": `Bearer ${token}` })
+      },
       onUploadProgress: (evt: AxiosProgressEvent) => {
         if (evt.total && onProgress) {
           const progress = Math.round((evt.loaded * 100) / evt.total);
@@ -299,6 +310,57 @@ export async function resetPassword(payload: { token: string; newPassword: strin
     return res.data;
   } catch (err) {
     console.error("API ERROR → resetPassword:", err);
+    throw err;
+  }
+}
+
+// System monitoring APIs
+export async function getSystemUptime() {
+  try {
+    const res = await api.get(`/system/uptime`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getSystemUptime:", err);
+    throw err;
+  }
+}
+
+export async function getSystemHealth() {
+  try {
+    const res = await api.get(`/system/health`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getSystemHealth:", err);
+    throw err;
+  }
+}
+
+export async function getSystemStatus() {
+  try {
+    const res = await api.get(`/system/status`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getSystemStatus:", err);
+    throw err;
+  }
+}
+
+export async function incrementUploadSuccess() {
+  try {
+    const res = await api.post(`/system/stats/upload-success`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → incrementUploadSuccess:", err);
+    throw err;
+  }
+}
+
+export async function incrementUploadFailure() {
+  try {
+    const res = await api.post(`/system/stats/upload-failure`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → incrementUploadFailure:", err);
     throw err;
   }
 }

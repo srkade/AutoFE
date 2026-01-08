@@ -1,7 +1,7 @@
 import React from "react";
 import "../Styles/WelcomePage.css";
 
-export default function WelcomePage({ onStart }: { onStart: () => void }) {
+export default function WelcomePage({ onStart }: { onStart: () => void }) { 
   return (
     <div className="welcome-wrapper">
       <div className="welcome-inner">

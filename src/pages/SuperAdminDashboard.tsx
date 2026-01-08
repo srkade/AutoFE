@@ -6,7 +6,7 @@ import DatabaseManagement from "./DatabaseManagement";
 import UserAnalytics from "./UserAnalytics";
 import SystemMonitoring from "./SystemMonitoring";
 import SuperAdminHomePage from "./SuperAdminHomePage";
-import "../Styles/AdminNavigationTabs.css";
+import "../Styles/AuthorNavigationTabs.css";
 
 export default function SuperAdminDashboard({ token }: { token: string | null }) {
     const [activeTab, setActiveTab] = useState("home");

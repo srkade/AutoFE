@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import AdminNavigationTabs from "./AdminNavigationTabs";
-import "../Styles/AdminNavigationTabs.css";
+import "../Styles/AuthorNavigationTabs.css";
 import ManageUsers from "./ManageUsers";
 import ImportFiles from "./ImportedFiles";
+import { useEffect } from "react";
+import AuthorNavigationTabs from "./AuthorNavigationTabs";
 
-
-export default function AdminDashboard({ token }: { token: string | null }) {
+export default function AuthorDashboard({ token }: { token: string | null }) {
     const [activeTab, setActiveTab] = useState("manage-users");
     const [userInfo, setUserInfo] = useState<{
         name: string;
@@ -33,7 +33,7 @@ export default function AdminDashboard({ token }: { token: string | null }) {
 
     return (
         <div className="admin-container" style={{ display: "flex", flexDirection: "column" }}>
-            <AdminNavigationTabs
+            <AuthorNavigationTabs
                 active={activeTab}
                 onChange={setActiveTab}
                 onLogout={handleLogout}

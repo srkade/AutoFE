@@ -15,6 +15,7 @@ import {
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 import RegisterForm from "./pages/RegistrationForm";
 import { useTraceNavigation } from './hooks/useTraceNavigation';
+import PasswordResetPage from './pages/PasswordResetPage';
 
 export type DashboardItem = {
   code: string;
@@ -25,7 +26,8 @@ export type DashboardItem = {
   description: string;
   schematicData: SchematicData;
 };
-import AdminNavigationTabs from "./pages/AdminNavigationTabs";
+import AuthorDashboard from "./pages/AuthorDashboard";
+import AuthorNavigationTabs from "./pages/AuthorNavigationTabs";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import ManageUsers from "./pages/ManageUsers";
 import ImportFiles from "./pages/ImportedFiles";
@@ -36,10 +38,10 @@ import ImageManagement from "./pages/ImageManagement";
 export default function App() {
   const trace = useTraceNavigation();
   const [isTraceMode, setIsTraceMode] = useState(false);
-const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
+  const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
 
   const [loggedIn, setLoggedIn] = useState(false);
-  const [page, setPage] = useState<"login" | "register" | "dashboard">("login");
+  const [page, setPage] = useState<"login" | "register" | "dashboard" | "password-reset">("login");
   const [role, setRole] = useState<"superadmin" | "author" | "user" | null>(null);
   const [currentUser, setCurrentUser] = useState<{
     name: string;
@@ -47,7 +49,7 @@ const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
     role: "superadmin" | "author" | "user";
   } | null>(null);
 
-  
+
 
 
   const handleLoginSuccess = (loggedInRole: "superadmin" | "author" | "user", user: any) => {
@@ -67,6 +69,16 @@ const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
   };
 
   useEffect(() => {
+    // Check if we're on the password reset page (has token in URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetToken = urlParams.get('token');
+
+    if (resetToken) {
+      // We're on the password reset page
+      setPage("password-reset");
+      return;
+    }
+
     const storedUser = sessionStorage.getItem("currentUser");
     const storedRole = sessionStorage.getItem("role");
     const storedToken = sessionStorage.getItem("token");
@@ -79,7 +91,7 @@ const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
       setPage("login");
     }
   }, []);
-  
+
 
 
   const handleLogout = () => {
@@ -96,7 +108,7 @@ const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
 
 
   const [activeTab, setActiveTab] = useState("components");
-  const [adminTab, setAdminTab] = useState("manage-users");
+  const [authorTab, setAuthorTab] = useState("manage-users");
   const [schematicTab, setSchematicTab] = useState("components");
   const [selectedItem, setSelectedItem] = useState<DashboardItem | null>(null);
 
@@ -117,7 +129,7 @@ const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
   const [systemsList, setSystemsList] = useState<any[]>([]);
   // const [adminUser, setAdminUser] = useState<any>(null);
 
-  
+
 
 
   const dtcItems: DashboardItem[] = dtcList.map((d) => ({
@@ -339,20 +351,20 @@ const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
           // Find the dashboard item to determine the type
           // First, try to find an item that matches the current tab context
           let dashboardItem;
-          
+
           if (tab === "voltage") {
             // When in voltage tab, prioritize supply items with the same code
             dashboardItem = dashboardItems.find(item => item.code === code && item.type === "Supply");
           }
-          
+
           // If no supply item found in voltage tab or not in voltage tab, find any item with the code
           if (!dashboardItem) {
             dashboardItem = dashboardItems.find(item => item.code === code);
           }
-                
+
           let data;
           let sourceType: string | undefined;
-                
+
           if (dashboardItem) {
             switch (dashboardItem.type) {
               case "Supply":
@@ -381,19 +393,19 @@ const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
             data = await getComponentSchematic(code);
             sourceType = "Component";
           }
-                
+
           const normalized = normalizeSchematic(data);
           // Add source type information to the normalized data
           return { ...normalized, sourceType };
         })
       );
-            
+
       // Extract the actual schematic data for merging
       const fetchedSchematics = fetchResults.map(result => {
         const { sourceType, ...schematicData } = result;
         return schematicData;
       });
-            
+
       // Pass source information to the merge function
       const sourceTypes = fetchResults.map(result => result.sourceType);
 
@@ -409,59 +421,59 @@ const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
   const [token, setToken] = useState<string | null>(
     sessionStorage.getItem("token")
   );
-  
+
 
   const iccComponent = dashboardItems.find(item => item.name === "ICC") || null;
   // Inside App.tsx - Replace handleComponentRightClick
-const handleComponentRightClick = useCallback(async (component: any) => {
-  console.log("🔍 TRACE 1: App.tsx - handleComponentRightClick triggered", component);
-  
-  const componentCode = component.id;
-  const itemName = component.label || component.id;
-  
-  // Find the item in dashboardItems
-  const dashboardItem = dashboardItems.find(i => i.code === componentCode);
-  
-  if (!dashboardItem) {
-    console.error("❌ TRACE 2: Component code not found in dashboardItems:", componentCode);
-    return;
-  }
+  const handleComponentRightClick = useCallback(async (component: any) => {
+    console.log("🔍 TRACE 1: App.tsx - handleComponentRightClick triggered", component);
 
-  console.log("✅ TRACE 3: Found Dashboard Item:", dashboardItem.name, "Type:", dashboardItem.type);
+    const componentCode = component.id;
+    const itemName = component.label || component.id;
 
-  let targetTab = 'components';
-  if (dashboardItem.type === 'System') targetTab = 'systems';
-  if (dashboardItem.type === 'Harness') targetTab = 'harnesses';
-  if (dashboardItem.type === 'DTC') targetTab = 'DTC';
-  if (dashboardItem.type === 'Supply') targetTab = 'voltage';
+    // Find the item in dashboardItems
+    const dashboardItem = dashboardItems.find(i => i.code === componentCode);
 
-  console.log("🚀 TRACE 4: Switching to Tab:", targetTab);
+    if (!dashboardItem) {
+      console.error("❌ TRACE 2: Component code not found in dashboardItems:", componentCode);
+      return;
+    }
 
-  // Enter Trace Mode - now with the original state
-  trace.enterTrace(targetTab, componentCode, itemName, activeTab, selectedItem, mergedSchematic);
-  setActiveTab(targetTab);
+    console.log("✅ TRACE 3: Found Dashboard Item:", dashboardItem.name, "Type:", dashboardItem.type);
 
-  try {
-    let rawData;
-    if (targetTab === 'harnesses') rawData = await getHarnessSchematic(componentCode);
-    else if (targetTab === 'voltage') rawData = await getSupplyFormula(componentCode);
-    else if (targetTab === 'DTC') rawData = await getDtcSchematic(componentCode);
-    else if (targetTab === 'systems') rawData = await getSystemFormula(Number(componentCode));
-    else rawData = await getComponentSchematic(componentCode);
+    let targetTab = 'components';
+    if (dashboardItem.type === 'System') targetTab = 'systems';
+    if (dashboardItem.type === 'Harness') targetTab = 'harnesses';
+    if (dashboardItem.type === 'DTC') targetTab = 'DTC';
+    if (dashboardItem.type === 'Supply') targetTab = 'voltage';
 
-    console.log("📥 TRACE 5: API Data Received:", rawData);
+    console.log("🚀 TRACE 4: Switching to Tab:", targetTab);
 
-    const normalized = normalizeSchematic(rawData);
-    
-    setMergedSchematic(null); 
-    setSelectedItem({ ...dashboardItem, schematicData: normalized });
-    setSelectedCodes([componentCode]);
-    
-    console.log("✨ TRACE 6: SelectedItem Updated. UI should re-render now.");
-  } catch (error) {
-    console.error("❌ TRACE ERROR: API fetch failed", error);
-  }
-}, [dashboardItems, activeTab, selectedItem, mergedSchematic, trace]);
+    // Enter Trace Mode - now with the original state
+    trace.enterTrace(targetTab, componentCode, itemName, activeTab, selectedItem, mergedSchematic);
+    setActiveTab(targetTab);
+
+    try {
+      let rawData;
+      if (targetTab === 'harnesses') rawData = await getHarnessSchematic(componentCode);
+      else if (targetTab === 'voltage') rawData = await getSupplyFormula(componentCode);
+      else if (targetTab === 'DTC') rawData = await getDtcSchematic(componentCode);
+      else if (targetTab === 'systems') rawData = await getSystemFormula(Number(componentCode));
+      else rawData = await getComponentSchematic(componentCode);
+
+      console.log("📥 TRACE 5: API Data Received:", rawData);
+
+      const normalized = normalizeSchematic(rawData);
+
+      setMergedSchematic(null);
+      setSelectedItem({ ...dashboardItem, schematicData: normalized });
+      setSelectedCodes([componentCode]);
+
+      console.log("✨ TRACE 6: SelectedItem Updated. UI should re-render now.");
+    } catch (error) {
+      console.error("❌ TRACE ERROR: API fetch failed", error);
+    }
+  }, [dashboardItems, activeTab, selectedItem, mergedSchematic, trace]);
 
   const filteredItems = dashboardItems.filter((item) => {
     const filterBase = role === "author" ? schematicTab : activeTab;
@@ -485,7 +497,7 @@ const handleComponentRightClick = useCallback(async (component: any) => {
         return true;
     }
   });
-  
+
 
   return (
     <div>
@@ -500,6 +512,10 @@ const handleComponentRightClick = useCallback(async (component: any) => {
       {page === "register" && (
         <RegisterForm onBackToLogin={() => setPage("login")}
           isAuthor={role === "author"} />
+      )}
+
+      {page === "password-reset" && (
+        <PasswordResetPage />
       )}
 
       {/* USER DASHBOARD */}
@@ -647,7 +663,7 @@ const handleComponentRightClick = useCallback(async (component: any) => {
               {/* {!isMobile && selectedItem?.schematicData && !mergedSchematic && (
                 <Schematic key={selectedItem.code} data={selectedItem.schematicData} activeTab={activeTab} />
               )} */}
-              
+
 
               <MainPanel
                 selectedItem={
@@ -668,15 +684,15 @@ const handleComponentRightClick = useCallback(async (component: any) => {
                 isMobile={isMobile}
 
                 onComponentRightClick={handleComponentRightClick}
-  traceMode={trace.isTraceMode}
-  traceBreadcrumb={trace.getBreadcrumb()}
-  onBackClick={() => {
-    const prevState = trace.exitTrace();
-    setActiveTab(prevState.tab);
-    setSelectedItem(prevState.selectedItem); 
-    setMergedSchematic(prevState.mergedSchematic);
-    setSelectedCodes([]);
-  }}
+                traceMode={trace.isTraceMode}
+                traceBreadcrumb={trace.getBreadcrumb()}
+                onBackClick={() => {
+                  const prevState = trace.exitTrace();
+                  setActiveTab(prevState.tab);
+                  setSelectedItem(prevState.selectedItem);
+                  setMergedSchematic(prevState.mergedSchematic);
+                  setSelectedCodes([]);
+                }}
               />
             </div>
           )}
@@ -686,28 +702,27 @@ const handleComponentRightClick = useCallback(async (component: any) => {
       {page === "dashboard" && role === "author" && token && (
         <div style={{ height: "100vh", display: "flex", flexDirection: "row" }}>
 
-          <AdminNavigationTabs
-            active={adminTab}
-            onChange={setAdminTab}
+          <AuthorNavigationTabs
+            active={authorTab}
+            onChange={setAuthorTab}
             onLogout={handleLogout}
             user={currentUser}
           />
 
           {/* TAB CONTENT */}
           <div style={{ flex: 1 }}>
-            {adminTab === "manage-users" && (
+            {authorTab === "manage-users" && (
               <ManageUsers />
             )}
 
-            {adminTab === "import-files" && (
+            {authorTab === "import-files" && (
               <ImportFiles />
             )}
-
-            {adminTab === "import-images" && (
+            {authorTab === "import-images" && (
               <ImageManagement />
             )}
 
-            {adminTab === "view-schematic" && (
+            {authorTab === "view-schematic" && (
               <div
                 style={{
                   height: "100vh",
@@ -875,15 +890,15 @@ const handleComponentRightClick = useCallback(async (component: any) => {
                       isMultipleComponents={!!mergedSchematic}
                       isMobile={isMobile}
                       onComponentRightClick={handleComponentRightClick}
-  traceMode={trace.isTraceMode}
-  traceBreadcrumb={trace.getBreadcrumb()}
-  onBackClick={() => {
-    const prevState = trace.exitTrace();
-    setActiveTab(prevState.tab);
-    setSelectedItem(prevState.selectedItem); 
-    setMergedSchematic(prevState.mergedSchematic);
-    setSelectedCodes([]);
-  }}
+                      traceMode={trace.isTraceMode}
+                      traceBreadcrumb={trace.getBreadcrumb()}
+                      onBackClick={() => {
+                        const prevState = trace.exitTrace();
+                        setActiveTab(prevState.tab);
+                        setSelectedItem(prevState.selectedItem);
+                        setMergedSchematic(prevState.mergedSchematic);
+                        setSelectedCodes([]);
+                      }}
                     />
                   </div>
                 )}
@@ -892,7 +907,7 @@ const handleComponentRightClick = useCallback(async (component: any) => {
           </div>
         </div>
       )}
-      
+
       {/* SUPER ADMIN DASHBOARD */}
       {page === "dashboard" && role === "superadmin" && token && (
         <SuperAdminDashboard token={token} />

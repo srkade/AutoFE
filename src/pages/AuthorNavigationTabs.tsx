@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import "../Styles/AdminNavigationTabs.css";
+import "../Styles/AuthorNavigationTabs.css";
 import { FiUsers, FiUpload, FiCpu, FiUser, FiImage } from "react-icons/fi";
 import logo from "../assets/Images/logo.png";
 
-interface AdminNavigationTabsProps {
+interface AuthorNavigationTabsProps {
   active: string;
   onChange: (tabId: string) => void;
   onLogout: () => void;
@@ -15,12 +15,12 @@ interface AdminNavigationTabsProps {
   } | null;
 }
 
-export default function AdminNavigationTabs({
+export default function AuthorNavigationTabs({
   active,
   onChange,
   onLogout,
   user,
-}: AdminNavigationTabsProps) {
+}: AuthorNavigationTabsProps) {
   const [showPopup, setShowPopup] = useState(false);
 
   const tabs = [
@@ -29,7 +29,7 @@ export default function AdminNavigationTabs({
     {id:"import-images", label:"Asset Management", icon: FiImage},
     { id: "view-schematic", label: "View Schematic", icon: FiCpu },
   ];
-  console.log("AdminNavigationTabs render → user prop:", user);
+  console.log("AuthorNavigationTabs render → user prop:", user);
 
   useEffect(() => {
     console.log("User prop updated:", user);

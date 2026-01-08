@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { smartFileUpload, ImportResponse } from '../services/api';
 import '../Styles/ImportedFiles.css';
-import { getAllUploads, deleteUploadById, fetchUploadFile } from "../services/uploadApi";  // only this one we keep
+import { getAllUploads, deleteUploadById, fetchUploadFile, trackSuccessfulUpload, trackFailedUpload } from "../services/uploadApi";  // only this one we keep
 import {
   FiSearch,
   FiEdit2,
@@ -155,20 +155,45 @@ const ImportedFiles: React.FC = () => {
       addUploadStatus(uiId, file.name, 'uploading', 'Starting upload...', file.size);
 
       try {
+        // Get current user from session storage to include author information
+        const storedUser = sessionStorage.getItem("currentUser");
+        const storedRole = sessionStorage.getItem("role");
+        let authorName = "unknown"; // Default fallback
+        
+        if (storedUser && storedRole) {
+          try {
+            const userData = JSON.parse(storedUser);
+            // Use full name if available, otherwise fall back to email
+            authorName = userData.name || userData.email || "unknown";
+            console.log(`Current user for upload: ${authorName}, Role: ${storedRole}`);
+          } catch (e) {
+            console.error("Error parsing stored user data:", e);
+            authorName = "unknown";
+          }
+        } else {
+          console.warn("No user session data found for upload");
+        }
+        
         // Upload the file (smartFileUpload should POST file to backend and wait for import)
         const response: ImportResponse = await smartFileUpload(file, (progress: number) => {
           updateUploadProgress(uiId, progress);
-        });
+        }, authorName);
 
         // Mark local UI as success and attach backend response
         updateUploadStatus(uiId, 'success', 'Upload complete', response);
 
         // Reload uploads from backend so the newly persisted row appears in the table
         await loadBackendUploads();
+        
+        // Track successful upload in system statistics
+        await trackSuccessfulUpload();
 
       } catch (err: any) {
         console.error('Upload/import failed', err);
         updateUploadStatus(uiId, 'error', err?.message || 'Upload failed');
+        
+        // Track failed upload in system statistics
+        await trackFailedUpload();
       }
     }
   };

@@ -3,7 +3,7 @@ import AdminNavigationTabs from "./AdminNavigationTabs";
 import "../Styles/AdminNavigationTabs.css";
 import ManageUsers from "./ManageUsers";
 import ImportFiles from "./ImportedFiles";
-import { useEffect } from "react";
+
 
 export default function AdminDashboard({ token }: { token: string | null }) {
     const [activeTab, setActiveTab] = useState("manage-users");
@@ -23,11 +23,11 @@ export default function AdminDashboard({ token }: { token: string | null }) {
             case "manage-users":
                 return <ManageUsers />; 
             case "import-files":
-                return <ImportFiles />; 
+                return <div>View Schematic Page Content</div>;
             case "view-schematic":
                 return <div>View Schematic Page Content</div>;
             default:
-                return <div>Please select a tab</div>;
+               return <div>Please select a tab. Current tab: {activeTab}</div>;
         }
     };
 

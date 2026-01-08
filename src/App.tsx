@@ -30,6 +30,7 @@ import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import ManageUsers from "./pages/ManageUsers";
 import ImportFiles from "./pages/ImportedFiles";
 import { useCallback } from "react";
+import ImageManagement from "./pages/ImageManagement";
 
 
 export default function App() {
@@ -700,6 +701,10 @@ const handleComponentRightClick = useCallback(async (component: any) => {
 
             {adminTab === "import-files" && (
               <ImportFiles />
+            )}
+
+            {adminTab === "import-images" && (
+              <ImageManagement />
             )}
 
             {adminTab === "view-schematic" && (

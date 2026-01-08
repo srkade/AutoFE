@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "../Styles/AdminNavigationTabs.css";
-import { FiUsers, FiUpload, FiCpu, FiUser } from "react-icons/fi";
+import { FiUsers, FiUpload, FiCpu, FiUser, FiImage } from "react-icons/fi";
 import logo from "../assets/Images/logo.png";
 
 interface AdminNavigationTabsProps {
@@ -26,6 +26,7 @@ export default function AdminNavigationTabs({
   const tabs = [
     { id: "manage-users", label: "Manage Users", icon: FiUsers },
     { id: "import-files", label: "Import Files", icon: FiUpload },
+    {id:"import-images", label:"Asset Management", icon: FiImage},
     { id: "view-schematic", label: "View Schematic", icon: FiCpu },
   ];
   console.log("AdminNavigationTabs render → user prop:", user);

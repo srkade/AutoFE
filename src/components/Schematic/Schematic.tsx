@@ -5,6 +5,7 @@ import React, {
   useRef,
   JSX,
   useLayoutEffect,
+  useMemo,
 } from "react";
 import TridentShape from "../symbols/TridentShape";
 import FuseSymbol from "../symbols/FuseSymbol";
@@ -57,6 +58,7 @@ import {
 } from "lucide-react";
 import { schematicExportManager } from "./SchematicExport";
 
+
 // ...existing code...
 const colors = {
   OG: "orange",
@@ -81,6 +83,40 @@ export default function Schematic({
   const svgWrapperRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, component: ComponentType } | null>(null);
+  
+  // Track render count
+  const [renderCount, setRenderCount] = useState(0);
+  
+  // Track render count
+  const renderInitialized = useRef(false);
+  
+  useEffect(() => {
+    setRenderCount(prev => prev + 1);
+    console.log(`Schematic component rendered. Total renders: ${renderCount + 1}`);
+    
+    // Only track the render once per schematic load to avoid double counting
+    if (!renderInitialized.current) {
+      renderInitialized.current = true;
+      
+      // Track schematic render for analytics - increment daily count in localStorage
+      try {
+        const today = new Date().toDateString();
+        const storedData = localStorage.getItem('schematicRendersAnalytics');
+        let renderData = storedData ? JSON.parse(storedData) : { date: today, count: 0 };
+        
+        // If it's a new day, reset the count
+        if (renderData.date !== today) {
+          renderData = { date: today, count: 1 };
+        } else {
+          renderData.count += 1;
+        }
+        
+        localStorage.setItem('schematicRendersAnalytics', JSON.stringify(renderData));
+      } catch (error) {
+        console.error('Failed to update schematic render analytics:', error);
+      }
+    }
+  }, [data]); 
 
   // Dragging state
   const [dragging, setDragging] = useState(false);

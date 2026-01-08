@@ -314,7 +314,7 @@ export default function SystemMonitoring() {
         <h3 style={{ margin: '0 0 15px 0', color: '#212529' }}>System Monitoring Information</h3>
         <p>
           This dashboard provides real-time monitoring of system performance, uptime, and health metrics.
-          Data is automatically refreshed every 30 seconds to provide up-to-date information.
+          Data is automatically refreshed every 20 seconds to provide up-to-date information.
         </p>
       </div>
     </div>

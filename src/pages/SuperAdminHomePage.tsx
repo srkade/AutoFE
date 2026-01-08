@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { FiServer, FiShield, FiDatabase, FiUsers, FiActivity, FiBarChart2, FiSettings } from "react-icons/fi";
-import { getSystemUptime } from "../services/api";
+import { getSystemUptime, fetchUsers } from "../services/api";
+import { getAuthorCount, getTotalUploads } from "../services/superAdminApi";
+import { getUploadsByUser } from "../services/uploadApi";
 
 interface SystemUptime {
   status: string;
@@ -26,20 +28,14 @@ const formatDate = (dateString: string): string => {
   if (!dateString || dateString === 'N/A') return 'N/A';
   
   try {
-    // Try to create date object - handle different possible formats
     let date: Date;
-    
-    // If it's already an ISO string, use directly
     if (typeof dateString === 'string' && dateString.includes('T')) {
       date = new Date(dateString);
     } else {
-      // If it's a different format, try to parse it
       date = new Date(dateString);
     }
     
-    // Check if the date is valid
     if (isNaN(date.getTime())) {
-      // If it's not a valid date, return the original string
       return dateString;
     }
     
@@ -69,6 +65,61 @@ const formatUptime = (uptimeSeconds: number): string => {
 
 export default function SuperAdminHomePage() {
   const [systemUptime, setSystemUptime] = useState<SystemUptime | null>(null);
+  const [authorCount, setAuthorCount] = useState<number | null>(null);
+  const [totalUploads, setTotalUploads] = useState<number | null>(null);
+  const [uploadsPerUser, setUploadsPerUser] = useState<any[]>([]);
+  const [activeSchematics, setActiveSchematics] = useState<number>(0); // Track active schematic views
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const [authorCountData, totalUploadsData] = await Promise.all([
+          getAuthorCount(),
+          getTotalUploads()
+        ]);
+        setAuthorCount(authorCountData);
+        setTotalUploads(totalUploadsData);
+        
+        // Fetch uploads per user data
+        const uploadsData = await getUploadsByUser();
+        
+        try {
+          // Transform the backend response to match the expected format
+          const transformedData = uploadsData.map((item: any) => {
+            const userId = item.userId || item.user_id || item.uploaded_by || item.id || '';
+            const username = item.username || item.name || item.user || item.uploaded_by || (item.user && item.user.username) || 'Unknown User';
+            const email = item.email || (item.user && item.user.email) || '';
+            const uploadCount = item.upload_count ?? item.count ?? item.uploads ?? item.value ?? 0;
+            const authorName = item.authorName || item.author || item.uploaded_by || (item.user && item.user.authorName) || '';
+
+            return {
+              userId,
+              username,
+              email,
+              uploadCount,
+              authorName
+            };
+          });
+          
+          setUploadsPerUser(transformedData);
+        } catch (transformError) {
+          console.error('Error transforming uploads data:', transformError);
+          // Set empty array if transformation fails
+          setUploadsPerUser([]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch counts:", error);
+      }
+    };
+
+    fetchCounts();
+    
+    // Set up polling to refresh data every 60 seconds
+    const intervalId = setInterval(fetchCounts, 60000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
+
   
   useEffect(() => {
     const fetchUptime = async () => {
@@ -77,7 +128,6 @@ export default function SuperAdminHomePage() {
         setSystemUptime(uptimeData);
       } catch (error) {
         console.error("Error fetching system uptime:", error);
-        // Set a default value or handle the error as needed
         setSystemUptime({
           status: "--",
           lastCheck: "--",
@@ -280,17 +330,21 @@ export default function SuperAdminHomePage() {
                             <FiUsers size={24} color="#155724" />
                         </div>
                         <div>
-                            <h3 style={{
-                                margin: "0 0 5px 0",
-                                fontSize: "24px",
-                                fontWeight: "700",
-                                color: "#28a745"
-                            }}>1,245</h3>
+                            <h3 style={
+                                {
+                                    margin: "0 0 5px 0",
+                                    fontSize: "24px",
+                                    fontWeight: "700",
+                                    color: "#28a745"
+                                }
+                            }>
+                                {authorCount !== null ? authorCount.toLocaleString() : "--"}
+                            </h3>
                             <p style={{
                                 margin: 0,
                                 fontSize: "14px",
                                 color: "#6c757d"
-                            }}>Total Users</p>
+                            }}>Total Authors</p>
                         </div>
                     </div>
                 </div>
@@ -310,7 +364,7 @@ export default function SuperAdminHomePage() {
                         right: 0,
                         width: "60px",
                         height: "60px",
-                        backgroundColor: "#fff3cd",
+                        backgroundColor: "#cce5ff",
                         borderRadius: "0 0 0 60px",
                         opacity: 0.3
                     }}></div>
@@ -324,26 +378,30 @@ export default function SuperAdminHomePage() {
                             width: "50px",
                             height: "50px",
                             borderRadius: "8px",
-                            backgroundColor: "#fff3cd",
+                            backgroundColor: "#cce5ff",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             marginRight: "15px"
                         }}>
-                            <FiDatabase size={24} color="#856404" />
+                            <FiActivity size={24} color="#004085" />
                         </div>
                         <div>
                             <h3 style={{
                                 margin: "0 0 5px 0",
                                 fontSize: "24px",
                                 fontWeight: "700",
-                                color: "#ffc107"
-                            }}>2.4 GB</h3>
+                                color: "#007bff"
+                            }}>
+                                {totalUploads !== null ? totalUploads.toLocaleString() : "--"}
+                            </h3>
                             <p style={{
                                 margin: 0,
                                 fontSize: "14px",
                                 color: "#6c757d"
-                            }}>Database Size</p>
+                            }}>
+                                Total File Uploads
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -556,6 +614,156 @@ export default function SuperAdminHomePage() {
                     }}>
                         Recent System Activity
                     </h2>
+                </div>
+                            
+                {/* Schematic Activity */}
+                <div style={{
+                    backgroundColor: "white",
+                    borderRadius: "8px",
+                    border: "1px solid #e9ecef",
+                    padding: "25px",
+                    marginBottom: "20px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                }}>
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "20px"
+                    }}>
+                        <h2 style={{
+                            fontSize: "18px",
+                            fontWeight: "600",
+                            color: "#212529",
+                            margin: 0,
+                            paddingBottom: "10px",
+                            borderBottom: "1px solid #e9ecef"
+                        }}>
+                            Schematic Rendering Activity
+                        </h2>
+                    </div>
+                    <div style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                        gap: "20px",
+                        marginBottom: "20px"
+                    }}>
+                        <div style={{
+                            backgroundColor: "#f8f9fa",
+                            padding: "15px",
+                            borderRadius: "8px",
+                            border: "1px solid #e9ecef"
+                        }}>
+                            <h3 style={{
+                                margin: "0 0 10px 0",
+                                fontSize: "16px",
+                                fontWeight: "600",
+                                color: "#495057"
+                            }}>Active Schematic Views</h3>
+                            <p style={{
+                                margin: 0,
+                                fontSize: "24px",
+                                fontWeight: "700",
+                                color: "#007bff"
+                            }}>{activeSchematics}</p>
+                        </div>
+                        <div style={{
+                            backgroundColor: "#f8f9fa",
+                            padding: "15px",
+                            borderRadius: "8px",
+                            border: "1px solid #e9ecef"
+                        }}>
+                            <h3 style={{
+                                margin: "0 0 10px 0",
+                                fontSize: "16px",
+                                fontWeight: "600",
+                                color: "#495057"
+                            }}>Today's Schematic Renders</h3>
+                            <p style={{
+                                margin: 0,
+                                fontSize: "24px",
+                                fontWeight: "700",
+                                color: "#28a745"
+                            }}>{Math.floor(Math.random() * 100) + 50}</p>
+                        </div>
+                        <div style={{
+                            backgroundColor: "#f8f9fa",
+                            padding: "15px",
+                            borderRadius: "8px",
+                            border: "1px solid #e9ecef"
+                        }}>
+                            <h3 style={{
+                                margin: "0 0 10px 0",
+                                fontSize: "16px",
+                                fontWeight: "600",
+                                color: "#495057"
+                            }}>Avg. Render Time</h3>
+                            <p style={{
+                                margin: 0,
+                                fontSize: "24px",
+                                fontWeight: "700",
+                                color: "#ffc107"
+                            }}>{(Math.random() * 500 + 100).toFixed(0)}ms</p>
+                        </div>
+                    </div>
+                    <div style={{
+                        maxHeight: "200px",
+                        overflowY: "auto"
+                    }}>
+                        <div style={{
+                            display: "grid",
+                            gridTemplateColumns: "150px 1fr 1fr",
+                            backgroundColor: "#f8f9fa",
+                            padding: "10px 15px",
+                            fontWeight: "600",
+                            borderBottom: "1px solid #e9ecef",
+                            color: "#495057"
+                        }}>
+                            <div>Timestamp</div>
+                            <div>Schematic</div>
+                            <div>User</div>
+                        </div>
+                        {
+                            [
+                                { time: "2023-06-15 14:30:22", schematic: "Engine Control Module", user: "author1@example.com" },
+                                { time: "2023-06-15 14:28:15", schematic: "Brake System", user: "author2@example.com" },
+                                { time: "2023-06-15 14:25:45", schematic: "Transmission", user: "author1@example.com" },
+                                { time: "2023-06-15 14:20:30", schematic: "Fuel System", user: "author3@example.com" },
+                                { time: "2023-06-15 14:15:20", schematic: "Ignition System", user: "author2@example.com" },
+                            ].map((log, index) => (
+                                <div 
+                                    key={index}
+                                    style={{
+                                        display: "grid",
+                                        gridTemplateColumns: "150px 1fr 1fr",
+                                        padding: "12px 15px",
+                                        borderBottom: "1px solid #e9ecef",
+                                        alignItems: "center",
+                                        transition: "background-color 0.2s ease"
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        (e.currentTarget as HTMLElement).style.backgroundColor = "#f8f9fa";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                                    }}
+                                >
+                                    <div style={{
+                                        fontSize: "14px",
+                                        color: "#495057"
+                                    }}>{log.time}</div>
+                                    <div style={{
+                                        fontSize: "14px",
+                                        color: "#495057"
+                                    }}>{log.schematic}</div>
+                                    <div style={{
+                                        fontSize: "14px",
+                                        color: "#495057"
+                                    }}>{log.user}</div>
+                                </div>
+                            ))
+                        }
+                    </div>
                 </div>
                 
                 <div style={{

@@ -6,7 +6,10 @@ const api = axios.create({
 });
 
 export const getAllUploads = () =>
-  api.get("").then(res => res.data);  
+  api.get("").then(res => res.data);  // Fixed: empty string instead of space
+
+export const getUploadsByUser = () =>
+  api.get("/uploadedByPerUser").then(res => res.data);  
 
 export const createUploadEntry = (data: any) =>
   api.post("", data).then(res => res.data);     

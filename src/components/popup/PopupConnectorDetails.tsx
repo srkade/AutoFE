@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { PopupConnectorType } from "../Schematic/SchematicTypes";
 
+import { DTC_STEPS_DATA } from "../../utils/DtcStepsData";
+
 interface PopupConnectorDetailsProps {
   popupConnector: PopupConnectorType | null;
   onClose: (e: React.MouseEvent) => void;
   selectedTab?: string;
   dtcCode?: string;
-  selectedDTC?: any;
+   selectedDTC?: any;
 }
 
 export default function PopupConnectorDetails({
@@ -17,6 +19,29 @@ export default function PopupConnectorDetails({
   selectedDTC,
 }: PopupConnectorDetailsProps) {
   const [activeTab, setActiveTab] = useState<"connection" | "dtc">("connection");
+  
+  // Helper function to find a matching DTC code from our map
+  const findMatchingDtcCode = (inputCode: string) => {
+    if (!inputCode) return null;
+    
+    // Normalize the input code
+    const normalizedInput = inputCode.trim().toUpperCase();
+    
+    // Check for direct match first
+    if (DTC_STEPS_DATA[normalizedInput]) {
+      return normalizedInput;
+    }
+    
+    // Check for partial matches starting with ICC
+    for (const code in DTC_STEPS_DATA) {
+      if (normalizedInput.startsWith(code) || code.startsWith(normalizedInput)) {
+        return code;
+      }
+    }
+    
+    return null;
+  };
+  
   if (!popupConnector) return null;
 
   // ---------- Internal CSS Styles ----------
@@ -72,8 +97,8 @@ export default function PopupConnectorDetails({
   const closeIconStyle: React.CSSProperties = {
     //  backgroundColor: "red",
     position: "absolute",
-    top: "-45px",    
-    right: "-10px",  
+    top: "-45px",
+    right: "-10px",
     color: "black",
     border: "none",
     width: "40px",
@@ -141,6 +166,8 @@ export default function PopupConnectorDetails({
   };
 
   // ---------- Component JSX ----------
+
+  
   return (
     <div style={containerStyle}>
       <div style={{ marginBottom: "10px", fontWeight: "bold", fontSize: "20px", textAlign: "center" }}>Connector Information</div>
@@ -274,77 +301,163 @@ export default function PopupConnectorDetails({
 
       {activeTab === "dtc" && (
         <div style={{ marginTop: "16px", fontSize: "14px", color: "#333" }}>
-          {selectedDTC ? (
-            (() => {
-              const dtc = {
-                ...selectedDTC,
-                probableCauses:
-                  selectedDTC.probableCauses ||
-                  selectedDTC.problableCauses ||
-                  [],
-                diagnosticSteps:
-                  selectedDTC.diagnosticSteps ||
-                  selectedDTC.steps ||
-                  [],
-                videoUrl:
-                  selectedDTC.videoUrl ||
-                  selectedDTC.vedioUrl ||
-                  null,
-              };
-
-              return (
-                <>
-                  <h3 style={{ color: "#0d0d0e", fontWeight: "bold" }}>
-                    {dtc.name || dtc.title || "Unnamed DTC"}
-                  </h3>
-
-                  <p style={{ marginBottom: "8px", color: "#666" }}>
-                    <b>Code:</b> {dtc.code}
-                  </p>
-
-                  {/* Probable Causes */}
-                  {dtc.probableCauses.length > 0 && (
+          {(() => {
+              // If selectedDTC is provided, use it directly
+              if (selectedDTC) {
+                // Handle selectedDTC as the source of truth
+                const dtcInfo = {
+                  code: selectedDTC.code || selectedDTC.dtcCode,
+                  name: selectedDTC.name || selectedDTC.title || "Diagnostic Trouble Code",
+                  steps: selectedDTC.steps || selectedDTC.diagnosticSteps || [],
+                  probableCauses: selectedDTC.probableCauses || selectedDTC.causes || [],
+                  videoUrl: selectedDTC.videoUrl || selectedDTC.video || null,
+                };
+                
+                if (dtcInfo.steps && dtcInfo.steps.length > 0) {
+                  return (
                     <>
-                      <h4 style={{ marginTop: "16px", color: "#007bff" }}>Probable Causes:</h4>
-                      <ul style={{ paddingLeft: "20px" }}>
-                        {dtc.probableCauses.map((cause: string, i: number) => (
-                          <li key={i}>{cause}</li>
-                        ))}
-                      </ul>
+                      {/* <h3 style={{ fontWeight: "bold" }}>
+                        {dtcInfo.name}
+                      </h3>
+
+                      <p style={{ marginBottom: "8px", color: "#666" }}>
+                        <b>Code:</b> {dtcInfo.code}
+                      </p> */}
+
+                      {/* Probable Causes */}
+                      {dtcInfo.probableCauses && dtcInfo.probableCauses.length > 0 && (
+                        <div style={{ marginTop: "16px" }}>
+                          <h4 style={{ color: "#007bff" }}>Probable Causes:</h4>
+                          <ul style={{ paddingLeft: "20px" }}>
+                            {dtcInfo.probableCauses.map((cause: string, idx: number) => (
+                              <li key={`cause-${idx}`}>
+                                {cause}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      <div style={{ marginTop: "16px" }}>
+                        <h4 style={{ color: "#007bff" }}>Diagnostic Steps:</h4>
+                        <ol style={{ paddingLeft: "20px" }}>
+                          {dtcInfo.steps.map((step: string, index: number) => {
+                            // Split step by semicolon or dash to create sub-steps
+                            const subSteps = step.includes(';') ? 
+                              step.split(';').filter((s: string) => s.trim()) :
+                              step.includes(' - ') ?
+                                step.split(' - ').filter((s: string) => s.trim()) :
+                                [step];
+                            
+                            return (
+                              <li key={index}>
+                                {subSteps.map((subStep: string, subIndex: number) => (
+                                  <span key={subIndex}>
+                                    {subStep.trim()}
+                                    {subIndex < subSteps.length - 1 && <br />}
+                                  </span>
+                                ))}
+                              </li>
+                            );
+                          })}
+                        </ol>
+                      </div>
+
+                      {/* Video */}
+                      {dtcInfo.videoUrl && (
+                        <div style={{ marginTop: "16px", textAlign: "center" }}>
+                          <iframe
+                            width="280"
+                            height="160"
+                            src={dtcInfo.videoUrl}
+                            title="Diagnostic Video"
+                            allowFullScreen
+                            style={{ borderRadius: "8px", border: "none" }}
+                          ></iframe>
+                        </div>
+                      )}
                     </>
-                  )}
+                  );
+                }
+              }
+              
+              // Otherwise, try to find data based on dtcCode
+              const matchedCode = dtcCode ? findMatchingDtcCode(dtcCode) : null;
+              
+              if (matchedCode && DTC_STEPS_DATA[matchedCode]) {
+                const dtcInfo = DTC_STEPS_DATA[matchedCode];
+                return (
+                  <>
+                    {/* <h3 style={{ fontWeight: "bold" }}>
+                      {dtcInfo.name || "Diagnostic Trouble Code"}
+                    </h3>
 
-                  {/* Diagnostic Steps */}
-                  {dtc.diagnosticSteps.length > 0 && (
-                    <>
-                      <h4 style={{ marginTop: "16px", color: "#007bff" }}>Diagnostic Steps:</h4>
+                    <p style={{ marginBottom: "8px", color: "#666" }}>
+                      <b>Code:</b> {matchedCode}
+                    </p> */}
+
+                    {/* Probable Causes */}
+                    {dtcInfo.probableCauses && dtcInfo.probableCauses.length > 0 && (
+                      <div style={{ marginTop: "16px" }}>
+                        <h4 style={{ color: "#007bff" }}>Probable Causes:</h4>
+                        <ul style={{ paddingLeft: "20px" }}>
+                          {dtcInfo.probableCauses.map((cause: string, idx: number) => (
+                            <li key={`cause-${idx}`}>
+                              {cause}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div style={{ marginTop: "16px" }}>
+                      <h4 style={{ color: "#007bff" }}>Diagnostic Steps:</h4>
                       <ol style={{ paddingLeft: "20px" }}>
-                        {dtc.diagnosticSteps.map((step: string, i: number) => (
-                          <li key={i}>{step}</li>
-                        ))}
+                        {dtcInfo.steps.map((step: string, index: number) => {
+                          // Split step by semicolon or dash to create sub-steps
+                          const subSteps = step.includes(';') ? 
+                            step.split(';').filter((s: string) => s.trim()) :
+                            step.includes(' - ') ?
+                              step.split(' - ').filter((s: string) => s.trim()) :
+                              [step];
+                          
+                          return (
+                            <li key={index}>
+                              {subSteps.map((subStep: string, subIndex: number) => (
+                                <span key={subIndex}>
+                                  {subStep.trim()}
+                                  {subIndex < subSteps.length - 1 && <br />}
+                                </span>
+                              ))}
+                            </li>
+                          );
+                        })}
                       </ol>
-                    </>
-                  )}
-
-                  {/* Video */}
-                  {dtc.videoUrl && (
-                    <div style={{ marginTop: "16px", textAlign: "center" }}>
-                      <iframe
-                        width="280"
-                        height="160"
-                        src={dtc.videoUrl}
-                        title="Diagnostic Video"
-                        allowFullScreen
-                        style={{ borderRadius: "8px", border: "none" }}
-                      ></iframe>
                     </div>
-                  )}
-                </>
-              );
-            })()
-          ) : (
-            <p style={{ color: "#999" }}>No DTC details found for this connector.</p>
-          )}
+
+                    {/* Video */}
+                    {dtcInfo.videoUrl && (
+                      <div style={{ marginTop: "16px", textAlign: "center" }}>
+                        <iframe
+                          width="280"
+                          height="160"
+                          src={dtcInfo.videoUrl}
+                          title="Diagnostic Video"
+                          allowFullScreen
+                          style={{ borderRadius: "8px", border: "none" }}
+                        ></iframe>
+                      </div>
+                    )}
+                  </>
+                );
+              } else {
+                return (
+                  <p style={{ color: "#999" }}>
+                    DTC is not mapped to this connector.
+                  </p>
+                );
+              }
+            })()}
         </div>
       )}
 

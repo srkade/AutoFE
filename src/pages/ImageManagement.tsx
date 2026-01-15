@@ -660,7 +660,7 @@ applyFilters(assets, searchQuery, filterType);
             )}
 
             {/* Manual Code Entry (fallback) */}
-            <div className="im-form-group">
+            {/* <div className="im-form-group">
               <label htmlFor="specific-code">Or Enter Code Manually</label>
               <input
                 id="specific-code"
@@ -671,7 +671,7 @@ applyFilters(assets, searchQuery, filterType);
                 disabled={specificUploading}
                 className="im-input"
               />
-            </div>
+            </div> */}
 
             {/* File Selection */}
             <label className="im-file-input-wrapper">

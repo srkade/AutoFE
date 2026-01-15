@@ -1,27 +1,46 @@
 :root {
   /* Primitive Color Tokens */
+  /* Base */
   --color-white: rgba(255, 255, 255, 1);
   --color-black: rgba(0, 0, 0, 1);
-  --color-cream-50: rgba(252, 252, 249, 1);
-  --color-cream-100: rgba(255, 255, 253, 1);
-  --color-gray-200: rgba(245, 245, 245, 1);
-  --color-gray-300: rgba(167, 169, 169, 1);
-  --color-gray-400: rgba(119, 124, 124, 1);
-  --color-slate-500: rgba(98, 108, 113, 1);
-  --color-brown-600: rgba(94, 82, 64, 1);
-  --color-charcoal-700: rgba(31, 33, 33, 1);
-  --color-charcoal-800: rgba(38, 40, 40, 1);
-  --color-slate-900: rgba(19, 52, 59, 1);
-  --color-teal-300: rgba(50, 184, 198, 1);
-  --color-teal-400: rgba(45, 166, 178, 1);
-  --color-teal-500: rgba(33, 128, 141, 1);
-  --color-teal-600: rgba(29, 116, 128, 1);
-  --color-teal-700: rgba(26, 104, 115, 1);
-  --color-teal-800: rgba(41, 150, 161, 1);
-  --color-red-400: rgba(255, 84, 89, 1);
-  --color-red-500: rgba(192, 21, 47, 1);
-  --color-orange-400: rgba(230, 129, 97, 1);
-  --color-orange-500: rgba(168, 75, 47, 1);
+
+  /* Page Backgrounds */
+  --color-cream-50: rgba(250, 251, 253, 1);   /* Main page background */
+  --color-cream-100: rgba(243, 246, 250, 1);  /* Table / card background */
+
+  /* Gray Shades */
+  --color-gray-200: rgba(230, 236, 245, 1);   /* Borders */
+  --color-gray-300: rgba(200, 211, 230, 1);   /* Input borders */
+  --color-gray-400: rgba(120, 135, 160, 1);   /* Secondary text */
+
+  /* Text colors */
+  --color-slate-500: rgba(100, 115, 140, 1);  /* Muted text */
+  --color-slate-900: rgba(25, 35, 60, 1);     /* Heading text */
+
+  /* Sidebar */
+  --color-charcoal-700: rgba(22, 35, 65, 1);  /* Sidebar background */
+  --color-charcoal-800: rgba(17, 28, 55, 1);  /* Sidebar hover */
+
+  /* Primary Blue */
+  --color-teal-300: rgba(140, 170, 255, 1);
+  --color-teal-400: rgba(30, 90, 255, 1);    /* Primary Button */
+  --color-teal-500: rgba(24, 76, 215, 1);    /* Primary default */
+  --color-teal-600: rgba(20, 65, 185, 1);    /* Hover */
+  --color-teal-700: rgba(17, 55, 155, 1);    /* Active */
+  --color-teal-800: rgba(14, 45, 125, 1);
+
+  /* Brown (used for secondary tints — neutral gray tone in UI) */
+  --color-brown-600: rgba(120, 135, 160, 1);
+
+  /* Status Colors */
+  --color-red-400: rgba(255, 72, 72, 1);     /* Delete icon */
+  --color-red-500: rgba(210, 35, 45, 1);     /* Error */
+
+  --color-orange-400: rgba(255, 170, 80, 1);
+  --color-orange-500: rgba(230, 140, 50, 1);
+
+  /* Success badge green */
+  --color-success-green: rgba(34, 197, 94, 1);
 
   /* RGB versions for opacity control */
   --color-brown-600-rgb: 94, 82, 64;
@@ -46,22 +65,33 @@
   /* Semantic Color Tokens (Light Mode) */
   --color-background: var(--color-cream-50);
   --color-surface: var(--color-cream-100);
+
   --color-text: var(--color-slate-900);
   --color-text-secondary: var(--color-slate-500);
+
+  /* Primary Buttons */
   --color-primary: var(--color-teal-500);
   --color-primary-hover: var(--color-teal-600);
   --color-primary-active: var(--color-teal-700);
+  --color-btn-primary-text: var(--color-white);
+
+  /* Secondary Buttons */
   --color-secondary: rgba(var(--color-brown-600-rgb), 0.12);
   --color-secondary-hover: rgba(var(--color-brown-600-rgb), 0.2);
   --color-secondary-active: rgba(var(--color-brown-600-rgb), 0.25);
-  --color-border: rgba(var(--color-brown-600-rgb), 0.2);
-  --color-btn-primary-text: var(--color-cream-50);
+
+  /* Borders */
+  --color-border: rgba(var(--color-brown-600-rgb), 0.18);
   --color-card-border: rgba(var(--color-brown-600-rgb), 0.12);
   --color-card-border-inner: rgba(var(--color-brown-600-rgb), 0.12);
+
+  /* Status */
   --color-error: var(--color-red-500);
-  --color-success: var(--color-teal-500);
+  --color-success: var(--color-success-green);
   --color-warning: var(--color-orange-500);
   --color-info: var(--color-slate-500);
+
+  /* Focus / Caret */
   --color-focus-ring: rgba(var(--color-teal-500-rgb), 0.4);
   --color-select-caret: rgba(var(--color-slate-900-rgb), 0.8);
 

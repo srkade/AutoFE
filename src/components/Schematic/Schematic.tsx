@@ -41,6 +41,7 @@ import {
 import PopupComponentDetails from "../popup/PopupComponentDetails";
 import PopupWireDetails from "../popup/PopupWireDetails";
 import PopupConnectorDetails from "../popup/PopupConnectorDetails";
+import { DTC_STEPS_DATA } from "../../utils/DtcStepsData";
 import {
   resetView,
   handleWheel,
@@ -177,6 +178,56 @@ export default function Schematic({
       cavityCount,
     });
     setPopupWire(null);
+    
+    // Set selectedDTC if we're in DTC tab
+    if (activeTab === 'DTC') {
+      // Strict mapping only (no fuzzy includes) to avoid showing unrelated DTC steps.
+      const connectorLabel = (connector.label || connector.id || "").toString().toUpperCase();
+      const connectorDtcMap: Record<string, string> = {
+        'XJ1': 'ICC 000100.01',
+        'XJ2': 'ICC 000100.01',
+        'XB4': 'ICC 000096.02',
+        'XS12': 'ICC 003942.03',
+      };
+
+      let mappedDtcCode: string | undefined;
+      
+      // First check explicit connector mappings
+      if (connectorLabel) {
+        if (connectorLabel.startsWith('XJ') && (connectorLabel === 'XJ1' || connectorLabel === 'XJ2')) { // Only for XJ1, XJ2 specifically
+          mappedDtcCode = 'ICC 000100.01';
+        } else {
+          mappedDtcCode = connectorDtcMap[connectorLabel];
+        }
+      }
+
+      // If not found by connector mapping, try exact match from component/connector fields
+      // Only look for exact DTC code matches in specific DTC-related fields if they exist
+      if (!mappedDtcCode) {
+        // Check if component or connector has a specific DTC code field
+        // Since ComponentType doesn't have dtcCode property, we only check IDs and labels
+        // but we'll be more selective about when to use them
+        
+        // First, check if the component or connector label appears to be a DTC code (starts with ICC)
+        if (comp.label && comp.label.toString().toUpperCase().startsWith('ICC') && DTC_STEPS_DATA[comp.label.toString().toUpperCase()]) {
+          mappedDtcCode = comp.label.toString().toUpperCase();
+        } else if (connector.label && connector.label.toString().toUpperCase().startsWith('ICC') && DTC_STEPS_DATA[connector.label.toString().toUpperCase()]) {
+          mappedDtcCode = connector.label.toString().toUpperCase();
+        } else if (comp.id && comp.id.toString().toUpperCase().startsWith('ICC') && DTC_STEPS_DATA[comp.id.toString().toUpperCase()]) {
+          mappedDtcCode = comp.id.toString().toUpperCase();
+        } else if (connector.id && connector.id.toString().toUpperCase().startsWith('ICC') && DTC_STEPS_DATA[connector.id.toString().toUpperCase()]) {
+          mappedDtcCode = connector.id.toString().toUpperCase();
+        }
+      }
+
+      if (mappedDtcCode && DTC_STEPS_DATA[mappedDtcCode]) {
+        // ensure the selected DTC object includes the code for downstream components
+        setSelectedDTC({ ...DTC_STEPS_DATA[mappedDtcCode], code: mappedDtcCode });
+      } else {
+        // no exact mapping — clear selection to avoid showing unrelated content
+        setSelectedDTC(null);
+      }
+    }
   };
 
   useEffect(() => {
@@ -204,6 +255,7 @@ export default function Schematic({
         setPopupComponent(null);
         setSelectedConnector(null);
         setPopupConnector(null);
+        setSelectedDTC(null);
       }
     };
 
@@ -218,6 +270,7 @@ export default function Schematic({
         setPopupComponent(null);
         setSelectedConnector(null);
         setPopupConnector(null);
+        setSelectedDTC(null);
       }
     };
 
@@ -229,6 +282,7 @@ export default function Schematic({
     e.stopPropagation(); // prevent outside-click effect
     setPopupConnector(null); // close popup
     setSelectedConnector(null); // clear highlight
+    setSelectedDTC(null); // clear DTC data
   };
 
   // Mouse event handlers for pan/drag
@@ -274,6 +328,14 @@ export default function Schematic({
       resetView(svgWrapperRef, fitViewBox, setViewBox);
     }
   }, [fitViewBox]);
+  
+  // Clear DTC selection when tab changes
+  useEffect(() => {
+    // Only clear if we're moving away from DTC tab
+    if (activeTab !== 'DTC') {
+      setSelectedDTC(null);
+    }
+  }, [activeTab]);
 
   // Reset view when data changes
   useEffect(() => {
@@ -1815,13 +1877,14 @@ export default function Schematic({
         <PopupConnectorDetails
           popupConnector={popupConnector}
           selectedDTC={selectedDTC}
-          onClose={(e) => {
-            e.stopPropagation();
-            setPopupConnector(null);
-            setSelectedConnector(null);
-          }}
-          selectedTab={activeTab}
-        />
+          dtcCode={selectedDTC?.code}
+           onClose={(e) => {
+             e.stopPropagation();
+             setPopupConnector(null);
+             setSelectedConnector(null);
+           }}
+           selectedTab={activeTab}
+         />
       </div>
     </div>
   );

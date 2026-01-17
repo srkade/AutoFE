@@ -123,6 +123,7 @@ export default function MainPanel({ selectedItem, activeTab, isMobile, onCompone
           key={selectedItem.code} // Helps React reset the view when switching components
           data={selectedItem.schematicData} 
           activeTab={activeTab}
+          dtcCode={selectedItem.type === 'DTC' ? selectedItem.code : undefined}
           onComponentRightClick={onComponentRightClick} // NOW IT IS PASSED CORRECTLY
         />
       )}

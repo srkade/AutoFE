@@ -74,50 +74,52 @@ export default function Schematic({
   data,
   scale = 1,
   activeTab,
+  dtcCode,
   onComponentRightClick,
 }: {
   data: SchematicData;
   scale?: number;
   activeTab?: string;
+  dtcCode?: string;
   onComponentRightClick?: (component: ComponentType, pos: { x: number; y: number }) => void; // <-- ADDED
 }) {
   const svgWrapperRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, component: ComponentType } | null>(null);
-  
+
   // Track render count
   const [renderCount, setRenderCount] = useState(0);
-  
+
   // Track render count
   const renderInitialized = useRef(false);
-  
+
   useEffect(() => {
     setRenderCount(prev => prev + 1);
     console.log(`Schematic component rendered. Total renders: ${renderCount + 1}`);
-    
+
     // Only track the render once per schematic load to avoid double counting
     if (!renderInitialized.current) {
       renderInitialized.current = true;
-      
+
       // Track schematic render for analytics - increment daily count in localStorage
       try {
         const today = new Date().toDateString();
         const storedData = localStorage.getItem('schematicRendersAnalytics');
         let renderData = storedData ? JSON.parse(storedData) : { date: today, count: 0 };
-        
+
         // If it's a new day, reset the count
         if (renderData.date !== today) {
           renderData = { date: today, count: 1 };
         } else {
           renderData.count += 1;
         }
-        
+
         localStorage.setItem('schematicRendersAnalytics', JSON.stringify(renderData));
       } catch (error) {
         console.error('Failed to update schematic render analytics:', error);
       }
     }
-  }, [data]); 
+  }, [data]);
 
   // Dragging state
   const [dragging, setDragging] = useState(false);
@@ -178,56 +180,19 @@ export default function Schematic({
       cavityCount,
     });
     setPopupWire(null);
-    
-    // Set selectedDTC if we're in DTC tab
+    console.log("Active DTC Code:", dtcCode);
+
     if (activeTab === 'DTC') {
-      // Strict mapping only (no fuzzy includes) to avoid showing unrelated DTC steps.
-      const connectorLabel = (connector.label || connector.id || "").toString().toUpperCase();
-      const connectorDtcMap: Record<string, string> = {
-        'XJ1': 'ICC 000100.01',
-        'XJ2': 'ICC 000100.01',
-        'XB4': 'ICC 000096.02',
-        'XS12': 'ICC 003942.03',
-      };
-
-      let mappedDtcCode: string | undefined;
-      
-      // First check explicit connector mappings
-      if (connectorLabel) {
-        if (connectorLabel.startsWith('XJ') && (connectorLabel === 'XJ1' || connectorLabel === 'XJ2')) { // Only for XJ1, XJ2 specifically
-          mappedDtcCode = 'ICC 000100.01';
-        } else {
-          mappedDtcCode = connectorDtcMap[connectorLabel];
-        }
-      }
-
-      // If not found by connector mapping, try exact match from component/connector fields
-      // Only look for exact DTC code matches in specific DTC-related fields if they exist
-      if (!mappedDtcCode) {
-        // Check if component or connector has a specific DTC code field
-        // Since ComponentType doesn't have dtcCode property, we only check IDs and labels
-        // but we'll be more selective about when to use them
-        
-        // First, check if the component or connector label appears to be a DTC code (starts with ICC)
-        if (comp.label && comp.label.toString().toUpperCase().startsWith('ICC') && DTC_STEPS_DATA[comp.label.toString().toUpperCase()]) {
-          mappedDtcCode = comp.label.toString().toUpperCase();
-        } else if (connector.label && connector.label.toString().toUpperCase().startsWith('ICC') && DTC_STEPS_DATA[connector.label.toString().toUpperCase()]) {
-          mappedDtcCode = connector.label.toString().toUpperCase();
-        } else if (comp.id && comp.id.toString().toUpperCase().startsWith('ICC') && DTC_STEPS_DATA[comp.id.toString().toUpperCase()]) {
-          mappedDtcCode = comp.id.toString().toUpperCase();
-        } else if (connector.id && connector.id.toString().toUpperCase().startsWith('ICC') && DTC_STEPS_DATA[connector.id.toString().toUpperCase()]) {
-          mappedDtcCode = connector.id.toString().toUpperCase();
-        }
-      }
-
-      if (mappedDtcCode && DTC_STEPS_DATA[mappedDtcCode]) {
-        // ensure the selected DTC object includes the code for downstream components
-        setSelectedDTC({ ...DTC_STEPS_DATA[mappedDtcCode], code: mappedDtcCode });
+      if (dtcCode && DTC_STEPS_DATA[dtcCode]) {
+        setSelectedDTC({
+          ...DTC_STEPS_DATA[dtcCode],
+          code: dtcCode,
+        });
       } else {
-        // no exact mapping — clear selection to avoid showing unrelated content
         setSelectedDTC(null);
       }
     }
+
   };
 
   useEffect(() => {
@@ -328,7 +293,7 @@ export default function Schematic({
       resetView(svgWrapperRef, fitViewBox, setViewBox);
     }
   }, [fitViewBox]);
-  
+
   // Clear DTC selection when tab changes
   useEffect(() => {
     // Only clear if we're moving away from DTC tab
@@ -1081,7 +1046,7 @@ export default function Schematic({
                 handleMouseUp();
               }}
             >
-              
+
               {(data.components || []).map((comp, componentIndex) => (
                 <g key={comp.id}>
                   {(comp.componentType?.toLowerCase() === "splice" ||
@@ -1148,22 +1113,22 @@ export default function Schematic({
                             strokeDasharray={
                               componentIndex !== 0 ? "6,4" : undefined
                             }
-                            
+
                             style={{ cursor: "pointer" }}
                             onContextMenu={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const pos = { x: e.clientX, y: e.clientY };
-                    console.log("🖱️ TRACE: Right-click on component:", comp.id);
-                    setContextMenu({ x: e.clientX, y: e.clientY, component: comp });
-                    if (onComponentRightClick) onComponentRightClick(comp, pos);
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedComponentIds([comp.id]);
-                    setPopupComponent(comp);
-                    // ... rest of existing click logic
-                  }}
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const pos = { x: e.clientX, y: e.clientY };
+                              console.log("🖱️ TRACE: Right-click on component:", comp.id);
+                              setContextMenu({ x: e.clientX, y: e.clientY, component: comp });
+                              if (onComponentRightClick) onComponentRightClick(comp, pos);
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedComponentIds([comp.id]);
+                              setPopupComponent(comp);
+                              // ... rest of existing click logic
+                            }}
                           />
                           {selectedComponentIds.includes(comp.id) && (
                             <rect
@@ -1378,7 +1343,7 @@ export default function Schematic({
                 );
                 const toComponent = toData[0];
                 var to = toData[1];
-                
+
                 if (fromComponent?.componentType?.toLowerCase() === "splice" && !from) {
                   const centerX =
                     getXForComponent(fromComponent) + getWidthForComponent(fromComponent) / 2;
@@ -1836,30 +1801,30 @@ export default function Schematic({
               })}
             </svg>
             {/* 3. THE CONTEXT MENU UI */}
-      {contextMenu && (
-        <div style={{
-          position: 'fixed', top: contextMenu.y, left: contextMenu.x,
-          background: 'white', border: '1px solid #ccc', borderRadius: '4px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 1000, padding: '8px 0', minWidth: '160px'
-        }}>
-          <div style={{ padding: '4px 16px', color: '#888', fontSize: '12px' }}>{contextMenu.component.label}</div>
-          <button
-            onClick={() => {
-        console.log("🔘 TRACE: 'Open Component' button clicked for:", contextMenu.component.id);
-        if (onComponentRightClick) {
-          onComponentRightClick(contextMenu.component, { x: contextMenu.x, y: contextMenu.y });
-        } else {
-          console.error("❌ TRACE: onComponentRightClick prop is MISSING in Schematic.tsx!");
-        }
-        setContextMenu(null);
-      }}
-      style={{ width: '100%', padding: '10px', cursor: 'pointer' }}
-          >
-            📍 Open Component
-          </button>
-        </div>
-      )}
-            
+            {contextMenu && (
+              <div style={{
+                position: 'fixed', top: contextMenu.y, left: contextMenu.x,
+                background: 'white', border: '1px solid #ccc', borderRadius: '4px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 1000, padding: '8px 0', minWidth: '160px'
+              }}>
+                <div style={{ padding: '4px 16px', color: '#888', fontSize: '12px' }}>{contextMenu.component.label}</div>
+                <button
+                  onClick={() => {
+                    console.log("🔘 TRACE: 'Open Component' button clicked for:", contextMenu.component.id);
+                    if (onComponentRightClick) {
+                      onComponentRightClick(contextMenu.component, { x: contextMenu.x, y: contextMenu.y });
+                    } else {
+                      console.error("❌ TRACE: onComponentRightClick prop is MISSING in Schematic.tsx!");
+                    }
+                    setContextMenu(null);
+                  }}
+                  style={{ width: '100%', padding: '10px', cursor: 'pointer' }}
+                >
+                  📍 Open Component
+                </button>
+              </div>
+            )}
+
           </div>
         </div>
         <PopupComponentDetails
@@ -1877,14 +1842,14 @@ export default function Schematic({
         <PopupConnectorDetails
           popupConnector={popupConnector}
           selectedDTC={selectedDTC}
-          dtcCode={selectedDTC?.code}
-           onClose={(e) => {
-             e.stopPropagation();
-             setPopupConnector(null);
-             setSelectedConnector(null);
-           }}
-           selectedTab={activeTab}
-         />
+          dtcCode={dtcCode}
+          onClose={(e) => {
+            e.stopPropagation();
+            setPopupConnector(null);
+            setSelectedConnector(null);
+          }}
+          selectedTab={activeTab}
+        />
       </div>
     </div>
   );

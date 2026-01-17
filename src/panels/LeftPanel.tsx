@@ -189,7 +189,10 @@ export default function LeftPanel({
           >
             {selectedCodes.length > 0 && (
               <button
-                onClick={() => setSelectedCodes([])}
+                onClick={() => {
+                  setSelectedCodes([]);
+                  onViewSchematic([]); 
+                }}
                 title="Clear Selection"
                 style={{
                   width: "40px",

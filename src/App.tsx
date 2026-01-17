@@ -329,9 +329,16 @@ export default function App() {
 
   async function handleViewSchematic(codes: string[]) {
     try {
+      // If no codes selected, clear the merged schematic
+      if (codes.length === 0) {
+        setMergedSchematic(null);
+        setSelectedItem(null);
+        return;
+      }
+      
       const tab = role === "author" ? schematicTab : activeTab;
 
-      if (tab === "harnesses" && codes.length > 0) {
+      if (tab === "harnesses") {
 
         // Use only the first selected harness for now
         const harnessCode = codes[0];

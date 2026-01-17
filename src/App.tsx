@@ -467,8 +467,7 @@ export default function App() {
 
       setMergedSchematic(null);
       setSelectedItem({ ...dashboardItem, schematicData: normalized });
-      setSelectedCodes([componentCode]);
-
+    
       console.log("✨ TRACE 6: SelectedItem Updated. UI should re-render now.");
     } catch (error) {
       console.error("❌ TRACE ERROR: API fetch failed", error);
@@ -531,6 +530,10 @@ export default function App() {
           <NavigationTabs
             activeTab={activeTab}
             onTabChange={(tabId) => {
+              // Exit trace mode when changing tabs
+              if (trace.isTraceMode) {
+                trace.exitTrace();
+              }
               setActiveTab(tabId);
               setSelectedItem(null);
               setShowWelcome(false);
@@ -553,6 +556,7 @@ export default function App() {
               <LeftPanel
                 activeTab={activeTab}
                 data={filteredItems}
+                traceMode={trace.isTraceMode}
                 onItemSelect={async (item) => {
                   try {
                     console.log("🔗 Item clicked:", item.code, "Type:", item.type);
@@ -735,6 +739,10 @@ export default function App() {
                 <NavigationTabs
                   activeTab={schematicTab}
                   onTabChange={(tabId) => {
+                    // Exit trace mode when changing tabs
+                    if (trace.isTraceMode) {
+                      trace.exitTrace();
+                    }
                     setSchematicTab(tabId);
                     setSelectedItem(null);
                     setShowWelcome(false);
@@ -759,6 +767,7 @@ export default function App() {
                     <LeftPanel
                       activeTab={schematicTab}
                       data={filteredItems}
+                      traceMode={trace.isTraceMode}
                       onItemSelect={async (item) => {
                         try {
                           console.log("🔗 Item clicked:", item.code, "Type:", item.type);

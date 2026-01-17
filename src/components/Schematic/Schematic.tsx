@@ -1134,11 +1134,11 @@ export default function Schematic({
                               const pos = { x: e.clientX, y: e.clientY };
                               console.log("🖱️ TRACE: Right-click on component:", comp.id);
                                                                                        
-                              // Close other popups and clear connector selection
+                             
                               setPopupComponent(null);
                               setPopupWire(null);
                               setPopupConnector(null);
-                              setSelectedConnector(null); // Clear connector highlight
+                              setSelectedConnector(null); 
                               setSelectedDTC(null);
                                                                                        
                               setContextMenu({ x: e.clientX, y: e.clientY, component: comp });

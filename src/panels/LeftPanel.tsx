@@ -15,6 +15,7 @@ interface LeftPanelProps {
   setSelectedCodes: React.Dispatch<React.SetStateAction<string[]>>;
   onViewSchematic: (selectedCodes: string[]) => void;
   isMobile: boolean;
+  traceMode?: boolean;
 }
 
 export default function LeftPanel({
@@ -26,6 +27,7 @@ export default function LeftPanel({
   setSelectedCodes,
   onViewSchematic,
   isMobile,
+  traceMode = false,
 }: LeftPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -60,15 +62,19 @@ export default function LeftPanel({
 
   const selectedSet = new Set(selectedCodes);
 
+  // Place the currently displayed item at the top only when in trace mode (came from right-click)
+  // Otherwise, the selected item will appear in its normal position
+  const displayedItemPart = (selectedItem && traceMode) ? [selectedItem].filter(item => filtered.some(f => f.code === item.code)) : [];
+  
   const selectedPart = filtered.filter((item) =>
-    selectedSet.has(item.code)
+    selectedSet.has(item.code) && (!traceMode || !selectedItem || item.code !== selectedItem.code) // avoid duplicates in trace mode
   );
 
   const otherPart = filtered.filter((item) =>
-    !selectedSet.has(item.code)
+    !selectedSet.has(item.code) && (!traceMode || !selectedItem || item.code !== selectedItem.code) // avoid duplicates in trace mode
   );
 
-  const filteredData = [...selectedPart, ...otherPart];
+  const filteredData = [...displayedItemPart, ...selectedPart, ...otherPart];
 
   const handleItemClick = (item: DashboardItem) => {
     if (showCheckbox && selectedCodes.length > 0) {

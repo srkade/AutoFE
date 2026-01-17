@@ -295,13 +295,13 @@ export default function PopupConnectorDetails({
               if (dtcInfo.steps && dtcInfo.steps.length > 0) {
                 return (
                   <>
-                    {/* <h3 style={{ fontWeight: "bold" }}>
+                    <h3 style={{ fontWeight: "bold" }}>
                         {dtcInfo.name}
                       </h3>
 
                       <p style={{ marginBottom: "8px", color: "#666" }}>
                         <b>Code:</b> {dtcInfo.code}
-                      </p> */}
+                      </p>
 
                     {/* Probable Causes */}
                     {dtcInfo.probableCauses && dtcInfo.probableCauses.length > 0 && (

@@ -157,6 +157,8 @@ export default function Schematic({
   const [popupConnector, setPopupConnector] =
     useState<PopupConnectorType | null>(null);
 
+
+
   const handleConnectorClick = (
     e: React.MouseEvent<SVGRectElement, MouseEvent>,
     connector: ConnectorType,
@@ -167,8 +169,11 @@ export default function Schematic({
     setSelectedWires([]);
     setSelectedConnector(connector);
     const cavityCount = calculateCavityCountForConnector(connector, data);
+    
+    // Close other popups but preserve connector selection
     setPopupComponent(null);
     setPopupWire(null);
+    
     setPopupConnector({
       componentCode: comp.label || comp.id,
       connectorCode: connector.label || connector.id,
@@ -179,7 +184,7 @@ export default function Schematic({
       connectorType: comp.connector_type,
       cavityCount,
     });
-    setPopupWire(null);
+    
     console.log("Active DTC Code:", dtcCode);
 
     if (activeTab === 'DTC') {
@@ -217,9 +222,11 @@ export default function Schematic({
         !popupRef.current?.contains(e.target as Node)
       ) {
         setSelectedComponentIds([]);
+        // Close all popups and clear selections
         setPopupComponent(null);
-        setSelectedConnector(null);
+        setPopupWire(null);
         setPopupConnector(null);
+        setSelectedConnector(null); // Clear connector highlight
         setSelectedDTC(null);
       }
     };
@@ -232,9 +239,11 @@ export default function Schematic({
     const handleClickOutside = (e: MouseEvent) => {
       if (!svgWrapperRef.current?.contains(e.target as Node)) {
         setSelectedComponentIds([]);
+        // Close all popups and clear selections
         setPopupComponent(null);
-        setSelectedConnector(null);
+        setPopupWire(null);
         setPopupConnector(null);
+        setSelectedConnector(null); // Clear connector highlight
         setSelectedDTC(null);
       }
     };
@@ -1080,12 +1089,16 @@ export default function Schematic({
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedWires([]);
-                            setSelectedConnector(null);
-
+                            
                             // Select this component
                             setSelectedComponentIds([comp.id]);
+                            
+                            // Close other popups and clear connector selection
+                            setPopupComponent(null);
                             setPopupWire(null);
                             setPopupConnector(null);
+                            setSelectedConnector(null); // Clear connector highlight
+                            setSelectedDTC(null);
 
                             // Show popup only if it wasn't manually closed
                             if (!popupClosedManually) {
@@ -1120,14 +1133,29 @@ export default function Schematic({
                               e.stopPropagation();
                               const pos = { x: e.clientX, y: e.clientY };
                               console.log("🖱️ TRACE: Right-click on component:", comp.id);
+                                                                                       
+                              // Close other popups and clear connector selection
+                              setPopupComponent(null);
+                              setPopupWire(null);
+                              setPopupConnector(null);
+                              setSelectedConnector(null); // Clear connector highlight
+                              setSelectedDTC(null);
+                                                                                       
                               setContextMenu({ x: e.clientX, y: e.clientY, component: comp });
                               if (onComponentRightClick) onComponentRightClick(comp, pos);
                             }}
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedComponentIds([comp.id]);
+                              
+                              // Close other popups and clear connector selection
+                              setPopupComponent(null);
+                              setPopupWire(null);
+                              setPopupConnector(null);
+                              setSelectedConnector(null); // Clear connector highlight
+                              setSelectedDTC(null);
+                              
                               setPopupComponent(comp);
-                              // ... rest of existing click logic
                             }}
                           />
                           {selectedComponentIds.includes(comp.id) && (
@@ -1284,23 +1312,36 @@ export default function Schematic({
                     <g key={conn.id}>
                       {/* render connector box only if component is not a splice */}
                       {comp.componentType?.toLowerCase() !== "splice" && (
-                        <rect
-                          x={safe(getXForConnector(conn, comp), padding)}
-                          y={safe(getYForConnector(conn, comp), padding)}
-                          width={safe(getWidthForConnector(conn, comp), 50)}
-                          height={connectorHeight}
-                          fill={
-                            selectedConnector?.id === conn.id
-                              ? "#3390FF"
-                              : "lightgreen"
-                          } // highlight selected
-                          stroke="black"
-                          strokeDasharray={
-                            componentIndex !== 0 ? "6,4" : undefined
-                          }
-                          onClick={(e) => handleConnectorClick(e, conn, comp)}
-                          style={{ cursor: "pointer" }}
-                        />
+                        <g>
+                          <rect
+                            x={safe(getXForConnector(conn, comp), padding)}
+                            y={safe(getYForConnector(conn, comp), padding)}
+                            width={safe(getWidthForConnector(conn, comp), 50)}
+                            height={connectorHeight}
+                            fill={
+                              selectedConnector?.id === conn.id
+                                ? "#3390FF"
+                                : "lightgreen"
+                            }
+                            stroke="black"
+                            strokeDasharray={
+                              componentIndex !== 0 ? "6,4" : undefined
+                            }
+                            onClick={(e) => handleConnectorClick(e, conn, comp)}
+                            style={{ cursor: "pointer" }}
+                          />
+                          {selectedConnector?.id === conn.id && (
+                            <rect
+                              x={safe(getXForConnector(conn, comp), padding)}
+                              y={safe(getYForConnector(conn, comp), padding)}
+                              width={safe(getWidthForConnector(conn, comp), 50)}
+                              height={connectorHeight}
+                              fill="#3390FF"
+                              opacity={0.3}
+                              pointerEvents="none" // so the click still passes through to the base rect
+                            />
+                          )}
+                        </g>
                       )}
 
                       <text
@@ -1681,12 +1722,16 @@ export default function Schematic({
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent deselecting everything else
                         setSelectedComponentIds([]);
-                        setSelectedConnector(null);
                         // Select only this wire
                         setSelectedWires([i.toString()]);
+                                                
+                        // Close other popups and clear connector selection
                         setPopupComponent(null);
-                        setPopupConnector(null);
                         setPopupWire(null);
+                        setPopupConnector(null);
+                        setSelectedConnector(null); // Clear connector highlight
+                        setSelectedDTC(null);
+                                                
                         // Set popupWire with all details
                         setPopupWire({
                           wire,
@@ -1695,7 +1740,7 @@ export default function Schematic({
                           toComponent: toComponent!,
                           toConnector: to!,
                         });
-
+                      
                         // Set popup position
                         setPopupWirePosition({
                           x: fromX + 900,
@@ -1844,9 +1889,9 @@ export default function Schematic({
           selectedDTC={selectedDTC}
           dtcCode={dtcCode}
           onClose={(e) => {
-            e.stopPropagation();
+            e.stopPropagation();            
             setPopupConnector(null);
-            setSelectedConnector(null);
+            setSelectedConnector(null); 
           }}
           selectedTab={activeTab}
         />
@@ -1854,7 +1899,7 @@ export default function Schematic({
     </div>
   );
 }
-// Add at the end of component file
+
 const spinnerStyle = `
   @keyframes spin {
     0% { transform: rotate(0deg); }

@@ -75,7 +75,7 @@ export default function AuthorNavigationTabs({
           }}
         >
           <img src={logo} alt="Logo" style={{ width: 50, height: 50 }} />
-          <h1 style={{ marginLeft: 10, fontSize: 20 }}>CRAZYBEES</h1>
+          <h1 style={{ marginLeft: 10, fontSize: 20, color:"white" }}>CRAZYBEES</h1>
         </div>
 
         {/* Tabs */}

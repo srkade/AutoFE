@@ -64,6 +64,7 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
           padding: "0 24px",
           display: "flex",
           gap: "2px"
+          
         }}>
         {/* LOGO AND BRANDING */}
         {!hideLogo && (

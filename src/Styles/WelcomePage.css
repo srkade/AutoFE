@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* background: linear-gradient(135deg, #e8f0ff, #d7e3fc); */
+  background: linear-gradient(135deg, #e8f0ff, #d7e3fc); /* Now active for consistency */
   color: #1a237e;
   font-family: "Segoe UI", Roboto, sans-serif;
   overflow: hidden;
@@ -37,7 +37,7 @@
 
 .welcome-text p {
   font-size: 18px;
-  line-height: 1.7;
+  line-height: 1.8; /* Increased for better readability */
   margin-bottom: 30px;
   color: #2c387e;
 }
@@ -45,43 +45,77 @@
 .features {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   font-size: 16px;
   color: #283593;
   margin-bottom: 40px;
 }
 
+.features div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.features div::before {
+  font-size: 22px;
+  display: inline-block;
+  min-width: 24px;
+  text-align: center;
+  position: relative;
+  top: 1px; /* Fine-tune vertical alignment */
+}
+
 /* Button */
 .start-btn {
-  background-color: #1976d2;
+  background-color: #ff6d00; /* Vibrant orange for higher contrast */
   color: white;
   border: none;
-  padding: 14px 30px;
+  padding: 14px 36px; /* Increased right padding for arrow spacing */
   border-radius: 25px;
   font-size: 17px;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 109, 0, 0.3);
   transition: 0.3s ease;
+  font-weight: 600;
 }
 
 .start-btn:hover {
-  background-color: #0d47a1;
+  background-color: #e65100; /* Darker orange on hover */
   transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 109, 0, 0.4);
 }
 
 /* Image section */
-.welcome-image img {
-  width: 420px;
-  height: auto;
+.welcome-image {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.home-image {
+  width: 650px;
+  /* Increased size */
+  height: 500px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  opacity: 1;
   animation: float 3s ease-in-out infinite;
-  filter: drop-shadow(0px 8px 16px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0px 12px 24px rgba(0, 0, 0, 0.15));
+  transition: all 0.3s ease;
+  border: 1px solid #e0e0e0; /* Subtle border for depth */
+  border-radius: 12px;
+  background-color: #ffffff; /* Ensure white background */
+  padding: 8px; /* Add slight padding for visual separation */
 }
 
 /* Footer */
 footer {
   text-align: center;
   padding: 20px;
-  /* background-color: #f0f4ff; */
+  background-color: rgba(240, 244, 255, 0.7); /* Semi-transparent to match gradient */
   font-size: 14px;
   color: #3949ab;
   border-top: 1px solid #c5cae9;
@@ -93,6 +127,7 @@ footer {
     opacity: 0;
     transform: translateX(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -100,9 +135,12 @@ footer {
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -120,8 +158,13 @@ footer {
     font-size: 36px;
   }
 
-  .welcome-image img {
-    width: 300px;
+  .home-image {
+    width: 350px;
+    height: 250px;
     margin-top: 40px;
+  }
+  
+  .features div {
+    justify-content: center;
   }
 }

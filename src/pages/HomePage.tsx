@@ -1,7 +1,7 @@
 import React from "react";
 import "../Styles/WelcomePage.css";
 
-export default function WelcomePage({ onStart }: { onStart: () => void }) { 
+export default function WelcomePage({ onStart }: { onStart: () => void }) {
   return (
     <div className="welcome-wrapper">
       <div className="welcome-inner">
@@ -27,7 +27,8 @@ export default function WelcomePage({ onStart }: { onStart: () => void }) {
 
         <div className="welcome-image">
           <img
-            src="https://cdn-icons-png.flaticon.com/512/1040/1040230.png"
+            src="/images/HomePage.png"
+            className="home-image"
             alt="Circuit Illustration"
           />
         </div>

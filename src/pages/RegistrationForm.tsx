@@ -33,6 +33,86 @@ export default function RegisterForm({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+
+  // ---------------- TERMS MODAL CONTENT ----------------
+  const TermsModal = () => (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1000,
+        padding: "20px",
+      }}
+      onClick={() => setShowTermsModal(false)}
+    >
+      <div
+        style={{
+          backgroundColor: "#fff",
+          padding: "30px",
+          borderRadius: "12px",
+          maxWidth: "500px",
+          maxHeight: "80vh",
+          overflowY: "auto",
+          boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+          position: "relative",
+          lineHeight: "1.6",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={() => setShowTermsModal(false)}
+          style={{
+            position: "absolute",
+            top: "15px",
+            right: "15px",
+            background: "none",
+            border: "none",
+            fontSize: "20px",
+            cursor: "pointer",
+            color: "#666",
+          }}
+        >
+          ✖
+        </button>
+        <h3 style={{ color: "#007bff", marginBottom: "20px", borderBottom: "2px solid #f0f0f0", paddingBottom: "10px" }}>Terms & Conditions</h3>
+        <div style={{ fontSize: "14px", color: "#444" }}>
+          <p>Welcome to <b>CRAZYBEES</b>. By creating an account, you agree to the following terms:</p>
+          <ol style={{ paddingLeft: "20px" }}>
+            <li><b>Usage:</b> This platform is provided for design and analysis of schematics. Unauthorized use is prohibited.</li>
+            <li><b>Data Security:</b> We value your privacy. Your data will be stored securely but we are not liable for user-side security breaches.</li>
+            <li><b>Account Approval:</b> All standard user accounts are subject to review and approval by authorized personnel.</li>
+            <li><b>Prohibited Acts:</b> Any attempt to reverse engineer or disrupt the service will lead to immediate account suspension.</li>
+            <li><b>Modifications:</b> These terms may be updated at any time without prior notice.</li>
+          </ol>
+          <p style={{ marginTop: "20px" }}>By checking the box on the registration page, you acknowledge that you have read and understood these terms.</p>
+        </div>
+        <button
+          onClick={() => setShowTermsModal(false)}
+          style={{
+            width: "100%",
+            padding: "12px",
+            marginTop: "20px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+        >
+          I Understand
+        </button>
+      </div>
+    </div>
+  );
 
   // ---------------- HANDLE SUBMIT ----------------
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,21 +191,24 @@ export default function RegisterForm({
   return (
     <div
       style={{
-        backgroundColor: "#f4f6f9",
-        minHeight: "100vh",
+        backgroundColor: showCloseButton ? "transparent" : "#f4f6f9",
+        minHeight: showCloseButton ? "auto" : "100vh",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
         fontFamily: "'Segoe UI', Tahoma, Verdana, sans-serif",
       }}
     >
+      {showTermsModal && <TermsModal />}
       <div
         style={{
           display: "flex",
           width: showLeftPanel ? "900px" : "500px",  // auto resize when left hidden
-          height: "customHeight",
+          minHeight: customHeight,
+          height: "auto",
+          maxHeight: showCloseButton ? "90vh" : "none",
           borderRadius: "12px",
-          overflow: "hidden",
+          overflowY: "auto",
           boxShadow: "0 6px 30px rgba(0,0,0,0.1)",
           backgroundColor: "#ffffff",
         }}
@@ -230,7 +313,8 @@ export default function RegisterForm({
             {/* First NAME */}
             <input
               type="text"
-              placeholder="Fistrname"
+              placeholder="First Name"
+              required
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               style={inputStyle}
@@ -239,7 +323,8 @@ export default function RegisterForm({
             {/* LASTNAME */}
             <input
               type="text"
-              placeholder="Lastname"
+              placeholder="Last Name"
+              required
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               style={inputStyle}
@@ -249,6 +334,7 @@ export default function RegisterForm({
             <input
               type="email"
               placeholder="Email Address"
+              required
               value={email}
               onChange={(e) => {
                 const val = e.target.value;
@@ -264,6 +350,7 @@ export default function RegisterForm({
                 <input
                   type="password"
                   placeholder="Password"
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={inputStyle}
@@ -272,6 +359,7 @@ export default function RegisterForm({
                 <input
                   type="password"
                   placeholder="Confirm Password"
+                  required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   style={inputStyle}
@@ -323,27 +411,44 @@ export default function RegisterForm({
             >
               <input
                 type="checkbox"
+                id="terms-checkbox"
                 checked={agreeTerms}
                 onChange={(e) => setAgreeTerms(e.target.checked)}
               />
-              <span>
+              <label htmlFor="terms-checkbox" style={{ cursor: "pointer" }}>
                 I agree to the{" "}
-                <span style={{ color: "#007bff" }}>Terms & Conditions</span>
-              </span>
+                <span
+                  style={{
+                    color: "#007bff",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    transition: "color 0.2s"
+                  }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#0056b3")}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#007bff")}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowTermsModal(true);
+                  }}
+                >
+                  Terms & Conditions
+                </span>
+              </label>
             </div>
 
             {/* SUBMIT */}
             <button
               type="submit"
+              disabled={!agreeTerms}
               style={{
                 width: "100%",
                 padding: "12px",
                 borderRadius: "6px",
                 border: "none",
-                backgroundColor: "#007bff",
+                backgroundColor: agreeTerms ? "#007bff" : "#ccc",
                 color: "#fff",
                 fontWeight: "bold",
-                cursor: "pointer",
+                cursor: agreeTerms ? "pointer" : "not-allowed",
               }}
             >
               {userToEdit ? "Save Changes" : "Register"}

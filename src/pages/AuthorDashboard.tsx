@@ -21,18 +21,18 @@ export default function AuthorDashboard({ token }: { token: string | null }) {
     const renderContent = () => {
         switch (activeTab) {
             case "manage-users":
-                return <ManageUsers />; 
+                return <ManageUsers />;
             case "import-files":
                 return <div>View Schematic Page Content</div>;
             case "view-schematic":
                 return <div>View Schematic Page Content</div>;
             default:
-               return <div>Please select a tab. Current tab: {activeTab}</div>;
+                return <div>Please select a tab. Current tab: {activeTab}</div>;
         }
     };
 
     return (
-        <div className="admin-container" style={{ display: "flex", flexDirection: "column" }}>
+        <div className="admin-container" style={{ display: "flex" }}>
             <AuthorNavigationTabs
                 active={activeTab}
                 onChange={setActiveTab}
@@ -41,7 +41,7 @@ export default function AuthorDashboard({ token }: { token: string | null }) {
             />
             <div
                 className="content-panel"
-                style={{ flex: 1, padding: 20, border: "1px solid red" }}
+                style={{ flex: 1, paddingLeft: "260px", paddingTop: "60px", height: "100vh", overflow: "auto" }}
             >
                 {renderContent()}
             </div>

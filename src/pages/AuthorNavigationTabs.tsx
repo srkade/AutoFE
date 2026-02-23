@@ -67,7 +67,7 @@ export default function AuthorNavigationTabs({
         {/* Logo */}
         <div
           style={{
-            width: "320px",
+            width: "100%",
             display: "flex",
             height: "80px",
             alignItems: "center",

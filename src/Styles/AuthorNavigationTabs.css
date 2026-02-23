@@ -1,14 +1,19 @@
 .admin-nav {
   display: flex;
   flex-direction: column;
-  width: 220px;
+  width: 260px;
   background-color: #1e2a47;
   padding: 20px;
-  border-radius: 12px;
+  border-radius: 0 12px 12px 0; /* Only right side rounded if it's a sidebar */
   font-family: 'Segoe UI', sans-serif;
   color: #cbd5e1;
   height: 100vh;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  z-index: 101;
 }
 
 .tabs {
@@ -73,16 +78,16 @@
   position: fixed;
   top: 0;
   left: 260px;
-  width: calc(100% - 250px);
-  height: 40px;
+  width: calc(100% - 260px);
+  height: 60px; /* Slightly taller for better look */
 
   background-color: #ffffff;
-  /* border-bottom: 1px solid #e5e7eb; */
-
   display: flex;
   align-items: center;
   justify-content: space-between;
 
   padding: 0 20px;
   z-index: 100;
+  box-sizing: border-box;
+  border-bottom: 1px solid #e5e7eb;
 }

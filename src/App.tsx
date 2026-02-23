@@ -335,7 +335,7 @@ export default function App() {
         setSelectedItem(null);
         return;
       }
-      
+
       const tab = role === "author" ? schematicTab : activeTab;
 
       if (tab === "harnesses") {
@@ -474,7 +474,7 @@ export default function App() {
 
       setMergedSchematic(null);
       setSelectedItem({ ...dashboardItem, schematicData: normalized });
-    
+
       console.log("✨ TRACE 6: SelectedItem Updated. UI should re-render now.");
     } catch (error) {
       console.error("❌ TRACE ERROR: API fetch failed", error);
@@ -721,7 +721,7 @@ export default function App() {
           />
 
           {/* TAB CONTENT */}
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, paddingLeft: "260px", paddingTop: "60px", height: "100vh", overflow: "auto" }}>
             {authorTab === "manage-users" && (
               <ManageUsers />
             )}
@@ -736,11 +736,10 @@ export default function App() {
             {authorTab === "view-schematic" && (
               <div
                 style={{
-                  height: "100vh",
+                  height: "100%",
                   background: "#f8f9fa",
                   display: "flex",
                   flexDirection: "column",
-                  marginTop: "30px",
                 }}
               >
                 <NavigationTabs

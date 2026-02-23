@@ -68,10 +68,14 @@
 .user-popup button {
   margin-top: 10px;
   padding: 6px;
-  background: #f396a9;
+  /* background: #f396a9; */
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.user-popup button:hover {
+  background: #e14c5b;
 }
 
 .admin-topbar {

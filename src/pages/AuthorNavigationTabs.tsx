@@ -58,7 +58,10 @@ export default function AuthorNavigationTabs({
               <div><span><b>Email:</b>{user?.email ?? "loadnig..."}</span></div>
               <div><span><b>Role:</b>{user?.role ?? "loading..."}</span></div>
 
-              <button onClick={onLogout}>Logout</button>
+              <button onClick={onLogout}>
+                <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                {/* Logout */}
+                </button>
             </div>
           )}
         </div>

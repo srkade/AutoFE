@@ -210,8 +210,8 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
                 <button
                   onClick={onLogout}
                   style={{
-                    background: "#ae8c8fff",
-                    color: "white",
+                    // background: "#ae8c8fff",
+                    color: "black",
                     border: "none",
                     padding: "8px 16px",
                     borderRadius: "6px",
@@ -224,9 +224,13 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
                   onMouseEnter={(e) =>
                     ((e.target as HTMLButtonElement).style.background = "#a74550")
                   }
+                  onMouseLeave={(e) =>
+                    ((e.target as HTMLButtonElement).style.background = "transparent")
+                  }
 
                 >
-                  Logout
+                  <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                  {/* Logout */}
                 </button>
               </div>
             )}

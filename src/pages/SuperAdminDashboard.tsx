@@ -6,6 +6,7 @@ import DatabaseManagement from "./DatabaseManagement";
 import UserAnalytics from "./UserAnalytics";
 import SystemMonitoring from "./SystemMonitoring";
 import SuperAdminHomePage from "./SuperAdminHomePage";
+import SearchBar from "../components/SearchBar";
 import "../Styles/AuthorNavigationTabs.css";
 
 export default function SuperAdminDashboard({ token }: { token: string | null }) {
@@ -37,10 +38,10 @@ export default function SuperAdminDashboard({ token }: { token: string | null })
 
         fetchUserInfo();
     }, []);
-    
+
     useEffect(() => {
         let title = "";
-        switch(activeTab) {
+        switch (activeTab) {
             case "home": title = "Welcome.."; break;
             case "system-settings": title = "System Configuration"; break;
             case "security-logs": title = "Security Monitoring"; break;
@@ -50,28 +51,28 @@ export default function SuperAdminDashboard({ token }: { token: string | null })
             default: title = " Super Admin Dashboard";
         }
     }, [activeTab]);
-    
+
     useEffect(() => {
         const handleClickOutside = (event: any) => {
             const target = event.target as HTMLElement;
-            
+
             if (showUserPopup && userIconRef.current && !userIconRef.current.contains(target)) {
                 setShowUserPopup(false);
             }
         };
-        
-        document.addEventListener("click", handleClickOutside);
+
+        document.addEventListener("mousedown", handleClickOutside);
         return () => {
-            document.removeEventListener("click", handleClickOutside);
+            document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [showUserPopup]);
-    
+
     const handleLogout = () => {
         console.log("Super Admin logout clicked");
         sessionStorage.clear();
         window.location.href = "/login";
     };
-    
+
     const handleTabChange = (tabId: string) => {
         //console.log("Tab clicked:", tabId);
         setActiveTab(tabId);
@@ -79,10 +80,10 @@ export default function SuperAdminDashboard({ token }: { token: string | null })
     };
 
     return (
-        <div className="admin-container" style={{ 
-            display: "flex", 
-            flexDirection: "row", 
-            height: "100vh", 
+        <div className="admin-container" style={{
+            display: "flex",
+            flexDirection: "row",
+            height: "100vh",
             backgroundColor: "#f0f4f8",
             fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
             overflow: "hidden"
@@ -95,8 +96,8 @@ export default function SuperAdminDashboard({ token }: { token: string | null })
             />
             <div
                 className="content-panel"
-                style={{ 
-                    flex: 1, 
+                style={{
+                    flex: 1,
                     padding: "24px",
                     backgroundColor: "#f8fafc",
                     overflowY: "auto",
@@ -148,14 +149,19 @@ export default function SuperAdminDashboard({ token }: { token: string | null })
                                 {activeTab === "system-monitoring" && "Monitor system performance and health"}
                             </p>
                         </div>
-                        
+
+                        {/* Global Search Bar */}
+                        <div style={{ flex: "1", maxWidth: "400px", margin: "0 24px" }}>
+                            <SearchBar />
+                        </div>
+
                         {/* User Icon */}
-                        <div style={{ position: "relative", display: "inline-block" }}>
-                            <div 
+                        <div style={{ position: "relative", display: "inline-block", marginRight: "130px" }}>
+                            <div
                                 ref={userIconRef}
-                                style={{ 
-                                    display: "flex", 
-                                    alignItems: "center", 
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
                                     cursor: "pointer",
                                     padding: "8px 12px",
                                     borderRadius: "8px",
@@ -167,68 +173,69 @@ export default function SuperAdminDashboard({ token }: { token: string | null })
                                     setShowUserPopup(prev => !prev);
                                 }}
                             >
-                                <div style={{ 
-                                    width: "40px", 
-                                    height: "40px", 
-                                    borderRadius: "50%", 
-                                    background: "#3b82f6", 
-                                    display: "flex", 
-                                    alignItems: "center", 
-                                    justifyContent: "center", 
-                                    color: "white", 
+                                <div style={{
+                                    width: "40px",
+                                    height: "40px",
+                                    borderRadius: "50%",
+                                    background: "#3b82f6",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    color: "white",
                                     fontWeight: "bold",
                                     marginRight: "12px",
                                 }}>
                                     {userInfo?.name?.charAt(0) || "S"}
                                 </div>
                             </div>
-                            
+
                             {/* USER POPUP */}
                             {showUserPopup && (
-                                <div 
+                                <div
                                     style={{
                                         position: "absolute",
-                                        top: "100%",  
-                                        left: "auto",
-                                        right: "0",  
-                                        zIndex: 1000,
+                                        top: "calc(100% + 8px)",
+                                        left: "50%",
+                                        transform: "translateX(-50%)",
+                                        zIndex: 1001,
                                         background: "white",
                                         border: "1px solid #e2e8f0",
-                                        borderRadius: "8px",
-                                        padding: "16px",
-                                        width: "260px",
-                                        boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)",
-                                        marginTop: "8px", 
+                                        borderRadius: "12px",
+                                        padding: "20px",
+                                        width: "280px",
+                                        boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
                                     }}
                                     onClick={(e) => e.stopPropagation()}
                                 >
-                                    <div style={{ marginBottom: "12px" }}>
-                                        <div style={{ marginBottom: "8px" }}><strong style={{ color: "#64748b" }}>Name:</strong> <span style={{ color: "#1e293b" }}>{userInfo?.name || "Super Admin"}</span></div>
-                                        <div style={{ marginBottom: "8px" }}><strong style={{ color: "#64748b" }}>Email:</strong> <span style={{ color: "#1e293b" }}>{userInfo?.email || "superadmin@company.com"}</span></div>
-                                        <div><strong style={{ color: "#64748b" }}>Role:</strong> <span style={{ color: "#1e293b" }}>{userInfo?.role || "Super Admin"}</span></div>
+                                    <div style={{ marginBottom: "16px" }}>
+                                        <div style={{ marginBottom: "10px" }}><strong style={{ color: "#64748b", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>User</strong><div style={{ color: "#1e293b", fontWeight: "600", fontSize: "15px" }}>{userInfo?.name || "Super Admin"}</div></div>
+                                        <div style={{ marginBottom: "10px" }}><strong style={{ color: "#64748b", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Email</strong><div style={{ color: "#1e293b", fontSize: "14px" }}>{userInfo?.email || "superadmin@company.com"}</div></div>
+                                        <div><strong style={{ color: "#64748b", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Role</strong><div style={{ color: "#3b82f6", fontWeight: "600", fontSize: "14px" }}>{userInfo?.role || "Super Admin"}</div></div>
                                     </div>
-                                    <button 
-                                        onClick={handleLogout}
-                                        style={{
-                                            width: "100%",
-                                            padding: "10px",
-                                            background: "#ef4444",
-                                            color: "white",
-                                            border: "none",
-                                            borderRadius: "6px",
-                                            cursor: "pointer",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            fontWeight: "500",
-                                            fontSize: "14px",
-                                            transition: "background 0.2s"
-                                        }}
-                                        onMouseEnter={(e) => (e.target as HTMLButtonElement).style.background = "#dc2626"}
-                                        onMouseLeave={(e) => (e.target as HTMLButtonElement).style.background = "#ef4444"}
-                                    >
-                                        <span style={{ marginRight: "8px" }}></span> Logout
-                                    </button>
+                                    <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "16px" }}>
+                                        <button
+                                            onClick={handleLogout}
+                                            style={{
+                                                width: "100%",
+                                                padding: "10px",
+                                                background: "#ef4444",
+                                                color: "white",
+                                                border: "none",
+                                                borderRadius: "8px",
+                                                cursor: "pointer",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                fontWeight: "600",
+                                                fontSize: "14px",
+                                                transition: "all 0.2s"
+                                            }}
+                                            onMouseEnter={(e) => (e.target as HTMLButtonElement).style.background = "#dc2626"}
+                                            onMouseLeave={(e) => (e.target as HTMLButtonElement).style.background = "#ef4444"}
+                                        >
+                                            Logout
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>

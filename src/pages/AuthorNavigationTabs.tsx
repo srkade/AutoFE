@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../Styles/AuthorNavigationTabs.css";
 import { FiUsers, FiUpload, FiCpu, FiUser, FiImage } from "react-icons/fi";
 import logo from "../assets/Images/logo.png";
+import SearchBar from "../components/SearchBar";
 
 interface AuthorNavigationTabsProps {
   active: string;
@@ -22,11 +23,12 @@ export default function AuthorNavigationTabs({
   user,
 }: AuthorNavigationTabsProps) {
   const [showPopup, setShowPopup] = useState(false);
+  const userIconRef = useRef<HTMLDivElement>(null);
 
   const tabs = [
     { id: "manage-users", label: "Manage Users", icon: FiUsers },
     { id: "import-files", label: "Import Files", icon: FiUpload },
-    {id:"import-images", label:"Asset Management", icon: FiImage},
+    { id: "import-images", label: "Asset Management", icon: FiImage },
     { id: "view-schematic", label: "View Schematic", icon: FiCpu },
   ];
   console.log("AuthorNavigationTabs render → user prop:", user);
@@ -35,14 +37,35 @@ export default function AuthorNavigationTabs({
     console.log("User prop updated:", user);
   }, [user]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showPopup && userIconRef.current && !userIconRef.current.contains(target)) {
+        setShowPopup(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPopup]);
+
 
   return (
     <div>
       <div className="admin-topbar">
-        {/* User Icon */}
+        {/* Search Bar in Topbar */}
+        <div style={{ flex: "1", maxWidth: "500px", margin: "0 20px" }}>
+          <SearchBar />
+        </div>
+
         <div
+          ref={userIconRef}
           className="logout"
-          onClick={() => {
+          style={{ marginLeft: "auto" }}
+          onClick={(e) => {
+            e.stopPropagation();
             console.log("User icon clicked");
             console.log("showPopup BEFORE:", showPopup);
             console.log("user at click time:", user);
@@ -61,7 +84,7 @@ export default function AuthorNavigationTabs({
               <button onClick={onLogout}>
                 <i className="fa-solid fa-arrow-right-from-bracket"></i>
                 {/* Logout */}
-                </button>
+              </button>
             </div>
           )}
         </div>
@@ -78,7 +101,7 @@ export default function AuthorNavigationTabs({
           }}
         >
           <img src={logo} alt="Logo" style={{ width: 50, height: 50 }} />
-          <h1 style={{ marginLeft: 10, fontSize: 20, color:"white" }}>CRAZYBEES</h1>
+          <h1 style={{ marginLeft: 10, fontSize: 20, color: "white" }}>CRAZYBEES</h1>
         </div>
 
         {/* Tabs */}

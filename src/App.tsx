@@ -33,10 +33,14 @@ import ManageUsers from "./pages/ManageUsers";
 import ImportFiles from "./pages/ImportedFiles";
 import { useCallback } from "react";
 import ImageManagement from "./pages/ImageManagement";
+import GlobalSearch from "./components/GlobalSearch";
+import { useGlobalSearch } from "./hooks/useGlobalSearch";
+import { searchService } from "./services/searchService";
 
 
 export default function App() {
   const trace = useTraceNavigation();
+  const { isSearchOpen, closeSearch } = useGlobalSearch();
   const [isTraceMode, setIsTraceMode] = useState(false);
   const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
 
@@ -296,6 +300,21 @@ export default function App() {
     }
     loadWires();
   }, []);
+
+  // Initialize Search Index when data changes
+  useEffect(() => {
+    if (apiSchematics.length > 0) {
+      searchService.initializeSearchIndex(
+        apiSchematics,
+        dtcList,
+        [], // connectors - can be added later if available
+        wireList,
+        harnessesList,
+        systemsList,
+        supplyList
+      );
+    }
+  }, [apiSchematics, dtcList, wireList, harnessesList, systemsList, supplyList]);
   const dashboardItems: DashboardItem[] = [
 
     // Components
@@ -481,6 +500,56 @@ export default function App() {
     }
   }, [dashboardItems, activeTab, selectedItem, mergedSchematic, trace]);
 
+  const handleItemSelection = useCallback(async (item: DashboardItem) => {
+    try {
+      console.log("🔗 Selecting item:", item.code, "Type:", item.type);
+
+      setMergedSchematic(null);
+      setShowWelcome(false);
+
+      // Determine target tab based on item type
+      let targetTab = role === "author" ? schematicTab : activeTab;
+
+      const typeToTab: Record<string, string> = {
+        'System': 'systems',
+        'Harness': 'harnesses',
+        'DTC': 'DTC',
+        'Supply': 'voltage',
+        'wire': 'wire',
+        'Controller': 'controllers',
+        'Component': 'components'
+      };
+
+      if (typeToTab[item.type]) {
+        targetTab = typeToTab[item.type];
+      }
+
+      if (role === "author") setSchematicTab(targetTab);
+      else setActiveTab(targetTab);
+
+      let schematicData;
+      if (item.type === "Harness") {
+        schematicData = await getHarnessSchematic(item.code);
+      } else if (item.type === "System") {
+        schematicData = await getSystemFormula(Number(item.code));
+      } else if (item.type === "Supply") {
+        schematicData = await getSupplyFormula(item.code);
+      } else if (item.type === "DTC") {
+        schematicData = await getDtcSchematic(item.code);
+      } else if (item.type === "wire") {
+        const wireDetails = await getWireDetailsByWireCode(item.code);
+        schematicData = { name: `Wire ${item.code}`, wires: wireDetails };
+      } else {
+        schematicData = await getComponentSchematic(item.code);
+      }
+
+      const converted = normalizeSchematic(schematicData);
+      setSelectedItem({ ...item, schematicData: converted });
+    } catch (err) {
+      console.error("Failed to selection item:", err);
+    }
+  }, [role, schematicTab, activeTab]);
+
   const filteredItems = dashboardItems.filter((item) => {
     const filterBase = role === "author" ? schematicTab : activeTab;
 
@@ -564,105 +633,7 @@ export default function App() {
                 activeTab={activeTab}
                 data={filteredItems}
                 traceMode={trace.isTraceMode}
-                onItemSelect={async (item) => {
-                  try {
-                    console.log("🔗 Item clicked:", item.code, "Type:", item.type);
-
-                    // Clear any merged schematic when selecting a single item
-                    setMergedSchematic(null);
-
-                    //  HARNESS CHECK
-                    if (item.type === "Harness") {
-                      console.log(" Loading harness schematic for:", item.code);
-
-                      const harnessData = await getHarnessSchematic(item.code);
-                      console.log(" Harness data received:", harnessData);
-
-                      const converted = normalizeSchematic(harnessData);
-                      console.log(" Normalized harness schematic:", converted);
-
-                      const updatedItem = {
-                        ...item,
-                        schematicData: converted
-                      };
-
-                      setSelectedItem(updatedItem);
-                      console.log(" Harness schematic set and ready to render");
-                      return;
-                    }
-
-                    // SYSTEM OR COMPONENT
-                    let schematicData;
-
-                    if (item.type === "System") {
-                      schematicData = await getSystemFormula(Number(item.code));
-                    } else if (item.type === "Supply") {
-                      // For supply components (including fuses), get the supply formula
-                      const supplyData = await getSupplyFormula(String(item.code));
-                      console.log("Fuse connections", supplyData);
-
-                      const converted = normalizeSchematic(supplyData);
-
-                      const updatedItem = {
-                        ...item,
-                        schematicData: converted,
-                      };
-
-                      setSelectedItem(updatedItem);
-                      console.log("Voltage Supply schematic set and ready to render");
-                      return;
-                    } else if (item.type === "DTC") {
-                      const dtcData = await getDtcSchematic(item.code);
-
-                      const converted = normalizeSchematic(dtcData);
-
-                      const updatedItem = {
-                        ...item,
-                        schematicData: converted,
-                      };
-
-                      setSelectedItem(updatedItem);
-                      console.log("DTC schematic set and ready to render");
-                      return;
-                    } else {
-                      schematicData = await getComponentSchematic(item.code);
-                    }
-
-                    if (item.type === "wire") {
-                      console.log(" Loading wire circuit for:", item.code);
-
-                      const wireDetails = await getWireDetailsByWireCode(item.code);
-                      console.log("Wire details received:", wireDetails);
-
-                      // Convert wireList rows → schematic
-                      const schematicData = normalizeSchematic({
-                        name: `Wire ${item.code}`,
-                        wires: wireDetails
-                      });
-
-                      const updatedItem = {
-                        ...item,
-                        schematicData
-                      };
-
-                      setSelectedItem(updatedItem);
-                      return;
-                    }
-                    console.log("Loaded schematic:", schematicData);
-
-                    const converted = normalizeSchematic(schematicData);
-                    const updatedItem = {
-                      ...item,
-                      schematicData: converted
-                    };
-
-                    setSelectedItem(updatedItem);
-                    console.log("Updated Item with schematic data:", updatedItem);
-
-                  } catch (err) {
-                    console.error("Failed to load schematic:", err);
-                  }
-                }}
+                onItemSelect={handleItemSelection}
                 selectedItem={selectedItem}
                 selectedCodes={selectedCodes}
                 setSelectedCodes={setSelectedCodes}
@@ -759,6 +730,7 @@ export default function App() {
                   user={currentUser}
                   hideLogout={true}
                   hideLogo={true}
+                  hideSearch={true}
                 />
 
                 {showWelcome ? (
@@ -774,107 +746,7 @@ export default function App() {
                       activeTab={schematicTab}
                       data={filteredItems}
                       traceMode={trace.isTraceMode}
-                      onItemSelect={async (item) => {
-                        try {
-                          console.log("🔗 Item clicked:", item.code, "Type:", item.type);
-
-                          // Clear any merged schematic when selecting a single item
-                          setMergedSchematic(null);
-
-                          //  HARNESS CHECK
-                          if (item.type === "Harness") {
-                            console.log(" Loading harness schematic for:", item.code);
-
-                            const harnessData = await getHarnessSchematic(item.code);
-                            console.log(" Harness data received:", harnessData);
-
-                            const converted = normalizeSchematic(harnessData);
-                            console.log(" Normalized harness schematic:", converted);
-
-                            const updatedItem = {
-                              ...item,
-                              schematicData: converted
-                            };
-
-                            setSelectedItem(updatedItem);
-                            console.log(" Harness schematic set and ready to render");
-                            return;
-                          }
-
-                          // SYSTEM OR COMPONENT
-                          let schematicData;
-
-                          if (item.type === "System") {
-                            schematicData = await getSystemFormula(Number(item.code));
-                          } else if (item.type === "Supply") {
-                            // For supply components (including fuses), get the supply formula
-                            const supplyData = await getSupplyFormula(String(item.code));
-                            console.log("Fuse connections", supplyData);
-
-                            const converted = normalizeSchematic(supplyData);
-
-                            const updatedItem = {
-                              ...item,
-                              schematicData: converted,
-                            };
-
-                            setSelectedItem(updatedItem);
-                            console.log("Voltage Supply schematic set and ready to render");
-                            return;
-                          } else if (item.type === "DTC") {
-                            const dtcData = await getDtcSchematic(item.code);
-                            console.log("DTC data received:", dtcData);
-
-                            const converted = normalizeSchematic(dtcData);
-
-                            const updatedItem = {
-                              ...item,
-                              schematicData: converted,
-                            };
-
-                            setSelectedItem(updatedItem);
-                            console.log("DTC schematic set and ready to render");
-                            return;
-                          } else {
-                            schematicData = await getComponentSchematic(item.code);
-                          }
-                          console.log("Loaded schematic:", schematicData);
-
-                          if (item.type === "wire") {
-                            console.log(" Loading wire circuit for:", item.code);
-
-                            const wireDetails = await getWireDetailsByWireCode(item.code);
-                            console.log("Wire details received:", wireDetails);
-
-                            // Convert wireList rows → schematic
-                            const schematicData = normalizeSchematic({
-                              name: `Wire ${item.code}`,
-                              wires: wireDetails
-                            });
-
-                            const updatedItem = {
-                              ...item,
-                              schematicData
-                            };
-
-                            setSelectedItem(updatedItem);
-                            return;
-                          }
-                          console.log("Loaded schematic:", schematicData);
-
-                          const converted = normalizeSchematic(schematicData);
-                          const updatedItem = {
-                            ...item,
-                            schematicData: converted
-                          };
-
-                          setSelectedItem(updatedItem);
-                          console.log("Updated Item with schematic data:", updatedItem);
-
-                        } catch (err) {
-                          console.error("Failed to load schematic:", err);
-                        }
-                      }}
+                      onItemSelect={handleItemSelection}
                       selectedItem={selectedItem}
                       selectedCodes={selectedCodes}
                       setSelectedCodes={setSelectedCodes}
@@ -927,6 +799,17 @@ export default function App() {
       {page === "dashboard" && role === "superadmin" && token && (
         <SuperAdminDashboard token={token} />
       )}
+      <GlobalSearch
+        isOpen={isSearchOpen}
+        onClose={closeSearch}
+        onItemSelected={(item) => {
+          console.log("Global Search Selected:", item);
+          const dashboardItem = dashboardItems.find(di => di.code === item.code);
+          if (dashboardItem) {
+            handleItemSelection(dashboardItem);
+          }
+        }}
+      />
     </div>
   );
 }

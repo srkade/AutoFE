@@ -1,0 +1,96 @@
+/* Search Trigger Styles */
+
+.search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 200px;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.search-trigger:hover {
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+  color: #495057;
+}
+
+.search-trigger:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.search-trigger-icon {
+  font-size: 16px;
+}
+
+.search-trigger-text {
+  flex: 1;
+  text-align: left;
+}
+
+.search-trigger-shortcut {
+  background-color: #e9ecef;
+  color: #6c757d;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'Monaco', 'Consolas', monospace;
+}
+
+/* Compact version for smaller spaces */
+.search-trigger.compact {
+  min-width: auto;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.search-trigger.compact .search-trigger-text {
+  display: none;
+}
+
+.search-trigger.compact .search-trigger-shortcut {
+  display: none;
+}
+
+/* Navigation bar version */
+.search-trigger.navbar {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.search-trigger.navbar:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.search-trigger.navbar .search-trigger-shortcut {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .search-trigger {
+    min-width: 40px;
+    padding: 8px;
+    justify-content: center;
+  }
+  
+  .search-trigger-text {
+    display: none;
+  }
+  
+  .search-trigger-shortcut {
+    display: none;
+  }
+}

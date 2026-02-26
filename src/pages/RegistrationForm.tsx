@@ -135,8 +135,14 @@ export default function RegisterForm({
       lastName,
       email,
       role,
-      status: role === "Author" ? "Active" : "Pending", // Author active by default, user pending
     };
+
+    // Only set status default for new users, use form value for editing
+    if (!userToEdit) {
+      payload.status = role === "Author" ? "Active" : "Pending"; // Author active by default, user pending
+    } else {
+      payload.status = status; // Use the selected status when editing
+    }
 
     if (!userToEdit) {
       payload.password = password;

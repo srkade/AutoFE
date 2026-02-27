@@ -11,6 +11,17 @@ interface Component {
   category: string;
   shape: string;
   connectors: Connector[];
+  isHighlighted: boolean;
+  componentType?: string;
+  engineering_component_name?: string;
+  engineering_manufacturer?: string;
+  primary_part_number?: string;
+  harness_name?: string;
+  connector_type?: string;
+  remove?: boolean;
+  manufacturer?: string;
+  connector_part_number?: string;
+  gender?: string;
 }
 
 interface Connection {
@@ -75,7 +86,7 @@ export function mergeSchematicConfigs(
 
   // First, group components by ID to handle potential conflicts between supply and non-supply versions
   const componentsById = new Map<string, Component[]>();
-  
+
   for (const component of allComponents) {
     const id = component.id;
     if (!componentsById.has(id)) {
@@ -83,24 +94,33 @@ export function mergeSchematicConfigs(
     }
     componentsById.get(id)!.push(component);
   }
-  
+
+  // Track duplicates
+  const duplicateIds = new Set<string>();
+
+  componentsById.forEach((components, id) => {
+    if (components.length > 1) {
+      duplicateIds.add(id);
+    }
+  });
+
   // For each component ID, if there are both supply and non-supply versions,
   // prioritize based on the active tab
   const componentMap = new Map<string, Component>();
   const getKey = (c: Component) => `${c.category}:${c.id}`;
-  
+
   componentsById.forEach((components: Component[], id: string) => {
     let primaryComponent: Component;
-    
+
     // Check if there are both supply and non-supply components with the same ID
     const supplyComponents = components.filter((c: Component) => c.category === "Supply");
     const nonSupplyComponents = components.filter((c: Component) => c.category !== "Supply");
-    
+
     // Determine priority based on active tab
     // If in supply tab ("voltage"), prioritize supply components
     // If in component tab or other tabs, prioritize non-supply components
     const inSupplyTab = activeTab === "voltage";
-    
+
     if (supplyComponents.length > 0 && nonSupplyComponents.length > 0) {
       // Both supply and non-supply versions exist - prioritize based on active tab
       if (inSupplyTab) {
@@ -110,20 +130,24 @@ export function mergeSchematicConfigs(
         // In component tab or other - use non-supply version (first one)
         primaryComponent = nonSupplyComponents[0];
       }
-      
+
+      //  NEW: Mark highlight if duplicate
+      if (duplicateIds.has(id)) {
+        primaryComponent.isHighlighted = true;
+      }
       // Combine connectors from all versions
       const allConnectors = new Map<string, Connector>();
-      
+
       // Add connectors from primary component first
       for (const connector of primaryComponent.connectors) {
         allConnectors.set(connector.id, connector);
       }
-      
+
       // Add connectors from other versions if not already present
       const allOtherComponents = [...supplyComponents, ...nonSupplyComponents].filter(
         comp => comp.id !== primaryComponent.id || comp.category !== primaryComponent.category
       );
-      
+
       for (const comp of allOtherComponents) {
         for (const connector of comp.connectors) {
           if (!allConnectors.has(connector.id)) {
@@ -131,15 +155,20 @@ export function mergeSchematicConfigs(
           }
         }
       }
-      
+
       primaryComponent.connectors = Array.from(allConnectors.values());
     } else if (supplyComponents.length > 0) {
       // Only supply version exists
       primaryComponent = supplyComponents[0];
-      
+
+      // Mark highlight if duplicate
+      if (duplicateIds.has(id)) {
+        primaryComponent.isHighlighted = true;
+      }
+
       // Combine connectors from all supply versions of this component
       const allConnectors = new Map<string, Connector>();
-      
+
       for (const comp of supplyComponents) {
         for (const connector of comp.connectors) {
           if (!allConnectors.has(connector.id)) {
@@ -147,15 +176,20 @@ export function mergeSchematicConfigs(
           }
         }
       }
-      
+
       primaryComponent.connectors = Array.from(allConnectors.values());
     } else {
       // Only non-supply versions exist
       primaryComponent = components[0];
-      
+
+      // Mark highlight if duplicate
+      if (duplicateIds.has(id)) {
+        primaryComponent.isHighlighted = true;
+      }
+
       // Combine connectors from all versions of this component
       const allConnectors = new Map<string, Connector>();
-      
+
       for (const comp of components) {
         for (const connector of comp.connectors) {
           if (!allConnectors.has(connector.id)) {
@@ -163,10 +197,10 @@ export function mergeSchematicConfigs(
           }
         }
       }
-      
+
       primaryComponent.connectors = Array.from(allConnectors.values());
     }
-    
+
     // Use the category:ID key for storage to maintain compatibility with connections
     const key = getKey(primaryComponent);
     componentMap.set(key, primaryComponent);
@@ -188,6 +222,8 @@ export function mergeSchematicConfigs(
   }
 
   const mergedConnections = Array.from(connectionMap.values());
+  console.log("Merged Components:", mergedComponents);
+  console.log("Merged Connections:", mergedConnections);
 
   //  STEP 4: RETURN
   return {

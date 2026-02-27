@@ -14,6 +14,7 @@ export type ComponentType = {
   manufacturer?: string;
   connector_part_number?: string;
   gender?: string;
+  isHighlighted?: boolean;
 };
 export interface FuseInfo {
   code: string;

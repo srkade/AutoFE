@@ -169,11 +169,11 @@ export default function Schematic({
     setSelectedWires([]);
     setSelectedConnector(connector);
     const cavityCount = calculateCavityCountForConnector(connector, data);
-    
+
     // Close other popups but preserve connector selection
     setPopupComponent(null);
     setPopupWire(null);
-    
+
     setPopupConnector({
       componentCode: comp.label || comp.id,
       connectorCode: connector.label || connector.id,
@@ -184,7 +184,7 @@ export default function Schematic({
       connectorType: comp.connector_type,
       cavityCount,
     });
-    
+
     console.log("Active DTC Code:", dtcCode);
 
     if (activeTab === 'DTC') {
@@ -1069,9 +1069,19 @@ export default function Schematic({
                           )}
                           cy={safe(getSpliceCenterY(comp), padding)}
                           r={componentSize.height / 8} // adjust radius as needed
-                          fill="white"
-                          stroke="black"
-                          strokeWidth={1}
+                          fill={
+                            comp.isHighlighted
+                              ? "#fca5a5"                     // duplicate = red-300
+                              : "white"
+                          }
+                          stroke={
+                            comp.isHighlighted
+                              ? "#dc2626"                     // duplicate = strong red border
+                              : "black"
+                          }
+                          strokeWidth={
+                            comp.isHighlighted ? 3 : 1
+                          }
                         />
                         <circle
                           cx={safe(
@@ -1080,7 +1090,11 @@ export default function Schematic({
                           )}
                           cy={safe(getSpliceCenterY(comp), padding)}
                           r={componentSize.height / 10}
-                          fill="black"
+                          fill={
+                            comp.isHighlighted
+                              ? "yellow"                     // duplicate = red-300
+                              : "black"
+                          }
                         />
                       </g>
                     ) : (
@@ -1089,10 +1103,10 @@ export default function Schematic({
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedWires([]);
-                            
+
                             // Select this component
                             setSelectedComponentIds([comp.id]);
-                            
+
                             // Close other popups and clear connector selection
                             setPopupComponent(null);
                             setPopupWire(null);
@@ -1121,40 +1135,62 @@ export default function Schematic({
                             y={safe(getYForComponent(comp), padding)}
                             width={safe(getWidthForComponent(comp), 100)}
                             height={componentSize.height}
-                            fill="lightblue"
-                            stroke="black"
+
+                            //  Dynamic fill
+                            fill={
+                              selectedComponentIds.includes(comp.id)
+                                ? "#93c5fd"                     // selected = blue-300
+                                : comp.isHighlighted
+                                  ? "yellow"                     // duplicate = yellow
+                                  : "lightblue"
+                            }
+
+                            //  Dynamic stroke
+                            stroke={
+                              comp.isHighlighted
+                                ? "#dc2626"                     // duplicate = strong red border
+                                : selectedComponentIds.includes(comp.id)
+                                  ? "#2563eb"                     // selected = strong blue
+                                  : "black"
+                            }
+
+                            strokeWidth={
+                              comp.isHighlighted ? 3 : 1
+                            }
+
                             strokeDasharray={
                               componentIndex !== 0 ? "6,4" : undefined
                             }
 
-                            style={{ cursor: "pointer" }}
+                            style={{
+                              cursor: "pointer",
+                            }}
+
                             onContextMenu={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               const pos = { x: e.clientX, y: e.clientY };
-                              console.log("🖱️ TRACE: Right-click on component:", comp.id);
-                                                                                       
-                             
+
                               setPopupComponent(null);
                               setPopupWire(null);
                               setPopupConnector(null);
-                              setSelectedConnector(null); 
+                              setSelectedConnector(null);
                               setSelectedDTC(null);
-                                                                                       
+
                               setContextMenu({ x: e.clientX, y: e.clientY, component: comp });
                               if (onComponentRightClick) onComponentRightClick(comp, pos);
                             }}
+
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedComponentIds([comp.id]);
-                              
-                              // Close other popups and clear connector selection
+
                               setPopupComponent(null);
                               setPopupWire(null);
                               setPopupConnector(null);
-                              setSelectedConnector(null); // Clear connector highlight
+                              setSelectedConnector(null);
                               setSelectedDTC(null);
-                              
+
                               setPopupComponent(comp);
                             }}
                           />
@@ -1724,14 +1760,14 @@ export default function Schematic({
                         setSelectedComponentIds([]);
                         // Select only this wire
                         setSelectedWires([i.toString()]);
-                                                
+
                         // Close other popups and clear connector selection
                         setPopupComponent(null);
                         setPopupWire(null);
                         setPopupConnector(null);
                         setSelectedConnector(null); // Clear connector highlight
                         setSelectedDTC(null);
-                                                
+
                         // Set popupWire with all details
                         setPopupWire({
                           wire,
@@ -1740,7 +1776,7 @@ export default function Schematic({
                           toComponent: toComponent!,
                           toConnector: to!,
                         });
-                      
+
                         // Set popup position
                         setPopupWirePosition({
                           x: fromX + 900,
@@ -1889,9 +1925,9 @@ export default function Schematic({
           selectedDTC={selectedDTC}
           dtcCode={dtcCode}
           onClose={(e) => {
-            e.stopPropagation();            
+            e.stopPropagation();
             setPopupConnector(null);
-            setSelectedConnector(null); 
+            setSelectedConnector(null);
           }}
           selectedTab={activeTab}
         />

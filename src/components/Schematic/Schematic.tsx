@@ -1066,9 +1066,19 @@ export default function Schematic({
                           )}
                           cy={safe(getSpliceCenterY(comp), padding)}
                           r={componentSize.height / 8} // adjust radius as needed
-                          fill="white"
-                          stroke="black"
-                          strokeWidth={1}
+                          fill={
+                            comp.isHighlighted
+                              ? "#fca5a5"                     // duplicate = red-300
+                              : "white"
+                          }
+                          stroke={
+                            comp.isHighlighted
+                              ? "#dc2626"                     // duplicate = strong red border
+                              : "black"
+                          }
+                          strokeWidth={
+                            comp.isHighlighted ? 3 : 1
+                          }
                         />
                         <circle
                           cx={safe(
@@ -1077,7 +1087,11 @@ export default function Schematic({
                           )}
                           cy={safe(getSpliceCenterY(comp), padding)}
                           r={componentSize.height / 10}
-                          fill="black"
+                          fill={
+                            comp.isHighlighted
+                              ? "yellow"                     // duplicate = red-300
+                              : "black"
+                          }
                         />
                       </g>
                     ) : (
@@ -1118,18 +1132,41 @@ export default function Schematic({
                             y={safe(getYForComponent(comp), padding)}
                             width={safe(getWidthForComponent(comp), 100)}
                             height={componentSize.height}
-                            fill="lightblue"
-                            stroke="black"
+
+                            //  Dynamic fill
+                            fill={
+                              selectedComponentIds.includes(comp.id)
+                                ? "#93c5fd"                     // selected = blue-300
+                                : comp.isHighlighted
+                                  ? "yellow"                     // duplicate = yellow
+                                  : "lightblue"
+                            }
+
+                            //  Dynamic stroke
+                            stroke={
+                              comp.isHighlighted
+                                ? "#dc2626"                     // duplicate = strong red border
+                                : selectedComponentIds.includes(comp.id)
+                                  ? "#2563eb"                     // selected = strong blue
+                                  : "black"
+                            }
+
+                            strokeWidth={
+                              comp.isHighlighted ? 3 : 1
+                            }
+
                             strokeDasharray={
                               componentIndex !== 0 ? "6,4" : undefined
                             }
 
-                            style={{ cursor: "pointer" }}
+                            style={{
+                              cursor: "pointer",
+                            }}
+
                             onContextMenu={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               const pos = { x: e.clientX, y: e.clientY };
-
 
                               setPopupComponent(null);
                               setPopupWire(null);
@@ -1140,15 +1177,15 @@ export default function Schematic({
                               setContextMenu({ x: e.clientX, y: e.clientY, component: comp });
                               if (onComponentRightClick) onComponentRightClick(comp, pos);
                             }}
+
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedComponentIds([comp.id]);
 
-                              // Close other popups and clear connector selection
                               setPopupComponent(null);
                               setPopupWire(null);
                               setPopupConnector(null);
-                              setSelectedConnector(null); // Clear connector highlight
+                              setSelectedConnector(null);
                               setSelectedDTC(null);
 
                               setPopupComponent(comp);

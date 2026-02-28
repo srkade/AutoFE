@@ -12,36 +12,12 @@ const SearchDemo: React.FC = () => {
   const { isSearchOpen, setIsSearchOpen } = useGlobalSearch();
 
   const handleItemSelected = (item: SearchItem) => {
-    console.log('Selected item:', item);
-    
+
     // Example navigation logic based on item type
     switch (item.type) {
       case 'component':
-        console.log(`Navigate to component: ${item.code}`);
         // Implement your navigation logic here
         break;
-      case 'dtc':
-        console.log(`Navigate to DTC: ${item.code}`);
-        // Implement your navigation logic here
-        break;
-      case 'connector':
-        console.log(`Navigate to connector: ${item.code}`);
-        // Implement your navigation logic here
-        break;
-      case 'wire':
-        console.log(`Navigate to wire: ${item.code}`);
-        // Implement your navigation logic here
-        break;
-      case 'harness':
-        console.log(`Navigate to harness: ${item.code}`);
-        // Implement your navigation logic here
-        break;
-      case 'system':
-        console.log(`Navigate to system: ${item.code}`);
-        // Implement your navigation logic here
-        break;
-      case 'supply':
-        console.log(`Navigate to supply: ${item.code}`);
         // Implement your navigation logic here
         break;
     }
@@ -50,18 +26,18 @@ const SearchDemo: React.FC = () => {
   return (
     <div style={{ padding: '20px' }}>
       <h2>Global Search Demo</h2>
-      
+
       <div style={{ marginBottom: '20px' }}>
         <p>Press <kbd>Ctrl+K</kbd> or click the button below to open global search:</p>
-        <SearchButton 
+        <SearchButton
           onClick={() => setIsSearchOpen(true)}
           className="compact"
         />
       </div>
 
-      <div style={{ 
-        background: '#f8f9fa', 
-        padding: '15px', 
+      <div style={{
+        background: '#f8f9fa',
+        padding: '15px',
         borderRadius: '8px',
         marginBottom: '20px'
       }}>
@@ -75,9 +51,9 @@ const SearchDemo: React.FC = () => {
         </ul>
       </div>
 
-      <div style={{ 
-        background: '#e3f2fd', 
-        padding: '15px', 
+      <div style={{
+        background: '#e3f2fd',
+        padding: '15px',
         borderRadius: '8px'
       }}>
         <h3>Integration Steps:</h3>

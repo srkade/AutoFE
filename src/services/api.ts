@@ -81,7 +81,7 @@ export async function getHarnesses() {
 
 export async function getWires() {
   try {
-    const res = await api.get(`/schematics/wires`); 
+    const res = await api.get(`/schematics/wires`);
     return res.data;
   } catch (err) {
     console.error("API ERROR → getWires:", err);
@@ -92,9 +92,7 @@ export async function getWires() {
 //  Harness schematic endpoint
 export async function getHarnessSchematic(code: string) {
   try {
-    console.log(`📡 Calling getHarnessSchematic for: ${code}`);
     const res = await api.get(`/wires/harness/${code}`);
-    console.log(` Harness schematic received:`, res.data);
     return res.data;
   } catch (err) {
     console.error("API ERROR → getHarnessSchematic:", err);
@@ -102,9 +100,9 @@ export async function getHarnessSchematic(code: string) {
   }
 }
 
-export async function getVoltageSupply(){
-  try{
-    const res=await api.get(`/schematics/supply`);
+export async function getVoltageSupply() {
+  try {
+    const res = await api.get(`/schematics/supply`);
     return res.data;
   } catch (err) {
     console.error("API Error-> getVoltageSupply:", err);
@@ -193,14 +191,12 @@ export async function updateUser(id: string, payload: {
   status?: string;
 }) {
   try {
-    console.log(`API: Updating user ${id} with payload:`, payload);
     const token = sessionStorage.getItem("token") || "";
     const res = await api.put(`/auth/users/${id}`, payload, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log(`API: Update successful for user ${id}:`, res.data);
     return res.data;
   } catch (err: any) {
     console.error("API ERROR → updateUser:", err);
@@ -246,13 +242,12 @@ export async function smartFileUpload(
   }
 
   try {
-    console.log(` Uploading file for auto-detection: ${file.name} by author: ${authorName || 'unknown'}`);
-    
+
     // Get the JWT token from session storage
     const token = sessionStorage.getItem('token');
-    
+
     const res = await api.post<ImportResponse>(`/import/upload`, formData, {
-      headers: { 
+      headers: {
         "Content-Type": "multipart/form-data",
         ...(token && { "Authorization": `Bearer ${token}` })
       },
@@ -260,14 +255,10 @@ export async function smartFileUpload(
         if (evt.total && onProgress) {
           const progress = Math.round((evt.loaded * 100) / evt.total);
           onProgress(progress);
-          console.log(`  Upload progress: ${progress}%`);
         }
       },
     });
 
-    console.log(
-      ` Upload successful! Detected table: ${res.data.metadata?.detectedTable}`
-    );
     return res.data;
   } catch (err: any) {
     console.error(" API ERROR → smartFileUpload:", err);

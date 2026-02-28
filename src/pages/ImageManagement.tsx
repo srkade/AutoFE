@@ -98,7 +98,6 @@ export default function ImageManagement() {
       if (componentResponse.ok) {
         const components = await componentResponse.json();
         setComponentList(components);
-        console.log("Components loaded:", components);
       }
 
       // Fetch connectors from serviceconnector table
@@ -114,7 +113,6 @@ export default function ImageManagement() {
       if (connectorResponse.ok) {
         const connectors = await connectorResponse.json();
         setConnectorList(connectors);
-        console.log("Connectors loaded:", connectors);
       }
     } catch (err) {
       const errorMessage =
@@ -145,11 +143,11 @@ export default function ImageManagement() {
 
       const json = await response.json();
 
-// ApiResponse<PageResponse<ImageAsset>>
-const assets = json.data.content;
+      // ApiResponse<PageResponse<ImageAsset>>
+      const assets = json.data.content;
 
-setImageAssets(assets);
-applyFilters(assets, searchQuery, filterType);
+      setImageAssets(assets);
+      applyFilters(assets, searchQuery, filterType);
 
     } catch (err) {
       const errorMessage =

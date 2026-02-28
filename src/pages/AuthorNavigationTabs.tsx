@@ -31,10 +31,8 @@ export default function AuthorNavigationTabs({
     { id: "import-images", label: "Asset Management", icon: FiImage },
     { id: "view-schematic", label: "View Schematic", icon: FiCpu },
   ];
-  console.log("AuthorNavigationTabs render → user prop:", user);
 
   useEffect(() => {
-    console.log("User prop updated:", user);
   }, [user]);
 
   useEffect(() => {
@@ -66,9 +64,6 @@ export default function AuthorNavigationTabs({
           style={{ marginLeft: "auto" }}
           onClick={(e) => {
             e.stopPropagation();
-            console.log("User icon clicked");
-            console.log("showPopup BEFORE:", showPopup);
-            console.log("user at click time:", user);
             setShowPopup(prev => !prev);
           }}
         >

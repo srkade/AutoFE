@@ -37,6 +37,7 @@ import {
   getConnectionsForConnector,
   getComponentConnectorTupleFromConnectionPoint,
   calculateCavityCountForConnector,
+  getConnectionPointsForConnector,
 } from "./SchematicUtils";
 import PopupComponentDetails from "../popup/PopupComponentDetails";
 import PopupWireDetails from "../popup/PopupWireDetails";
@@ -95,7 +96,6 @@ export default function Schematic({
 
   useEffect(() => {
     setRenderCount(prev => prev + 1);
-    console.log(`Schematic component rendered. Total renders: ${renderCount + 1}`);
 
     // Only track the render once per schematic load to avoid double counting
     if (!renderInitialized.current) {
@@ -169,11 +169,11 @@ export default function Schematic({
     setSelectedWires([]);
     setSelectedConnector(connector);
     const cavityCount = calculateCavityCountForConnector(connector, data);
-    
+
     // Close other popups but preserve connector selection
     setPopupComponent(null);
     setPopupWire(null);
-    
+
     setPopupConnector({
       componentCode: comp.label || comp.id,
       connectorCode: connector.label || connector.id,
@@ -184,8 +184,7 @@ export default function Schematic({
       connectorType: comp.connector_type,
       cavityCount,
     });
-    
-    console.log("Active DTC Code:", dtcCode);
+
 
     if (activeTab === 'DTC') {
       if (dtcCode && DTC_STEPS_DATA[dtcCode]) {
@@ -698,7 +697,6 @@ export default function Schematic({
         }
       );
 
-      console.log("PDF export completed successfully");
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
@@ -731,7 +729,6 @@ export default function Schematic({
         data
       );
 
-      console.log("Image export completed successfully");
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
@@ -1089,10 +1086,10 @@ export default function Schematic({
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedWires([]);
-                            
+
                             // Select this component
                             setSelectedComponentIds([comp.id]);
-                            
+
                             // Close other popups and clear connector selection
                             setPopupComponent(null);
                             setPopupWire(null);
@@ -1132,29 +1129,28 @@ export default function Schematic({
                               e.preventDefault();
                               e.stopPropagation();
                               const pos = { x: e.clientX, y: e.clientY };
-                              console.log("🖱️ TRACE: Right-click on component:", comp.id);
-                                                                                       
-                             
+
+
                               setPopupComponent(null);
                               setPopupWire(null);
                               setPopupConnector(null);
-                              setSelectedConnector(null); 
+                              setSelectedConnector(null);
                               setSelectedDTC(null);
-                                                                                       
+
                               setContextMenu({ x: e.clientX, y: e.clientY, component: comp });
                               if (onComponentRightClick) onComponentRightClick(comp, pos);
                             }}
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedComponentIds([comp.id]);
-                              
+
                               // Close other popups and clear connector selection
                               setPopupComponent(null);
                               setPopupWire(null);
                               setPopupConnector(null);
                               setSelectedConnector(null); // Clear connector highlight
                               setSelectedDTC(null);
-                              
+
                               setPopupComponent(comp);
                             }}
                           />
@@ -1189,8 +1185,8 @@ export default function Schematic({
 
                           {comp.category?.toLowerCase() === "switch" && (
                             <ElectricalSwitch
-                              x={getXForComponent(comp)}
-                              y={getYForComponent(comp)}
+                              x={safe(getXForComponent(comp), padding)}
+                              y={safe(getYForComponent(comp), padding)}
                               sizeMultiplier={0.5}
                               stroke="black"
                               strokeWidth={1}
@@ -1199,11 +1195,12 @@ export default function Schematic({
 
                           {comp.category?.toLowerCase() === "transistor" && (
                             <Transistor
-                              x={
+                              x={safe(
                                 getXForComponent(comp) +
-                                getWidthForComponent(comp) / 12
-                              } // horizontal centering
-                              y={getYForComponent(comp) + componentSize.height / 2} // vertical centering
+                                getWidthForComponent(comp) / 12,
+                                padding
+                              )} // horizontal centering
+                              y={safe(getYForComponent(comp) + componentSize.height / 2, padding)} // vertical centering
                               sizeMultiplier={0.3} // make smaller so it fits neatly inside
                               stroke="black"
                               strokeWidth={5}
@@ -1211,11 +1208,12 @@ export default function Schematic({
                           )}
                           {comp.category?.toLowerCase() === "transformer" && (
                             <Transformer
-                              x={
+                              x={safe(
                                 getXForComponent(comp) +
-                                getWidthForComponent(comp) / 16
-                              } // horizontal centering
-                              y={getYForComponent(comp) + componentSize.height / 6} // vertical centering
+                                getWidthForComponent(comp) / 16,
+                                padding
+                              )} // horizontal centering
+                              y={safe(getYForComponent(comp) + componentSize.height / 6, padding)} // vertical centering
                               sizeMultiplier={0.2} // scale it down to fit
                               stroke="black"
                               strokeWidth={1}
@@ -1224,59 +1222,63 @@ export default function Schematic({
                           )}
                           {comp.category?.toLowerCase() === "motor" && (
                             <MotorSymbol
-                              cx={
+                              cx={safe(
                                 getXForComponent(comp) +
-                                getWidthForComponent(comp) / 5
-                              } // center of rectangle
-                              cy={getYForComponent(comp) + componentSize.height / 2} // center of rectangle
-                              size={
+                                getWidthForComponent(comp) / 5,
+                                padding
+                              )} // center of rectangle
+                              cy={safe(getYForComponent(comp) + componentSize.height / 2, padding)} // center of rectangle
+                              size={safe(
                                 Math.min(
                                   getWidthForComponent(comp),
                                   componentSize.height
-                                ) * 0.5
-                              } // scale to fit rectangle
+                                ) * 0.5,
+                                20
+                              )} // scale to fit rectangle
                               color="black"
                               fill="#B0E0E6"
                             />
                           )}
                           {comp.category?.toLowerCase() === "lamp" && (
                             <LampSymbol
-                              cx={
+                              cx={safe(
                                 getXForComponent(comp) +
-                                getWidthForComponent(comp) / 5
-                              }
-                              cy={getYForComponent(comp) + componentSize.height / 2}
-                              size={
+                                getWidthForComponent(comp) / 5,
+                                padding
+                              )}
+                              cy={safe(getYForComponent(comp) + componentSize.height / 2, padding)}
+                              size={safe(
                                 Math.min(
                                   getWidthForComponent(comp),
                                   componentSize.height
-                                ) * 0.5
-                              }
+                                ) * 0.5,
+                                20
+                              )}
                               color="black"
                             />
                           )}
                           {comp.category?.toLowerCase() === "ground" && (
                             <GroundSymbol
-                              x={getXForComponent(comp)} // adjust horizontal position
-                              y={getYForComponent(comp) + 15} // adjust vertical position
-                              width={getWidthForComponent(comp) / 2} // adjust width scaling
-                              height={componentSize.height / 2} // adjust height scaling
+                              x={safe(getXForComponent(comp), padding)} // adjust horizontal position
+                              y={safe(getYForComponent(comp) + 15, padding)} // adjust vertical position
+                              width={safe(getWidthForComponent(comp) / 2, 50)} // adjust width scaling
+                              height={safe(componentSize.height / 2, 30)} // adjust height scaling
                               stroke="black"
                               strokeWidth={3}
                             />
                           )}
                           {comp.category?.toLowerCase() === "resistor" && (
                             <ResistorSymbol
-                              x={getXForComponent(comp) - 50}
-                              y={getYForComponent(comp) + 13}
-                              width={getWidthForComponent(comp)}
+                              x={safe(getXForComponent(comp) - 50, padding)}
+                              y={safe(getYForComponent(comp) + 13, padding)}
+                              width={safe(getWidthForComponent(comp), 100)}
                               height={40}
                             />
                           )}
                           {comp.category?.toLowerCase() === "battery" && (
                             <Battery
-                              x={getXForComponent(comp) + 10}
-                              y={getYForComponent(comp) + 10}
+                              x={safe(getXForComponent(comp) + 10, padding)}
+                              y={safe(getYForComponent(comp) + 10, padding)}
                               width={30}
                               height={40}
                               leadLength={5}
@@ -1297,7 +1299,7 @@ export default function Schematic({
                       getYForComponent(comp) +
                       (getYForComponent(comp) + componentSize.height / 2 <
                         fitViewBox.y + fitViewBox.h / 2
-                        ? -componentSize.height / 2 // above component
+                        ? (comp.componentType?.toLowerCase() === "splice" ? componentSize.height - 10 : -componentSize.height / 2) // above component
                         : componentSize.height +
                         (comp.componentType?.toLowerCase() === "splice" ? -30 : 30)),
                       padding
@@ -1443,16 +1445,18 @@ export default function Schematic({
                   } else {
                     const fromConnectorX = getXForConnector(from, fromComponent!);
                     const fromConnectorWidth = getWidthForConnector(from, fromComponent!);
-                    const fromConnectorCount = connectorConnectionCount[from.id] || 1;
+                    const fromConnectorCount = calculateCavityCountForConnector(from, data);
 
-                    const connIndex = getConnectionsForConnector(from, data)
-                      .findIndex((c) => c === wire);
+                    const connPoints = getConnectionPointsForConnector(from, data);
+                    const pointIndex = connPoints.findIndex(
+                      (p) => p.wire === wire && p.side === "from"
+                    );
 
                     const fromConnectorOffset =
                       fromConnectorCount === 1
                         ? fromConnectorWidth / 2
                         : (fromConnectorWidth / (fromConnectorCount + 1)) *
-                        (connIndex + 1);
+                        (pointIndex + 1);
 
                     fromX =
                       fromComponent?.shape === "circle"
@@ -1501,16 +1505,18 @@ export default function Schematic({
                   } else {
                     const toConnectorX = getXForConnector(to, toComponent!);
                     const toConnectorWidth = getWidthForConnector(to, toComponent!);
-                    const toConnectorCount = connectorConnectionCount[to.id] || 1;
+                    const toConnectorCount = calculateCavityCountForConnector(to, data);
 
-                    const connIndexTo = getConnectionsForConnector(to, data)
-                      .findIndex((c) => c === wire);
+                    const connPointsTo = getConnectionPointsForConnector(to, data);
+                    const pointIndexTo = connPointsTo.findIndex(
+                      (p) => p.wire === wire && p.side === "to"
+                    );
 
                     const toConnectorOffset =
                       toConnectorCount === 1
                         ? toConnectorWidth / 2
                         : (toConnectorWidth / (toConnectorCount + 1)) *
-                        (connIndexTo + 1);
+                        (pointIndexTo + 1);
 
                     toX =
                       toComponent?.shape === "circle"
@@ -1724,14 +1730,14 @@ export default function Schematic({
                         setSelectedComponentIds([]);
                         // Select only this wire
                         setSelectedWires([i.toString()]);
-                                                
+
                         // Close other popups and clear connector selection
                         setPopupComponent(null);
                         setPopupWire(null);
                         setPopupConnector(null);
                         setSelectedConnector(null); // Clear connector highlight
                         setSelectedDTC(null);
-                                                
+
                         // Set popupWire with all details
                         setPopupWire({
                           wire,
@@ -1740,7 +1746,7 @@ export default function Schematic({
                           toComponent: toComponent!,
                           toConnector: to!,
                         });
-                      
+
                         // Set popup position
                         setPopupWirePosition({
                           x: fromX + 900,
@@ -1855,7 +1861,6 @@ export default function Schematic({
                 <div style={{ padding: '4px 16px', color: '#888', fontSize: '12px' }}>{contextMenu.component.label}</div>
                 <button
                   onClick={() => {
-                    console.log("🔘 TRACE: 'Open Component' button clicked for:", contextMenu.component.id);
                     if (onComponentRightClick) {
                       onComponentRightClick(contextMenu.component, { x: contextMenu.x, y: contextMenu.y });
                     } else {
@@ -1889,9 +1894,9 @@ export default function Schematic({
           selectedDTC={selectedDTC}
           dtcCode={dtcCode}
           onClose={(e) => {
-            e.stopPropagation();            
+            e.stopPropagation();
             setPopupConnector(null);
-            setSelectedConnector(null); 
+            setSelectedConnector(null);
           }}
           selectedTab={activeTab}
         />

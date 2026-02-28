@@ -68,15 +68,12 @@ export default function SuperAdminDashboard({ token }: { token: string | null })
     }, [showUserPopup]);
 
     const handleLogout = () => {
-        console.log("Super Admin logout clicked");
         sessionStorage.clear();
         window.location.href = "/login";
     };
 
     const handleTabChange = (tabId: string) => {
-        //console.log("Tab clicked:", tabId);
         setActiveTab(tabId);
-        //console.log("Active tab updated to:", tabId);
     };
 
     return (

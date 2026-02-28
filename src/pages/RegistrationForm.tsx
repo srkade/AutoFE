@@ -163,7 +163,6 @@ export default function RegisterForm({
       } else {
         // ---------------- CREATE MODE ----------------
         const res = await registerUser(payload);
-        console.log("Registration Success:", res);
 
         // ---------------- CONDITIONAL ALERT ----------------
         if (role === "Author") {

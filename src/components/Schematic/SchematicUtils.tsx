@@ -83,13 +83,32 @@ export function getComponentConnectorTupleFromConnectionPoint(
     return [undefined, undefined];
 }
 
-export function calculateCavityCountForConnector(conn: ConnectorType,data:SchematicData): number {
-    // Count all connections where this connector is involved
-    const count = (data.connections ?? []).filter(
-        (connection) =>
-            connection.from.connectorId === conn.id ||
-            connection.to.connectorId === conn.id
-    ).length;
+export function calculateCavityCountForConnector(conn: ConnectorType, data: SchematicData): number {
+    // Count all connection points where this connector is involved.
+    // If a connection is a self-loop on this connector, it counts as 2 points.
+    let count = 0;
+    (data.connections ?? []).forEach((connection) => {
+        if (connection.from.connectorId === conn.id) count++;
+        if (connection.to.connectorId === conn.id) count++;
+    });
 
     return count;
 }
+
+/**
+ * Returns an array of objects representing each attachment point on a connector.
+ * If a wire starts and ends on the same connector, it will appear twice in this list.
+ */
+export function getConnectionPointsForConnector(conn: ConnectorType, data: SchematicData): Array<{ wire: ConnectionType; side: "from" | "to" }> {
+    const points: Array<{ wire: ConnectionType; side: "from" | "to" }> = [];
+    (data.connections ?? []).forEach((wire) => {
+        if (wire.from.connectorId === conn.id) {
+            points.push({ wire, side: "from" });
+        }
+        if (wire.to.connectorId === conn.id) {
+            points.push({ wire, side: "to" });
+        }
+    });
+    return points;
+}
+

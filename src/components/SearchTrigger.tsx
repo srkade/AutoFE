@@ -10,10 +10,10 @@ interface SearchTriggerProps {
   onItemSelected?: (item: SearchItem) => void;
 }
 
-const SearchTrigger: React.FC<SearchTriggerProps> = ({ 
+const SearchTrigger: React.FC<SearchTriggerProps> = ({
   className = '',
   placeholder = 'Search...',
-  onItemSelected 
+  onItemSelected
 }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -22,12 +22,11 @@ const SearchTrigger: React.FC<SearchTriggerProps> = ({
       onItemSelected(item);
     }
     // You can add routing logic here based on item type
-    console.log('Selected item:', item);
   };
 
   return (
     <>
-      <div 
+      <div
         className={`search-trigger ${className}`}
         onClick={() => setIsSearchOpen(true)}
       >

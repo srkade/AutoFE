@@ -159,13 +159,12 @@ const ImportedFiles: React.FC = () => {
         const storedUser = sessionStorage.getItem("currentUser");
         const storedRole = sessionStorage.getItem("role");
         let authorName = "unknown"; // Default fallback
-        
+
         if (storedUser && storedRole) {
           try {
             const userData = JSON.parse(storedUser);
             // Use full name if available, otherwise fall back to email
             authorName = userData.name || userData.email || "unknown";
-            console.log(`Current user for upload: ${authorName}, Role: ${storedRole}`);
           } catch (e) {
             console.error("Error parsing stored user data:", e);
             authorName = "unknown";
@@ -173,7 +172,7 @@ const ImportedFiles: React.FC = () => {
         } else {
           console.warn("No user session data found for upload");
         }
-        
+
         // Upload the file (smartFileUpload should POST file to backend and wait for import)
         const response: ImportResponse = await smartFileUpload(file, (progress: number) => {
           updateUploadProgress(uiId, progress);
@@ -184,14 +183,14 @@ const ImportedFiles: React.FC = () => {
 
         // Reload uploads from backend so the newly persisted row appears in the table
         await loadBackendUploads();
-        
+
         // Track successful upload in system statistics
         await trackSuccessfulUpload();
 
       } catch (err: any) {
         console.error('Upload/import failed', err);
         updateUploadStatus(uiId, 'error', err?.message || 'Upload failed');
-        
+
         // Track failed upload in system statistics
         await trackFailedUpload();
       }

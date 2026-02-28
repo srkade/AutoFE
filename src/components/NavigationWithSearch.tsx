@@ -41,7 +41,6 @@ const NavigationWithSearch: React.FC<NavigationWithSearchProps> = ({
         isOpen={isSearchOpen}
         onClose={closeSearch}
         onItemSelected={(item) => {
-          console.log('Selected item:', item);
           // Add navigation logic based on item type
         }}
       />

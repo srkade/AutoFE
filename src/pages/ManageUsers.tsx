@@ -92,7 +92,6 @@ export default function ManageUsersModern() {
   // Save user (add or edit)
   const handleSaveUser = async (savedUser: any) => {
     try {
-      console.log("Saving user:", savedUser);
       if (editingUser) {
         // ------- UPDATE USER -------
         const payload = {
@@ -102,13 +101,10 @@ export default function ManageUsersModern() {
           role: savedUser.role,
           status: savedUser.status || "Active",
         };
-        
-        console.log("Update payload:", payload);
-        console.log("Updating user ID:", editingUser.id);
+
 
         const updated = await updateUser(editingUser.id, payload);
-        
-        console.log("Update response:", updated);
+
 
         const mappedUpdated = {
           ...updated,
@@ -131,12 +127,10 @@ export default function ManageUsersModern() {
           role: savedUser.role,
           status: savedUser.status,
         };
-        
-        console.log("Create payload:", payload);
+
 
         const created = await registerUser(payload);
-        
-        console.log("Create response:", created);
+
 
         const mappedCreated = {
           ...created,
@@ -155,7 +149,7 @@ export default function ManageUsersModern() {
       console.error("Error response:", err.response?.data);
       console.error("Error status:", err.response?.status);
       console.error("Error headers:", err.response?.headers);
-      
+
       // Show user-friendly error message
       const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to save user";
       alert(`Error: ${errorMessage}`);
@@ -175,26 +169,22 @@ export default function ManageUsersModern() {
 
   const handleStatusChange = async (id: string, status: User["status"]) => {
     try {
-      console.log(`Attempting to update user ${id} status to:`, status);
-      
+
       // Update user status with API call
       const updatedUser = await apiUpdateUserStatus(id, status, sessionStorage.getItem("token") || "");
-      
-      console.log("Status update API response:", updatedUser);
+
 
       // Update the local state with the new status
       setUsers(prev => {
         const newUsers = prev.map(u => u.id === id ? { ...u, status } : u);
-        console.log("Updated users state:", newUsers.find(u => u.id === id)?.status);
         return newUsers;
       });
 
       setStatusEditingUserId(null);
-      console.log("Status updated successfully in UI");
     } catch (err: any) {
       console.error("Status update failed:", err);
       console.error("Error details:", err.response?.data);
-      
+
       // Fallback to general update if status endpoint doesn't exist
       try {
         const updatedUser = await updateUser(id, { status });
@@ -213,7 +203,7 @@ export default function ManageUsersModern() {
     try {
       // Update user role with dedicated endpoint
       const updatedUser = await updateUserRole(id, role);
-      
+
       setUsers(prev =>
         prev.map(u => u.id === id ? { ...u, role } : u)
       );

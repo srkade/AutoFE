@@ -40,10 +40,10 @@ class SearchService {
     systems: any[],
     supplies: any[]
   ) {
-    console.log('🔍 Initializing global search index...');
-    
+
+
     this.searchIndex = [];
-    
+
     // Add components
     components.forEach((comp: any) => {
       this.searchIndex.push({
@@ -170,7 +170,6 @@ class SearchService {
     });
 
     this.isInitialized = true;
-    console.log(`✅ Search index initialized with ${this.searchIndex.length} items`);
   }
 
   // Main search function with facet filtering
@@ -185,14 +184,14 @@ class SearchService {
 
     // Apply text search if query exists
     if (normalizedQuery) {
-      results = results.filter(item => 
+      results = results.filter(item =>
         item.searchableText.includes(normalizedQuery)
       );
     }
 
     // Apply facet filters
     if (activeFacets.length > 0) {
-      results = results.filter(item => 
+      results = results.filter(item =>
         activeFacets.includes(item.type)
       );
     }
@@ -219,7 +218,7 @@ class SearchService {
   // Get all available facets
   getAvailableFacets(): SearchFacet[] {
     if (!this.isInitialized) return [];
-    
+
     const typeCounts: Record<string, number> = {};
     this.searchIndex.forEach(item => {
       typeCounts[item.type] = (typeCounts[item.type] || 0) + 1;
@@ -240,7 +239,7 @@ class SearchService {
   // Get search suggestions (for autocomplete)
   getSuggestions(query: string, limit: number = 5): SearchItem[] {
     if (!this.isInitialized || !query.trim()) return [];
-    
+
     const normalizedQuery = query.toLowerCase().trim();
     return this.searchIndex
       .filter(item => item.searchableText.includes(normalizedQuery))
@@ -252,23 +251,23 @@ class SearchService {
 export const searchService = new SearchService();
 
 // Type guard functions
-export const isComponentItem = (item: SearchItem): item is SearchItem & { type: 'component' } => 
+export const isComponentItem = (item: SearchItem): item is SearchItem & { type: 'component' } =>
   item.type === 'component';
 
-export const isDtcItem = (item: SearchItem): item is SearchItem & { type: 'dtc' } => 
+export const isDtcItem = (item: SearchItem): item is SearchItem & { type: 'dtc' } =>
   item.type === 'dtc';
 
-export const isConnectorItem = (item: SearchItem): item is SearchItem & { type: 'connector' } => 
+export const isConnectorItem = (item: SearchItem): item is SearchItem & { type: 'connector' } =>
   item.type === 'connector';
 
-export const isWireItem = (item: SearchItem): item is SearchItem & { type: 'wire' } => 
+export const isWireItem = (item: SearchItem): item is SearchItem & { type: 'wire' } =>
   item.type === 'wire';
 
-export const isHarnessItem = (item: SearchItem): item is SearchItem & { type: 'harness' } => 
+export const isHarnessItem = (item: SearchItem): item is SearchItem & { type: 'harness' } =>
   item.type === 'harness';
 
-export const isSystemItem = (item: SearchItem): item is SearchItem & { type: 'system' } => 
+export const isSystemItem = (item: SearchItem): item is SearchItem & { type: 'system' } =>
   item.type === 'system';
 
-export const isSupplyItem = (item: SearchItem): item is SearchItem & { type: 'supply' } => 
+export const isSupplyItem = (item: SearchItem): item is SearchItem & { type: 'supply' } =>
   item.type === 'supply';

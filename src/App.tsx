@@ -224,7 +224,6 @@ export default function App() {
     async function loadSchematics() {
       try {
         const data = await getComponents();
-        console.log("Raw API components:", data);
         setApiSchematics(data);
       } catch (err) {
         console.error("Failed to load components:", err);
@@ -238,10 +237,9 @@ export default function App() {
     async function loadSystems() {
       try {
         const data = await getSystems();
-        console.log("Raw API harnesses:", data);
         setSystemsList(data);
       } catch (err) {
-        console.error("Failed to load harnesses:", err);
+        console.error("Failed to load systems:", err);
       }
     }
 
@@ -252,7 +250,6 @@ export default function App() {
     async function loadDtcs() {
       try {
         const data = await getDtcs();
-        console.log("Raw API DTC list:", data);
         setDtcList(data);
       } catch (err) {
         console.error("Failed to load DTC list:", err);
@@ -266,7 +263,6 @@ export default function App() {
     async function loadHarnesses() {
       try {
         const data = await getHarnesses();
-        console.log("Raw API harnesses:", data);
         setHarnessesList(data);
       } catch (err) {
         console.error("Failed to load harnesses:", err);
@@ -279,10 +275,9 @@ export default function App() {
     async function loadSupply() {
       try {
         const data = await getVoltageSupply();
-        console.log("Row API voltage supply:", data);
         setVoltageSupplyList(data);
       } catch (err) {
-        console.log("failed to load harness: ", err);
+        console.error("failed to load supply: ", err);
       }
     }
     loadSupply();
@@ -292,10 +287,9 @@ export default function App() {
     async function loadWires() {
       try {
         const data = await getWires();
-        console.log("Row API Wires List:", data);
         setWireList(data);
       } catch (err) {
-        console.log("failed to load harness: ", err);
+        console.error("failed to load wires: ", err);
       }
     }
     loadWires();
@@ -452,7 +446,6 @@ export default function App() {
   const iccComponent = dashboardItems.find(item => item.name === "ICC") || null;
   // Inside App.tsx - Replace handleComponentRightClick
   const handleComponentRightClick = useCallback(async (component: any) => {
-    console.log("🔍 TRACE 1: App.tsx - handleComponentRightClick triggered", component);
 
     const componentCode = component.id;
     const itemName = component.label || component.id;
@@ -465,7 +458,6 @@ export default function App() {
       return;
     }
 
-    console.log("✅ TRACE 3: Found Dashboard Item:", dashboardItem.name, "Type:", dashboardItem.type);
 
     let targetTab = 'components';
     if (dashboardItem.type === 'System') targetTab = 'systems';
@@ -473,7 +465,6 @@ export default function App() {
     if (dashboardItem.type === 'DTC') targetTab = 'DTC';
     if (dashboardItem.type === 'Supply') targetTab = 'voltage';
 
-    console.log("🚀 TRACE 4: Switching to Tab:", targetTab);
 
     // Enter Trace Mode - now with the original state
     trace.enterTrace(targetTab, componentCode, itemName, activeTab, selectedItem, mergedSchematic);
@@ -487,14 +478,12 @@ export default function App() {
       else if (targetTab === 'systems') rawData = await getSystemFormula(Number(componentCode));
       else rawData = await getComponentSchematic(componentCode);
 
-      console.log("📥 TRACE 5: API Data Received:", rawData);
 
       const normalized = normalizeSchematic(rawData);
 
       setMergedSchematic(null);
       setSelectedItem({ ...dashboardItem, schematicData: normalized });
 
-      console.log("✨ TRACE 6: SelectedItem Updated. UI should re-render now.");
     } catch (error) {
       console.error("❌ TRACE ERROR: API fetch failed", error);
     }
@@ -502,7 +491,6 @@ export default function App() {
 
   const handleItemSelection = useCallback(async (item: DashboardItem) => {
     try {
-      console.log("🔗 Selecting item:", item.code, "Type:", item.type);
 
       setMergedSchematic(null);
       setShowWelcome(false);
@@ -803,7 +791,6 @@ export default function App() {
         isOpen={isSearchOpen}
         onClose={closeSearch}
         onItemSelected={(item) => {
-          console.log("Global Search Selected:", item);
           const dashboardItem = dashboardItems.find(di => di.code === item.code);
           if (dashboardItem) {
             handleItemSelection(dashboardItem);

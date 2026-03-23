@@ -12,6 +12,7 @@ import {
   FiArrowUp,
   FiArrowDown
 } from "react-icons/fi";
+import TableEditorModal from './TableEditorModal';
 
 interface UploadStatus {
   id: string;
@@ -22,6 +23,8 @@ interface UploadStatus {
   response?: ImportResponse;
   timestamp: string;
   filesize?: number;
+  isTablePresent?: boolean;
+  detectedTable?: string;
 }
 
 const ImportedFiles: React.FC = () => {
@@ -30,6 +33,11 @@ const ImportedFiles: React.FC = () => {
   const [selectedUploads, setSelectedUploads] = useState<Set<string>>(new Set());
   const [dragOver, setDragOver] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // --- Table Editor State ---
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingTableName, setEditingTableName] = useState<string>('');
+
   type sortField = 'fileName' | 'timestamp' | 'status' | 'filesize';
   const [sortBy, setSortBy] = useState<sortField>('timestamp');
   const [sortAsc, setSortAsc] = useState<boolean>(false);
@@ -57,7 +65,9 @@ const ImportedFiles: React.FC = () => {
             processingTimeMs: item.processing_time_ms ?? item.processingTimeMs,
             metadata: { detectedTable: item.detected_table ?? item.detectedTable },
             errors: item.errors,
-          }
+          },
+          isTablePresent: item.isTablePresent,
+          detectedTable: item.detected_table ?? item.detectedTable
         }))
       );
     } catch (err) {
@@ -195,6 +205,15 @@ const ImportedFiles: React.FC = () => {
         await trackFailedUpload();
       }
     }
+  };
+
+  const handleEdit = (tableName: string | undefined) => {
+    if (!tableName) {
+      alert("No database table associated with this file.");
+      return;
+    }
+    setEditingTableName(tableName);
+    setIsEditorOpen(true);
   };
 
   const toggleSelectUpload = (id: string) => {
@@ -428,6 +447,7 @@ const ImportedFiles: React.FC = () => {
               <th>Size</th>
               <th>Updated At</th>
               <th>Status</th>
+              <th>DB Table</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -455,8 +475,22 @@ const ImportedFiles: React.FC = () => {
                   </span>
                 </td>
 
+                <td>
+                  {upload.status === 'success' ? (
+                    upload.isTablePresent ? (
+                      <span className="table-status present" title="Table exists in database">✅ Present</span>
+                    ) : (
+                      <span className="table-status missing" title="Table missing from database">❌ Deleted</span>
+                    )
+                  ) : '--'}
+                </td>
+
                 <td className="actions">
-                  <FiEdit2 className="edit-icon" />
+                  <FiEdit2 
+                    className="edit-icon" 
+                    title="Edit table data"
+                    onClick={() => handleEdit(upload.response?.metadata?.detectedTable || upload.detectedTable)}
+                  />
                   <FiTrash2
                     className="delete-icon"
                     title="Delete file"
@@ -472,9 +506,13 @@ const ImportedFiles: React.FC = () => {
               </tr>
             ))}
             {filteredAndSortedUploads.length === 0 && (
-              <div className="empty-state">
-                🔍 No matching files found
-              </div>
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '40px' }}>
+                  <div className="empty-state">
+                    🔍 No matching files found
+                  </div>
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -524,6 +562,15 @@ const ImportedFiles: React.FC = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {/* TABLE EDITOR MODAL */}
+      {isEditorOpen && (
+        <TableEditorModal
+          tableName={editingTableName}
+          onClose={() => setIsEditorOpen(false)}
+          onSave={loadBackendUploads}
+        />
       )}
     </div>
   );

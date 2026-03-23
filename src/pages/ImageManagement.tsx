@@ -520,17 +520,17 @@ export default function ImageManagement() {
 
   // ==================== UI COMPONENTS ====================
   return (
-    <div className="image-management-container">
+    <div className="asset-management-page">
       {/* Header */}
       <div className="im-header">
-        <h1>Image Management Dashboard</h1>
-        <p>Manage component and connector images for schematic rendering</p>
+        <h1 className="title">Asset Management Dashboard</h1>
+        <p className="subtitle">Manage component and connector images for schematic rendering</p>
       </div>
 
       {/* Messages */}
       {error && (
         <div className="im-alert im-alert-error">
-          <strong>Error:</strong> {error}
+          <span><strong>Error:</strong> {error}</span>
           <button
             onClick={() => setError(null)}
             className="im-alert-close"
@@ -543,7 +543,7 @@ export default function ImageManagement() {
 
       {successMessage && (
         <div className="im-alert im-alert-success">
-          <strong>Success:</strong> {successMessage}
+          <span><strong>Success:</strong> {successMessage}</span>
           <button
             onClick={() => setSuccessMessage(null)}
             className="im-alert-close"
@@ -807,15 +807,13 @@ export default function ImageManagement() {
                   </td>
                   <td>{asset.fileName}</td>
                   <td>{(asset.fileSize / 1024).toFixed(2)} KB</td>
-                  <td>{new Date(asset.uploadedAt).toLocaleDateString()}</td>
-                  <td className="im-actions-col">
+                  <td>{new Date(asset.uploadedAt).toLocaleDateString()}</td>                  <td className="im-actions-col">
                     <button
-                      className="im-btn im-btn-sm im-btn-danger"
+                      className="im-action-btn-danger"
                       onClick={() => handleDeleteSingle(asset.id)}
                       title="Delete image"
-                      aria-label={`Delete ${asset.entityCode}`}
                     >
-                      <FiTrash2 />
+                      <FiTrash2 size={18} />
                     </button>
                   </td>
                 </tr>

@@ -138,7 +138,8 @@ export default function ManageUsersModern() {
           lastActive: created.updatedAt || new Date().toISOString(),
         };
 
-        setUsers(prev => [...prev, mappedCreated]); // UI updates instantly
+        setUsers(prev => [mappedCreated, ...prev]); // UI updates instantly (prepend for newest first)
+        alert("User registration successful.");
       }
 
       setEditingUser(null);
@@ -232,8 +233,8 @@ export default function ManageUsersModern() {
       ((u.lastName || "").toLowerCase().includes(searchTerm.toLowerCase())) ||
       ((u.email || "").toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesRole = roleFilter ? u.role === roleFilter : true;
-    const matchesStatus = statusFilter ? u.status === statusFilter : true;
+    const matchesRole = roleFilter ? (u.role || "").toLowerCase() === roleFilter.toLowerCase() : true;
+    const matchesStatus = statusFilter ? (u.status || "").toLowerCase() === statusFilter.toLowerCase() : true;
 
     const matchesDate = (() => {
       if (!dateFilter || !u.joined) return true;

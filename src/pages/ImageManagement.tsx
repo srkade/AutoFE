@@ -98,7 +98,6 @@ export default function ImageManagement() {
       if (componentResponse.ok) {
         const components = await componentResponse.json();
         setComponentList(components);
-        console.log("Components loaded:", components);
       }
 
       // Fetch connectors from serviceconnector table
@@ -114,7 +113,6 @@ export default function ImageManagement() {
       if (connectorResponse.ok) {
         const connectors = await connectorResponse.json();
         setConnectorList(connectors);
-        console.log("Connectors loaded:", connectors);
       }
     } catch (err) {
       const errorMessage =
@@ -145,11 +143,11 @@ export default function ImageManagement() {
 
       const json = await response.json();
 
-// ApiResponse<PageResponse<ImageAsset>>
-const assets = json.data.content;
+      // ApiResponse<PageResponse<ImageAsset>>
+      const assets = json.data.content;
 
-setImageAssets(assets);
-applyFilters(assets, searchQuery, filterType);
+      setImageAssets(assets);
+      applyFilters(assets, searchQuery, filterType);
 
     } catch (err) {
       const errorMessage =
@@ -522,17 +520,17 @@ applyFilters(assets, searchQuery, filterType);
 
   // ==================== UI COMPONENTS ====================
   return (
-    <div className="image-management-container">
+    <div className="asset-management-page">
       {/* Header */}
       <div className="im-header">
-        <h1>Image Management Dashboard</h1>
-        <p>Manage component and connector images for schematic rendering</p>
+        <h1 className="title">Asset Management Dashboard</h1>
+        <p className="subtitle">Manage component and connector images for schematic rendering</p>
       </div>
 
       {/* Messages */}
       {error && (
         <div className="im-alert im-alert-error">
-          <strong>Error:</strong> {error}
+          <span><strong>Error:</strong> {error}</span>
           <button
             onClick={() => setError(null)}
             className="im-alert-close"
@@ -545,7 +543,7 @@ applyFilters(assets, searchQuery, filterType);
 
       {successMessage && (
         <div className="im-alert im-alert-success">
-          <strong>Success:</strong> {successMessage}
+          <span><strong>Success:</strong> {successMessage}</span>
           <button
             onClick={() => setSuccessMessage(null)}
             className="im-alert-close"
@@ -809,15 +807,13 @@ applyFilters(assets, searchQuery, filterType);
                   </td>
                   <td>{asset.fileName}</td>
                   <td>{(asset.fileSize / 1024).toFixed(2)} KB</td>
-                  <td>{new Date(asset.uploadedAt).toLocaleDateString()}</td>
-                  <td className="im-actions-col">
+                  <td>{new Date(asset.uploadedAt).toLocaleDateString()}</td>                  <td className="im-actions-col">
                     <button
-                      className="im-btn im-btn-sm im-btn-danger"
+                      className="im-action-btn-danger"
                       onClick={() => handleDeleteSingle(asset.id)}
                       title="Delete image"
-                      aria-label={`Delete ${asset.entityCode}`}
                     >
-                      <FiTrash2 />
+                      <FiTrash2 size={18} />
                     </button>
                   </td>
                 </tr>

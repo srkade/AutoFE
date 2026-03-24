@@ -130,8 +130,27 @@ export default function PopupComponentDetails({
               </tr>
             )}
 
+            {/* Label */}
+            {popupComponent.label && popupComponent.label !== popupComponent.id && (
+              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+                <td
+                  style={{
+                    fontWeight: "600",
+                    padding: "10px 8px",
+                    backgroundColor: "#f8f9fa",
+                    color: "#555",
+                  }}
+                >
+                  Label
+                </td>
+                <td style={{ padding: "10px 8px", color: "#333" }}>
+                  {popupComponent.label}
+                </td>
+              </tr>
+            )}
+
             {/* Engineering Component Name */}
-            {popupComponent.engineering_component_name && (
+            {(popupComponent.engineering_component_name || popupComponent.label) && (
               <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
                 <td
                   style={{
@@ -144,7 +163,7 @@ export default function PopupComponentDetails({
                   Engineering Component Name
                 </td>
                 <td style={{ padding: "10px 8px", color: "#333" }}>
-                  {popupComponent.engineering_component_name}
+                  {popupComponent.engineering_component_name || popupComponent.label}
                 </td>
               </tr>
             )}

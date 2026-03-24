@@ -15,7 +15,6 @@ export default function AuthorDashboard({ token }: { token: string | null }) {
     } | null>(null);
 
     const handleLogout = () => {
-        console.log("Logout clicked");
     };
 
     const renderContent = () => {

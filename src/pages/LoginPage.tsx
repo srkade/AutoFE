@@ -3,7 +3,7 @@ import logo from "../assets/Images/logo.png";
 import { loginUser, requestPasswordReset } from "../services/api";
 
 interface LoginPageProps {
-  onLoginSuccess: (role: "superadmin" | "author" | "user",user:any) => void;
+  onLoginSuccess: (role: "superadmin" | "author" | "user", user: any) => void;
   onRegisterClick: () => void;
   setToken: (token: string) => void;
   onForgotPasswordClick?: () => void;
@@ -34,24 +34,23 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick, setToken, o
           status: "Active"
         }
       };
-      
+
       // Store token in sessionStorage
       sessionStorage.setItem("token", superAdminResponse.token);
       setToken(superAdminResponse.token);
-      
+
       // Call parent callback with superadmin role
       onLoginSuccess("superadmin", superAdminResponse.user);
       return;
     }
-    
+
     try {
       const response = await loginUser({ email: username, password });
-      console.log("LoginResponse:", response);
 
       // Check user status
       if (response.status?.toLowerCase() !== "active") {
         setError("Your account is pending admin approval.");
-        return; 
+        return;
       }
 
       // Store token in sessionStorage (or state)
@@ -61,29 +60,29 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick, setToken, o
 
       // Call parent callback with role from backend
       const userRole = response.role?.toLowerCase();
-      
+
       onLoginSuccess(
-        userRole === "author" ? "author" : 
-        userRole === "admin" ? "author" : 
-        userRole === "super admin" || response.role === "Super Admin" ? "superadmin" : 
-        "user",
+        userRole === "author" ? "author" :
+          userRole === "admin" ? "author" :
+            userRole === "super admin" || response.role === "Super Admin" ? "superadmin" :
+              "user",
         response
       );
     } catch (err: any) {
       console.error("Login failed:", err);
-      
+
       // Check if the error response contains specific information about account status
       if (err?.response?.data) {
         // Check various possible response formats for account status
         const errorData = err.response.data;
-        
+
         // Check for message field
         if (errorData.message && typeof errorData.message === 'string') {
-          if (errorData.message.toLowerCase().includes('pending') || 
-              errorData.message.toLowerCase().includes('approval') ||
-              errorData.message.toLowerCase().includes('inactive') ||
-              errorData.message.toLowerCase().includes('not active') ||
-              errorData.message.toLowerCase().includes('not activated')) {
+          if (errorData.message.toLowerCase().includes('pending') ||
+            errorData.message.toLowerCase().includes('approval') ||
+            errorData.message.toLowerCase().includes('inactive') ||
+            errorData.message.toLowerCase().includes('not active') ||
+            errorData.message.toLowerCase().includes('not activated')) {
             setError("Your account is pending admin approval.");
             return;
           } else {
@@ -91,14 +90,14 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick, setToken, o
             return;
           }
         }
-        
+
         // Check for other possible field names that might contain status info
         if (errorData.error && typeof errorData.error === 'string') {
-          if (errorData.error.toLowerCase().includes('pending') || 
-              errorData.error.toLowerCase().includes('approval') ||
-              errorData.error.toLowerCase().includes('inactive') ||
-              errorData.error.toLowerCase().includes('not active') ||
-              errorData.error.toLowerCase().includes('not activated')) {
+          if (errorData.error.toLowerCase().includes('pending') ||
+            errorData.error.toLowerCase().includes('approval') ||
+            errorData.error.toLowerCase().includes('inactive') ||
+            errorData.error.toLowerCase().includes('not active') ||
+            errorData.error.toLowerCase().includes('not activated')) {
             setError("Your account is pending admin approval.");
             return;
           } else {
@@ -106,20 +105,20 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick, setToken, o
             return;
           }
         }
-        
+
         // Check if response contains status field
         if (errorData.status && typeof errorData.status === 'string') {
-          if (errorData.status.toLowerCase().includes('pending') || 
-              errorData.status.toLowerCase().includes('approval') ||
-              errorData.status.toLowerCase().includes('inactive') ||
-              errorData.status.toLowerCase().includes('not active') ||
-              errorData.status.toLowerCase().includes('not activated')) {
+          if (errorData.status.toLowerCase().includes('pending') ||
+            errorData.status.toLowerCase().includes('approval') ||
+            errorData.status.toLowerCase().includes('inactive') ||
+            errorData.status.toLowerCase().includes('not active') ||
+            errorData.status.toLowerCase().includes('not activated')) {
             setError("Your account is pending admin approval.");
             return;
           }
         }
       }
-      
+
       // Check response status codes
       if (err?.response?.status === 401) {
         // Check if it's a 401 Unauthorized error

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../Styles/NavigationTabs.css"
 import logo from "../assets/Images/logo.png";
-import SearchBar from "../components/SearchBar";
+import SearchBar from "../components/SearchBar"; // Add search bar import
 import {
   Wrench,
   Cpu,
@@ -22,7 +22,6 @@ interface NavigationTabsProps {
   } | null;
   hideLogout?: boolean;
   hideLogo?: boolean;
-  hideSearch?: boolean;
 }
 
 const tabs = [
@@ -35,11 +34,11 @@ const tabs = [
   { id: "harnesses", label: "Harnesses", icon: Cable },
 ];
 
-export default function NavigationTabs({ activeTab, onTabChange, onLogout, user, hideLogout = false, hideLogo, hideSearch = false }: NavigationTabsProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
-
+export default function NavigationTabs({ activeTab, onTabChange, onLogout, user, hideLogout = false, hideLogo }: NavigationTabsProps) {
+  const [menuOpen, setMenuOpen] = useState(false);  
+  const [userMenuOpen, setUserMenuOpen] = useState(false); 
+  const userMenuRef = useRef<HTMLDivElement>(null);  
+  
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -51,6 +50,8 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+
   return (
 
     <div className="nav-tabs-wrapper" style={{ position: "relative" }}>
@@ -59,14 +60,14 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
         ☰
       </div>
       <nav
-        className={`nav-tabs ${menuOpen ? "open" : ""}`}
+        className={`nav-tabs ${menuOpen ? "open" : ""}`} 
         style={{
           background: "white",
           borderBottom: "1px solid #e9ecef",
           padding: "0 24px",
           display: "flex",
           gap: "2px"
-
+          
         }}>
         {/* LOGO AND BRANDING */}
         {!hideLogo && (
@@ -107,7 +108,7 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
               className={`nav-tab ${activeTab === tab.id ? "active" : ""}`}
               onClick={() => {
                 onTabChange(tab.id);
-                setMenuOpen(false);
+                setMenuOpen(false); 
               }}
               style={{
                 display: "flex",
@@ -149,17 +150,15 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
           );
         })}
         {/* Search Bar */}
-        {!hideSearch && (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            margin: "0 20px",
-            flex: "1",
-            maxWidth: "400px"
-          }}>
-            <SearchBar />
-          </div>
-        )}
+        <div style={{ 
+          display: "flex", 
+          alignItems: "center", 
+          margin: "0 20px",
+          flex: "1",
+          maxWidth: "400px"
+        }}>
+          <SearchBar />
+        </div>
         {!hideLogout && (
           <div
             ref={userMenuRef}
@@ -216,7 +215,7 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
                 >
                   <div style={{ fontWeight: "bold", color: "#212529" }}><span>Name:{user?.name}</span></div>
                   <div style={{ fontSize: "bold", color: "#212529" }}><span>Email:{user?.email}</span></div>
-                  <div style={{ fontSize: "bold", color: "#212529" }}><span>Role:{user?.role}</span></div>
+                  <div style={{ fontSize: "bold", color: "#212529"}}><span>Role:{user?.role}</span></div>
                 </div>
 
                 <hr style={{ border: "none", borderTop: "1px solid #e9ecef" }} />

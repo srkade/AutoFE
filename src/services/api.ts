@@ -93,9 +93,7 @@ export async function getWires() {
 //  Harness schematic endpoint
 export async function getHarnessSchematic(code: string) {
   try {
-    console.log(`📡 Calling getHarnessSchematic for: ${code}`);
     const res = await api.get(`/wires/harness/${code}`);
-    console.log(` Harness schematic received:`, res.data);
     return res.data;
   } catch (err) {
     console.error("API ERROR → getHarnessSchematic:", err);
@@ -194,10 +192,17 @@ export async function updateUser(id: string, payload: {
   status?: string;
 }) {
   try {
-    const res = await api.put(`/auth/users/${id}`, payload);
+    const token = sessionStorage.getItem("token") || "";
+    const res = await api.put(`/auth/users/${id}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return res.data;
-  } catch (err) {
+  } catch (err: any) {
     console.error("API ERROR → updateUser:", err);
+    console.error("Response data:", err.response?.data);
+    console.error("Response status:", err.response?.status);
     throw err;
   }
 }
@@ -238,7 +243,6 @@ export async function smartFileUpload(
   }
 
   try {
-    console.log(` Uploading file for auto-detection: ${file.name} by author: ${authorName || 'unknown'}`);
 
     // Get the JWT token from session storage
     const token = sessionStorage.getItem('token');
@@ -252,14 +256,10 @@ export async function smartFileUpload(
         if (evt.total && onProgress) {
           const progress = Math.round((evt.loaded * 100) / evt.total);
           onProgress(progress);
-          console.log(`  Upload progress: ${progress}%`);
         }
       },
     });
 
-    console.log(
-      ` Upload successful! Detected table: ${res.data.metadata?.detectedTable}`
-    );
     return res.data;
   } catch (err: any) {
     console.error(" API ERROR → smartFileUpload:", err);
@@ -289,6 +289,28 @@ export async function updateUserStatus(
     return res.data;
   } catch (err) {
     console.error("API ERROR → updateUserStatus:", err);
+    throw err;
+  }
+}
+
+export async function updateUserRole(
+  id: string,
+  role: string
+) {
+  try {
+    const token = sessionStorage.getItem("token") || "";
+    const res = await api.put(
+      `/auth/users/${id}/role`,
+      { role },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → updateUserRole:", err);
     throw err;
   }
 }

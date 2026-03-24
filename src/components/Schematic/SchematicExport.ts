@@ -11,6 +11,7 @@ import {
   ExportedComponentDetail,
   ExportedWireDetail,
   ExportedConnectorDetail,
+  ExportedSpliceDetail,
   ConnectorMapping,
   ExportMetadata,
 } from "./SchematicTypes";
@@ -21,7 +22,6 @@ class SchematicExportManager {
     zoom: number = 1
   ): Promise<string> {
     try {
-      console.log("Capturing full schematic SVG using bounding box...");
 
       const svgElement = document.querySelector("#export svg") as SVGSVGElement;
       if (!svgElement) throw new Error("SVG not found inside #export div");
@@ -198,6 +198,28 @@ class SchematicExportManager {
     return connections.length;
   }
 
+  private extractSpliceDetails(data: SchematicData): ExportedSpliceDetail[] {
+    const splices = (data.components ?? []).filter(
+      (comp) =>
+        comp.componentType?.toLowerCase() === "splice" ||
+        comp.label?.toLowerCase() === "splice"
+    );
+
+    return splices.map((comp) => {
+      const connectedWires = (data.connections ?? []).filter(
+        (wire) =>
+          wire.from?.componentId === comp.id || wire.to?.componentId === comp.id
+      ).length;
+
+      return {
+        spliceId: comp.id ?? "",
+        label: comp.label ?? "",
+        category: comp.category ?? "Splice",
+        connectedWires,
+      };
+    });
+  }
+
   public async generatePDF(
     svgElement: SVGSVGElement | null, // Not used, kept for compatibility
     data: SchematicData,
@@ -210,13 +232,11 @@ class SchematicExportManager {
 
 
     try {
-      console.log("=== Starting PDF Export ===");
 
       // Capture schematic from #export div
       const schematicImage = await this.captureSchematicDiv(resolution, zoom);
 
       // Extract all data
-      console.log("Extracting component data...");
       const components = this.extractComponentDetails(data, connectorConnectionCount);
       const wires = this.extractWireDetails(data);
       const connectors = this.extractConnectorDetails(data);
@@ -230,7 +250,6 @@ class SchematicExportManager {
         totalConnectors: connectors.length,
       };
 
-      console.log("Creating PDF document...");
 
       // Create PDF
       const pdf = new jsPDF({
@@ -273,7 +292,6 @@ class SchematicExportManager {
 
       try {
         pdf.addImage(schematicImage, "PNG", margin, yPosition, imgWidth, imgHeight);
-        console.log("✓ Schematic image added to PDF");
       } catch (imgError) {
         console.warn("Warning: Could not add image to PDF:", imgError);
       }
@@ -388,7 +406,37 @@ class SchematicExportManager {
 
         yPosition = (pdf as any).lastAutoTable.finalY + 10;
 
-        console.log("✓ Tables added to PDF");
+        // Splices Table
+        if (yPosition > pageHeight - 50) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+
+        pdf.setFontSize(14);
+        pdf.text("SPLICE DETAILS", margin, yPosition);
+        yPosition += 8;
+
+        const splices = this.extractSpliceDetails(data);
+        const spliceRows = splices.map((splice) => [
+          splice.spliceId,
+          splice.label,
+          splice.category,
+          splice.connectedWires.toString(),
+        ]);
+
+        if (spliceRows.length > 0) {
+          (pdf as any).autoTable({
+            startY: yPosition,
+            head: [["Splice ID", "Label", "Category", "Connected Wires"]],
+            body: spliceRows,
+            margin: { left: margin },
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [139, 92, 246], textColor: [255, 255, 255], fontStyle: "bold" }, // Purple header
+            theme: "grid",
+          });
+          yPosition = (pdf as any).lastAutoTable.finalY + 10;
+        }
+
       } else {
         console.warn("autoTable not available, adding text summary instead");
         pdf.setFontSize(12);
@@ -449,8 +497,6 @@ class SchematicExportManager {
 
       // Save PDF
       pdf.save(filename);
-      console.log(`✓✓✓ PDF exported successfully: ${filename}`);
-      console.log("=== Export Complete ===");
     } catch (error) {
       console.error(" Error generating PDF:", error);
       throw error;
@@ -554,7 +600,6 @@ class SchematicExportManager {
     };
 
     try {
-      console.log("=== Starting Image Export (robust) ===");
       try {
         if ((document as any).fonts && (document as any).fonts.ready) {
           await (document as any).fonts.ready;
@@ -562,7 +607,6 @@ class SchematicExportManager {
       } catch { }
 
       try {
-        console.log("Attempting full SVG capture (bounding box method)");
         const svg = document.querySelector("#export svg") as SVGSVGElement | null;
         if (!svg) throw new Error("SVG not found inside #export div");
 
@@ -603,7 +647,6 @@ class SchematicExportManager {
 
         const dataUrl = canvas.toDataURL("image/png", 1.0);
         downloadDataUrl(dataUrl, filename);
-        console.log("✓ Full schematic PNG exported successfully");
         return;
       } catch (err) {
         console.warn("SVG capture failed, falling back to html2canvas:", err);
@@ -652,7 +695,6 @@ class SchematicExportManager {
       // export PNG
       const png = canvas.toDataURL("image/png", 1.0);
       downloadDataUrl(png, filename);
-      console.log(" Fallback SVG-inlined export successful");
       return;
     } catch (err) {
       console.error(" exportAsImage failed (both methods):", err);

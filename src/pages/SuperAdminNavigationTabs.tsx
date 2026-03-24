@@ -31,7 +31,7 @@ export default function SuperAdminNavigationTabs({
 
   return (
     <div className="admin-nav-container" style={{ display: "flex", height: "100vh", width: "300px", background: "#1e293b", borderRight: "1px solid #334155", flexDirection: "column" }}>
-      
+
       <div className="admin-nav" style={{ padding: "20px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
         {/* Logo */}
         <div
@@ -73,7 +73,6 @@ export default function SuperAdminNavigationTabs({
                   margin: "2px 0"
                 }}
                 onClick={() => {
-                  //console.log("Navigation tab clicked:", tab.id);
                   onChange(tab.id);
                 }}
                 onMouseEnter={(e) => {
@@ -95,7 +94,7 @@ export default function SuperAdminNavigationTabs({
             );
           })}
         </div>
-        
+
         {/* Super Admin Badge */}
         <div style={{
           textAlign: "center",

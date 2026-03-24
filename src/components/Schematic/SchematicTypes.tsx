@@ -26,6 +26,9 @@ export type ConnectorType = {
   color?: string;
   gender?: string;
   fuse?: FuseInfo;
+  manufacturer?: string;
+  termPartNo?: string;
+  sealPartNo?: string;
 };
 export type ConnectionPoint = {
   componentId: string;
@@ -148,6 +151,26 @@ export type PopupConnectorType = {
   sealPartNo?: string;
 };
 
+export type SpliceConnectionDetail = {
+  wireColor?: string;
+  circuitNumber?: string;
+  fromComponentId?: string;
+  fromComponentLabel?: string;
+  fromConnectorId?: string;
+  fromCavity?: string;
+  toComponentId?: string;
+  toComponentLabel?: string;
+  toConnectorId?: string;
+  toCavity?: string;
+};
+
+export type SplicePopupType = {
+  spliceId: string;
+  label?: string;
+  category?: string;
+  connections?: SpliceConnectionDetail[];
+};
+
 export interface ExportOptions {
   filename?: string;
   resolution?: number;
@@ -203,6 +226,13 @@ export interface ExportedConnectorDetail {
   manufacturer: string;
   terminalPartNumber: string;
   sealPartNumber: string;
+}
+
+export interface ExportedSpliceDetail {
+  spliceId: string;
+  label: string;
+  category: string;
+  connectedWires: number;
 }
 
 export interface ConnectorMapping {

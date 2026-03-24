@@ -4,7 +4,7 @@ import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2 } from "react-icons/f
 import { IoIosArrowDown } from "react-icons/io";
 import RegisterForm from "./RegistrationForm";
 import { User } from "../components/Schematic/SchematicTypes";
-import { fetchUsers, updateUser, deleteUserById, registerUser, updateUserStatus as apiUpdateUserStatus } from "../services/api";
+import { fetchUsers, updateUser, deleteUserById, registerUser, updateUserStatus as apiUpdateUserStatus, updateUserRole } from "../services/api";
 
 export default function ManageUsersModern() {
   const [users, setUsers] = useState<User[]>([]);
@@ -17,6 +17,7 @@ export default function ManageUsersModern() {
     "Banned",
   ];
   const [statusEditingUserId, setStatusEditingUserId] = useState<string | null>(null);
+  const [roleEditingUserId, setRoleEditingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -98,10 +99,12 @@ export default function ManageUsersModern() {
           lastName: savedUser.lastName,
           email: savedUser.email,
           role: savedUser.role,
-          status: savedUser.role === "admin" ? "Active" : savedUser.status,
+          status: savedUser.status || "Active",
         };
 
+
         const updated = await updateUser(editingUser.id, payload);
+
 
         const mappedUpdated = {
           ...updated,
@@ -125,7 +128,9 @@ export default function ManageUsersModern() {
           status: savedUser.status,
         };
 
+
         const created = await registerUser(payload);
+
 
         const mappedCreated = {
           ...created,
@@ -133,14 +138,22 @@ export default function ManageUsersModern() {
           lastActive: created.updatedAt || new Date().toISOString(),
         };
 
-        setUsers(prev => [...prev, mappedCreated]); // UI updates instantly
+        setUsers(prev => [mappedCreated, ...prev]); // UI updates instantly (prepend for newest first)
+        alert("User registration successful.");
       }
 
       setEditingUser(null);
       setShowRegisterForm(false);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to save user:", err);
+      console.error("Error response:", err.response?.data);
+      console.error("Error status:", err.response?.status);
+      console.error("Error headers:", err.response?.headers);
+
+      // Show user-friendly error message
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to save user";
+      alert(`Error: ${errorMessage}`);
     }
   };
 
@@ -157,16 +170,58 @@ export default function ManageUsersModern() {
 
   const handleStatusChange = async (id: string, status: User["status"]) => {
     try {
-      const token = sessionStorage.getItem("token") || "";
-      await apiUpdateUserStatus(id, status, token);
 
-      setUsers(prev =>
-        prev.map(u => u.id === id ? { ...u, status } : u)
-      );
+      // Update user status with API call
+      const updatedUser = await apiUpdateUserStatus(id, status, sessionStorage.getItem("token") || "");
+
+
+      // Update the local state with the new status
+      setUsers(prev => {
+        const newUsers = prev.map(u => u.id === id ? { ...u, status } : u);
+        return newUsers;
+      });
 
       setStatusEditingUserId(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Status update failed:", err);
+      console.error("Error details:", err.response?.data);
+
+      // Fallback to general update if status endpoint doesn't exist
+      try {
+        const updatedUser = await updateUser(id, { status });
+        setUsers(prev =>
+          prev.map(u => u.id === id ? { ...u, status } : u)
+        );
+        setStatusEditingUserId(null);
+      } catch (fallbackErr: any) {
+        console.error("Fallback status update also failed:", fallbackErr);
+        alert("Failed to update status: " + (fallbackErr.response?.data?.message || fallbackErr.message));
+      }
+    }
+  };
+
+  const handleRoleChange = async (id: string, role: User["role"]) => {
+    try {
+      // Update user role with dedicated endpoint
+      const updatedUser = await updateUserRole(id, role);
+
+      setUsers(prev =>
+        prev.map(u => u.id === id ? { ...u, role } : u)
+      );
+
+      setRoleEditingUserId(null);
+    } catch (err: any) {
+      console.error("Role update failed:", err);
+      // Fallback to general update if role endpoint doesn't exist
+      try {
+        const updatedUser = await updateUser(id, { role });
+        setUsers(prev =>
+          prev.map(u => u.id === id ? { ...u, role } : u)
+        );
+        setRoleEditingUserId(null);
+      } catch (fallbackErr: any) {
+        console.error("Fallback role update also failed:", fallbackErr);
+      }
     }
   };
 
@@ -178,8 +233,8 @@ export default function ManageUsersModern() {
       ((u.lastName || "").toLowerCase().includes(searchTerm.toLowerCase())) ||
       ((u.email || "").toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesRole = roleFilter ? u.role === roleFilter : true;
-    const matchesStatus = statusFilter ? u.status === statusFilter : true;
+    const matchesRole = roleFilter ? (u.role || "").toLowerCase() === roleFilter.toLowerCase() : true;
+    const matchesStatus = statusFilter ? (u.status || "").toLowerCase() === statusFilter.toLowerCase() : true;
 
     const matchesDate = (() => {
       if (!dateFilter || !u.joined) return true;
@@ -275,7 +330,7 @@ export default function ManageUsersModern() {
             <FiFilter /> Role <IoIosArrowDown />
             {activeFilter === "role" && (
               <div className="filter-dropdown">
-                {["admin", "user"].map(role => (
+                {["User", "Author"].map(role => (
                   <div key={role} onClick={() => { setRoleFilter(role as User["role"]); setActiveFilter(null); }}>
                     {role}
                   </div>
@@ -361,7 +416,28 @@ export default function ManageUsersModern() {
                   </span>
                 )}
               </td>
-              <td>{u.role || "User"}</td>
+              <td>
+                {roleEditingUserId === u.id ? (
+                  <select
+                    value={u.role || "User"}
+                    autoFocus
+                    onChange={(e) =>
+                      handleRoleChange(u.id, e.target.value as User["role"])
+                    }
+                    onBlur={() => setRoleEditingUserId(null)}
+                  >
+                    <option value="User">User</option>
+                    <option value="Author">Author</option>
+                  </select>
+                ) : (
+                  <span
+                    style={{ cursor: "pointer", padding: "4px 8px", borderRadius: "4px", backgroundColor: "#e9ecef" }}
+                    onClick={() => setRoleEditingUserId(u.id)}
+                  >
+                    {u.role || "User"}
+                  </span>
+                )}
+              </td>
               <td>{u.joined ? new Date(u.joined).toLocaleString() : "-"}</td>
               <td>{u.lastActive ? new Date(u.lastActive).toLocaleString() : "-"}</td>
               <td className="actions">

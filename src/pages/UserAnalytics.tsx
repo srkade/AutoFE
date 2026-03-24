@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchUsers } from '../services/api';
 import { getAllUploads, getUploadsByUser } from '../services/uploadApi';
 import { User } from '../components/Schematic/SchematicTypes';
-import { getAuthorCount, getTotalUploads, getUploadSuccessRate ,getUploadedByUser} from '../services/superAdminApi';
+import { getAuthorCount, getTotalUploads, getUploadSuccessRate, getUploadedByUser } from '../services/superAdminApi';
 
 interface UserAnalyticsData {
   totalActiveUsers: number;
@@ -39,9 +39,9 @@ export default function UserAnalytics() {
   const [uploadsPerUser, setUploadsPerUser] = useState<UploadsPerUser[]>([]);
   const [loadingUploads, setLoadingUploads] = useState(true);
   const [totalUploads, setTotalUploads] = useState<number | null>(null);
-  const [svgRendersPerDay, setSvgRendersPerDay] = useState<number>(0); 
-  const [uploadSuccessRate,setUploadSuccessRate]=useState<number>(0);
-  const[authorUploadsCount,setAuthorUploadsCount]=useState<{[authorId:string]:number}>({});
+  const [svgRendersPerDay, setSvgRendersPerDay] = useState<number>(0);
+  const [uploadSuccessRate, setUploadSuccessRate] = useState<number>(0);
+  const [authorUploadsCount, setAuthorUploadsCount] = useState<{ [authorId: string]: number }>({});
   const [hoveredUserId, setHoveredUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,28 +69,28 @@ export default function UserAnalytics() {
 
     fetchTotalUploads();
   }, []);
-  
+
   // Track SVG renders per day using localStorage to persist counts
   useEffect(() => {
     const updateRendersPerDay = () => {
       const today = new Date().toDateString();
       const storedData = localStorage.getItem('schematicRendersAnalytics');
       let renderData = storedData ? JSON.parse(storedData) : { date: today, count: 0 };
-      
+
       // If it's a new day, reset the count
       if (renderData.date !== today) {
         renderData = { date: today, count: 0 };
       }
-      
+
       // Update the display with the current count
       setSvgRendersPerDay(renderData.count);
     };
-    
+
     updateRendersPerDay();
-    
+
     // Update the count every 60 seconds
     const intervalId = setInterval(updateRendersPerDay, 60000);
-    
+
     return () => clearInterval(intervalId);
   }, []);
 
@@ -99,7 +99,6 @@ export default function UserAnalytics() {
       try {
         setLoadingUploads(true);
         let uploadsData: any = await getUploadsByUser();
-        console.log('getUploadsByUser response:', uploadsData);
 
         // Unwrap common wrappers (e.g., { data: [...] })
         if (uploadsData && typeof uploadsData === 'object' && 'data' in uploadsData) {
@@ -135,9 +134,8 @@ export default function UserAnalytics() {
         setUploadsPerUser(transformedData);
       } catch (error: any) {
         console.error('Error fetching uploads per user:', error);
-          
+
         // If there was an error, use mock data based on the example provided
-        console.log('Using mock data for uploads per user');
         const mockData: UploadsPerUser[] = [
           {
             userId: 'currentUser',
@@ -175,20 +173,20 @@ export default function UserAnalytics() {
             authorName: 'sanika.gavhane'
           }
         ];
-          
+
         setUploadsPerUser(mockData);
       } finally {
         setLoadingUploads(false);
       }
     };
-  
+
     fetchUploadsPerUser();
   }, []);
 
-  useEffect(()=>{
-    const fetchUploadSuccessRate=async()=>{
-      try{
-        const uploadStats=await getUploadSuccessRate();
+  useEffect(() => {
+    const fetchUploadSuccessRate = async () => {
+      try {
+        const uploadStats = await getUploadSuccessRate();
         // Handle response depending on whether it's an object with successRate property or a direct value
         if (uploadStats && typeof uploadStats === 'object' && 'successRate' in uploadStats) {
           setUploadSuccessRate(uploadStats.successRate);
@@ -197,12 +195,12 @@ export default function UserAnalytics() {
           setUploadSuccessRate(uploadStats || 0);
         }
       }
-      catch(error){
-        console.error('Error fetching upload success rate:',error);
-      }     
+      catch (error) {
+        console.error('Error fetching upload success rate:', error);
+      }
     }
     fetchUploadSuccessRate();
-  },[]);
+  }, []);
 
   const [groupedUsers, setGroupedUsers] = useState<GroupedUsers>({});
   const [loading, setLoading] = useState(true);
@@ -214,7 +212,7 @@ export default function UserAnalytics() {
         const users = await fetchUsers();
         const grouped: GroupedUsers = {};
         users.forEach((user: any) => {
-      
+
           if (user.role === 'User') {
             const authorId = user.authorId || 'default-author';
             if (!grouped[authorId]) {
@@ -390,7 +388,7 @@ export default function UserAnalytics() {
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffc107', marginBottom: '10px' }}>
-           {uploadSuccessRate !== null ? uploadSuccessRate.toLocaleString() : "--"}
+            {uploadSuccessRate !== null ? uploadSuccessRate.toLocaleString() : "--"}
           </div>
           <div style={{ fontSize: '16px', color: '#6c757d', fontWeight: '500' }}>Upload Success Rate</div>
         </div>
@@ -574,91 +572,91 @@ export default function UserAnalytics() {
               {/* Pie Chart */}
               <div style={{ position: 'relative', width: '200px', height: '200px' }}>
                 <svg width="200" height="200" viewBox="0 0 200 200">
-                {(() => {
-                  const totalUploads = uploadsPerUser.reduce((sum, user) => sum + user.uploadCount, 0);
-                  let startAngle = 0;
-                  
-                  return uploadsPerUser.slice(0, 10).map((user, index) => {
-                    const percentage = totalUploads > 0 ? (user.uploadCount / totalUploads) * 100 : 0;
-                    const angle = (percentage / 100) * 360;
-                    const color = `hsl(${index * 36}, 70%, 50%)`;
-                    
-                    // Calculate the path for the pie slice
-                    const startAngleRad = (startAngle * Math.PI) / 180;
-                    const endAngleRad = ((startAngle + angle) * Math.PI) / 180;
-                    
-                    const x1 = 100 + 80 * Math.cos(startAngleRad);
-                    const y1 = 100 + 80 * Math.sin(startAngleRad);
-                    
-                    const x2 = 100 + 80 * Math.cos(endAngleRad);
-                    const y2 = 100 + 80 * Math.sin(endAngleRad);
-                    
-                    const largeArcFlag = angle > 180 ? 1 : 0;
-                    
-                    const pathData = [
-                      `M 100,100`,
-                      `L ${x1},${y1}`,
-                      `A 80,80 0 ${largeArcFlag},1 ${x2},${y2}`,
-                      'Z'
-                    ].join(' ');
-                    
-                    const slice = (
-                      <path
-                        key={user.userId}
-                        d={pathData}
-                        fill={color}
-                        stroke="#fff"
-                        strokeWidth="1"
-                        style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
-                        onMouseEnter={() => setHoveredUserId(user.userId)}
-                        onMouseLeave={() => setHoveredUserId(null)}
-                        transform={hoveredUserId === user.userId ? 'scale(1.05)' : 'scale(1)'}
-                      />
-                    );
-                    
-                    startAngle += angle;
-                    return slice;
-                  });
-                })()}
-                
-                {/* Center circle */}
-                <circle cx="100" cy="100" r="40" fill="#ffffff" stroke="#e9ecef" strokeWidth="2" />
-                <text 
-                  x="100" 
-                  y="100" 
-                  textAnchor="middle" 
-                  dominantBaseline="central" 
-                  style={{ fontSize: '14px', fontWeight: 'bold', fill: '#495057' }}
-                >
-                  {uploadsPerUser.length}
-                </text>
-                <text 
-                  x="100" 
-                  y="115" 
-                  textAnchor="middle" 
-                  dominantBaseline="central" 
-                  style={{ fontSize: '12px', fill: '#6c757d' }}
-                >
-                  Users
-                </text>
+                  {(() => {
+                    const totalUploads = uploadsPerUser.reduce((sum, user) => sum + user.uploadCount, 0);
+                    let startAngle = 0;
+
+                    return uploadsPerUser.slice(0, 10).map((user, index) => {
+                      const percentage = totalUploads > 0 ? (user.uploadCount / totalUploads) * 100 : 0;
+                      const angle = (percentage / 100) * 360;
+                      const color = `hsl(${index * 36}, 70%, 50%)`;
+
+                      // Calculate the path for the pie slice
+                      const startAngleRad = (startAngle * Math.PI) / 180;
+                      const endAngleRad = ((startAngle + angle) * Math.PI) / 180;
+
+                      const x1 = 100 + 80 * Math.cos(startAngleRad);
+                      const y1 = 100 + 80 * Math.sin(startAngleRad);
+
+                      const x2 = 100 + 80 * Math.cos(endAngleRad);
+                      const y2 = 100 + 80 * Math.sin(endAngleRad);
+
+                      const largeArcFlag = angle > 180 ? 1 : 0;
+
+                      const pathData = [
+                        `M 100,100`,
+                        `L ${x1},${y1}`,
+                        `A 80,80 0 ${largeArcFlag},1 ${x2},${y2}`,
+                        'Z'
+                      ].join(' ');
+
+                      const slice = (
+                        <path
+                          key={user.userId}
+                          d={pathData}
+                          fill={color}
+                          stroke="#fff"
+                          strokeWidth="1"
+                          style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+                          onMouseEnter={() => setHoveredUserId(user.userId)}
+                          onMouseLeave={() => setHoveredUserId(null)}
+                          transform={hoveredUserId === user.userId ? 'scale(1.05)' : 'scale(1)'}
+                        />
+                      );
+
+                      startAngle += angle;
+                      return slice;
+                    });
+                  })()}
+
+                  {/* Center circle */}
+                  <circle cx="100" cy="100" r="40" fill="#ffffff" stroke="#e9ecef" strokeWidth="2" />
+                  <text
+                    x="100"
+                    y="100"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    style={{ fontSize: '14px', fontWeight: 'bold', fill: '#495057' }}
+                  >
+                    {uploadsPerUser.length}
+                  </text>
+                  <text
+                    x="100"
+                    y="115"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    style={{ fontSize: '12px', fill: '#6c757d' }}
+                  >
+                    Users
+                  </text>
                 </svg>
               </div>
-              
+
               {/* Legend */}
               <div style={{ marginLeft: '30px', maxHeight: '200px', overflowY: 'auto', flexShrink: 0 }}>
                 {uploadsPerUser.slice(0, 10).map((user, index) => {
                   const totalUploads = uploadsPerUser.reduce((sum, u) => sum + u.uploadCount, 0);
                   const percentage = totalUploads > 0 ? (user.uploadCount / totalUploads * 100).toFixed(1) : 0;
                   const color = `hsl(${index * 36}, 70%, 50%)`;
-                  
+
                   return (
                     <div key={user.userId} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', fontSize: '12px' }}>
-                      <div 
-                        style={{ 
-                          width: '16px', 
-                          height: '16px', 
-                          backgroundColor: color, 
-                          borderRadius: '2px', 
+                      <div
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          backgroundColor: color,
+                          borderRadius: '2px',
                           marginRight: '8px',
                           border: hoveredUserId === user.userId ? '2px solid #333' : 'none'
                         }}

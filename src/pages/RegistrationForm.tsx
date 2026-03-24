@@ -135,8 +135,18 @@ export default function RegisterForm({
       lastName,
       email,
       role,
-      status: role === "Author" ? "Active" : "Pending", // Author active by default, user pending
     };
+
+    // Only set status default for new users, use form value for editing
+    if (!userToEdit) {
+      if (isAuthor && status) {
+        payload.status = status;
+      } else {
+        payload.status = role === "Author" ? "Active" : "Pending"; // Author active by default, user pending
+      }
+    } else {
+      payload.status = status; // Use the selected status when editing
+    }
 
     if (!userToEdit) {
       payload.password = password;
@@ -156,19 +166,23 @@ export default function RegisterForm({
         alert("User updated successfully!");
       } else {
         // ---------------- CREATE MODE ----------------
-        const res = await registerUser(payload);
-        console.log("Registration Success:", res);
-
-        // ---------------- CONDITIONAL ALERT ----------------
-        if (role === "Author") {
-          alert("Author registration successful.");
+        if (onSave) {
+          // Delegate to parent (ManageUsers handles API + State)
+          await onSave(payload);
         } else {
-          alert(
-            "Your account has been created and is pending author approval. You will be able to login once approved."
-          );
-        }
+          // Self-registration flow (App.tsx doesn't pass onSave)
+          const res = await registerUser(payload);
 
-        onBackToLogin();
+          // ---------------- CONDITIONAL ALERT ----------------
+          if (role === "Author") {
+            alert("Author registration successful.");
+          } else {
+            alert(
+              "Your account has been created and is pending author approval. You will be able to login once approved."
+            );
+          }
+           onBackToLogin();
+        }
       }
     }
     catch (err: any) {

@@ -11,6 +11,7 @@ import {
   ExportedComponentDetail,
   ExportedWireDetail,
   ExportedConnectorDetail,
+  ExportedSpliceDetail,
   ConnectorMapping,
   ExportMetadata,
 } from "./SchematicTypes";
@@ -195,6 +196,28 @@ class SchematicExportManager {
         conn.to?.connectorId === connector.id
     );
     return connections.length;
+  }
+
+  private extractSpliceDetails(data: SchematicData): ExportedSpliceDetail[] {
+    const splices = (data.components ?? []).filter(
+      (comp) =>
+        comp.componentType?.toLowerCase() === "splice" ||
+        comp.label?.toLowerCase() === "splice"
+    );
+
+    return splices.map((comp) => {
+      const connectedWires = (data.connections ?? []).filter(
+        (wire) =>
+          wire.from?.componentId === comp.id || wire.to?.componentId === comp.id
+      ).length;
+
+      return {
+        spliceId: comp.id ?? "",
+        label: comp.label ?? "",
+        category: comp.category ?? "Splice",
+        connectedWires,
+      };
+    });
   }
 
   public async generatePDF(
@@ -382,6 +405,37 @@ class SchematicExportManager {
         });
 
         yPosition = (pdf as any).lastAutoTable.finalY + 10;
+
+        // Splices Table
+        if (yPosition > pageHeight - 50) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+
+        pdf.setFontSize(14);
+        pdf.text("SPLICE DETAILS", margin, yPosition);
+        yPosition += 8;
+
+        const splices = this.extractSpliceDetails(data);
+        const spliceRows = splices.map((splice) => [
+          splice.spliceId,
+          splice.label,
+          splice.category,
+          splice.connectedWires.toString(),
+        ]);
+
+        if (spliceRows.length > 0) {
+          (pdf as any).autoTable({
+            startY: yPosition,
+            head: [["Splice ID", "Label", "Category", "Connected Wires"]],
+            body: spliceRows,
+            margin: { left: margin },
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [139, 92, 246], textColor: [255, 255, 255], fontStyle: "bold" }, // Purple header
+            theme: "grid",
+          });
+          yPosition = (pdf as any).lastAutoTable.finalY + 10;
+        }
 
       } else {
         console.warn("autoTable not available, adding text summary instead");

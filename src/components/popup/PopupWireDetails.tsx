@@ -258,6 +258,17 @@ export default function PopupWireDetails({
               )}
 
 
+              {/* Fuse Information */}
+              {popupWire.wire?.wireDetails?.fuse && (
+                <tr>
+                  <td style={tdLabelStyle}>Fuse Info</td>
+                  <td style={tdValueStyle}>
+                    {popupWire.wire.wireDetails.fuse.code} ({popupWire.wire.wireDetails.fuse.ampere})
+                  </td>
+                </tr>
+              )}
+
+
               {popupWire.fromComponent?.harness_name && (
                 <tr>
                   <td style={tdLabelStyle}>Harness Name</td>

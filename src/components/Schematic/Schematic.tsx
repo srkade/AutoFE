@@ -27,6 +27,7 @@ import {
   WireDetailsType,
   WirePopupType,
   PopupConnectorType,
+  SplicePopupType,
 } from "./SchematicTypes";
 import {
   spaceForWires,
@@ -42,6 +43,8 @@ import {
 import PopupComponentDetails from "../popup/PopupComponentDetails";
 import PopupWireDetails from "../popup/PopupWireDetails";
 import PopupConnectorDetails from "../popup/PopupConnectorDetails";
+import PopupSpliceDetails from "../popup/PopupSpliceDetails";
+
 import { DTC_STEPS_DATA } from "../../utils/DtcStepsData";
 import {
   resetView,
@@ -157,7 +160,47 @@ export default function Schematic({
   const [popupConnector, setPopupConnector] =
     useState<PopupConnectorType | null>(null);
 
+  // state to manage splice selection
+  const [popupSplice, setPopupSplice] = useState<SplicePopupType | null>(null);
+  const [popupSpliceLoading, setPopupSpliceLoading] = useState(false);
+  const [popupSpliceError, setPopupSpliceError] = useState<string | null>(null);
 
+
+
+  const handleSpliceClick = async (
+    e: React.MouseEvent,
+    comp: ComponentType,
+    connections: ConnectionType[]
+  ) => {
+    e.stopPropagation();
+    setSelectedComponentIds([]);
+    setSelectedWires([]);
+    setSelectedConnector(null);
+    setPopupComponent(null);
+    setPopupWire(null);
+    setPopupConnector(null);
+    setSelectedDTC(null);
+    setPopupSpliceError(null);
+
+    // Optimistically build from local data first
+    const localSpliceData: SplicePopupType = {
+      spliceId: comp.id,
+      label: comp.label,
+      category: comp.category,
+      connections: connections.map((wire) => ({
+        wireColor: wire.color,
+        circuitNumber: wire.wireDetails?.circuitNumber,
+        fromComponentId: wire.from?.componentId,
+        fromConnectorId: wire.from?.connectorId,
+        fromCavity: wire.from?.cavity,
+        toComponentId: wire.to?.componentId,
+        toConnectorId: wire.to?.connectorId,
+        toCavity: wire.to?.cavity,
+      })),
+    };
+    // Only use local data since backend endpoint is not implemented yet
+    setPopupSplice(localSpliceData);
+  };
 
   const handleConnectorClick = (
     e: React.MouseEvent<SVGRectElement, MouseEvent>,
@@ -173,6 +216,7 @@ export default function Schematic({
     // Close other popups but preserve connector selection
     setPopupComponent(null);
     setPopupWire(null);
+    setPopupSplice(null);
 
     setPopupConnector({
       componentCode: comp.label || comp.id,
@@ -183,6 +227,9 @@ export default function Schematic({
       color: connector.color,
       connectorType: comp.connector_type,
       cavityCount,
+      manufacturer: connector.manufacturer,
+      termPartNo: connector.termPartNo,
+      sealPartNo: connector.sealPartNo,
     });
 
 
@@ -221,12 +268,14 @@ export default function Schematic({
         !popupRef.current?.contains(e.target as Node)
       ) {
         setSelectedComponentIds([]);
+        setSelectedWires([]);
         // Close all popups and clear selections
         setPopupComponent(null);
         setPopupWire(null);
         setPopupConnector(null);
         setSelectedConnector(null); // Clear connector highlight
         setSelectedDTC(null);
+        setPopupSplice(null);
       }
     };
 
@@ -238,12 +287,14 @@ export default function Schematic({
     const handleClickOutside = (e: MouseEvent) => {
       if (!svgWrapperRef.current?.contains(e.target as Node)) {
         setSelectedComponentIds([]);
+        setSelectedWires([]);
         // Close all popups and clear selections
         setPopupComponent(null);
         setPopupWire(null);
         setPopupConnector(null);
         setSelectedConnector(null); // Clear connector highlight
         setSelectedDTC(null);
+        setPopupSplice(null);
       }
     };
 
@@ -1058,7 +1109,17 @@ export default function Schematic({
                   {(comp.componentType?.toLowerCase() === "splice" ||
                     comp.label?.toLowerCase() === "splice")
                     ? (
-                      <g>
+                      <g
+                        onClick={(e) => {
+                          const spliceConnections = (data.connections || []).filter(
+                            (wire) =>
+                              wire.from?.componentId === comp.id ||
+                              wire.to?.componentId === comp.id
+                          );
+                          handleSpliceClick(e, comp, spliceConnections);
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
                         <circle
                           cx={safe(
                             getXForComponent(comp) + getWidthForComponent(comp) / 2,
@@ -1069,15 +1130,19 @@ export default function Schematic({
                           fill={
                             comp.isHighlighted
                               ? "#fca5a5"                     // duplicate = red-300
+                              : popupSplice?.spliceId === comp.id
+                              ? "#ede9fe"                     // selected splice = purple-100
                               : "white"
                           }
                           stroke={
                             comp.isHighlighted
                               ? "#dc2626"                     // duplicate = strong red border
+                              : popupSplice?.spliceId === comp.id
+                              ? "#2563eb"                    // selected splice = purple
                               : "black"
                           }
                           strokeWidth={
-                            comp.isHighlighted ? 3 : 1
+                            comp.isHighlighted ? 3 : popupSplice?.spliceId === comp.id ? 2 : 1
                           }
                         />
                         <circle
@@ -1090,6 +1155,9 @@ export default function Schematic({
                           fill={
                             comp.isHighlighted
                               ? "yellow"                     // duplicate = red-300
+                              : popupSplice?.spliceId === comp.id
+                              // ? "#8b5cf6"     
+                              ? "#2563eb"              // selected = purple dot
                               : "black"
                           }
                         />
@@ -1110,6 +1178,7 @@ export default function Schematic({
                             setPopupConnector(null);
                             setSelectedConnector(null); // Clear connector highlight
                             setSelectedDTC(null);
+                            setPopupSplice(null);
 
                             // Show popup only if it wasn't manually closed
                             if (!popupClosedManually) {
@@ -1168,11 +1237,13 @@ export default function Schematic({
                               e.stopPropagation();
                               const pos = { x: e.clientX, y: e.clientY };
 
+                              setSelectedWires([]);
                               setPopupComponent(null);
                               setPopupWire(null);
                               setPopupConnector(null);
                               setSelectedConnector(null);
                               setSelectedDTC(null);
+                              setPopupSplice(null);
 
                               setContextMenu({ x: e.clientX, y: e.clientY, component: comp });
                               if (onComponentRightClick) onComponentRightClick(comp, pos);
@@ -1181,12 +1252,14 @@ export default function Schematic({
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedComponentIds([comp.id]);
+                              setSelectedWires([]);
 
                               setPopupComponent(null);
                               setPopupWire(null);
                               setPopupConnector(null);
                               setSelectedConnector(null);
                               setSelectedDTC(null);
+                              setPopupSplice(null);
 
                               setPopupComponent(comp);
                             }}
@@ -1774,6 +1847,7 @@ export default function Schematic({
                         setPopupConnector(null);
                         setSelectedConnector(null); // Clear connector highlight
                         setSelectedDTC(null);
+                        setPopupSplice(null);
 
                         // Set popupWire with all details
                         setPopupWire({
@@ -1924,6 +1998,15 @@ export default function Schematic({
             e.stopPropagation();
             setSelectedWires([]);
             setPopupWire(null);
+          }}
+        />
+        <PopupSpliceDetails
+          popupSplice={popupSplice}
+          isLoading={popupSpliceLoading}
+          error={popupSpliceError}
+          onClose={(e) => {
+            e.stopPropagation();
+            setPopupSplice(null);
           }}
         />
         <PopupConnectorDetails

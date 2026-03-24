@@ -93,17 +93,18 @@ export function normalizeSchematic(apiData: any) {
           shape: c.shape || 'rectangle',
           componentType: c.componentType,
           connectors: c.connectors?.map((conn: any) => ({
+            ...conn,
             id: conn.id,
-            label: conn.label
+            label: conn.label || conn.id
           })) || [],
-          engineering_component_name: c.engineeringComponentName,
-          engineering_manufacturer: c.engineeringManufacturer,
-          primary_part_number: c.primaryPartNumber,
-          harness_name: c.harnessName,
-          connector_type: c.connectorType,
+          engineering_component_name: c.engineeringComponentName || c.engineering_component_name,
+          engineering_manufacturer: c.engineeringManufacturer || c.engineering_manufacturer,
+          primary_part_number: c.primaryPartNumber || c.primary_part_number,
+          harness_name: c.harnessName || c.harness_name,
+          connector_type: c.connectorType || c.connector_type,
           remove: c.remove || false,
           manufacturer: c.manufacturer,
-          connector_part_number: c.connectorPartNumber,
+          connector_part_number: c.connectorPartNumber || c.connector_part_number,
           gender: c.gender
         };
       }),
@@ -168,11 +169,21 @@ export function normalizeSchematic(apiData: any) {
         shape: c.shape || 'rectangle',
         componentType: c.componentType,
         connectors: (c.connectors || []).map((conn: any) => ({
+          ...conn,
           id: conn.id,
           label: conn.label || conn.id,
           color: conn.color,
           gender: conn.gender
-        })) || []
+        })) || [],
+        engineering_component_name: c.engineeringComponentName || c.engineering_component_name,
+        engineering_manufacturer: c.engineeringManufacturer || c.engineering_manufacturer,
+        primary_part_number: c.primaryPartNumber || c.primary_part_number,
+        harness_name: c.harnessName || c.harness_name,
+        connector_type: c.connectorType || c.connector_type,
+        remove: c.remove || false,
+        manufacturer: c.manufacturer,
+        connector_part_number: c.connectorPartNumber || c.connector_part_number,
+        gender: c.gender
       })),
       connections: (wireData.connections || []).map((con: any) => ({
         color: con.color || 'black',
@@ -189,7 +200,25 @@ export function normalizeSchematic(apiData: any) {
           gender: con.to?.gender
         },
         label: con.label || '',
-        wireDetails: con.wireDetails
+        wireDetails: con.wireDetails ? {
+          ...con.wireDetails,
+          from: con.wireDetails.from || {
+            connectorNumber: con.wireDetails.fromConnNumber,
+            devName: con.wireDetails.fromDevName,
+            connPartNumber: con.wireDetails.fromConnPartNumber,
+            termPartNo: con.wireDetails.fromTermPartNo,
+            sealPartNo: con.wireDetails.fromSealPartNo || '',
+            cavity: con.wireDetails.fromCavity
+          },
+          to: con.wireDetails.to || {
+            connectorNumber: con.wireDetails.toConnNumber,
+            devName: con.wireDetails.toDevName,
+            connPartNumber: con.wireDetails.toConnPartNumber,
+            termPartNo: con.wireDetails.toTermPartNo,
+            sealPartNo: con.wireDetails.toSealPartNo || '',
+            cavity: con.wireDetails.toCavity
+          }
+        } : undefined
       }))
     };
   }
@@ -211,11 +240,21 @@ export function normalizeSchematic(apiData: any) {
       shape: c.shape || 'rectangle',
       componentType: c.componentType,
       connectors: (c.connectors || []).map((conn: any) => ({
+        ...conn,
         id: conn.id,
         label: conn.label || conn.id,
         color: conn.color,
         gender: conn.gender
-      })) || []
+      })) || [],
+      engineering_component_name: c.engineeringComponentName || c.engineering_component_name,
+      engineering_manufacturer: c.engineeringManufacturer || c.engineering_manufacturer,
+      primary_part_number: c.primaryPartNumber || c.primary_part_number,
+      harness_name: c.harnessName || c.harness_name,
+      connector_type: c.connectorType || c.connector_type,
+      remove: c.remove || false,
+      manufacturer: c.manufacturer,
+      connector_part_number: c.connectorPartNumber || c.connector_part_number,
+      gender: c.gender
     })),
     connections: (apiData.connections || []).map((con: any) => ({
       color: con.color || 'black',
@@ -232,7 +271,25 @@ export function normalizeSchematic(apiData: any) {
         gender: con.to?.gender
       },
       label: con.label || '',
-      wireDetails: con.wireDetails
+      wireDetails: con.wireDetails ? {
+        ...con.wireDetails,
+        from: con.wireDetails.from || {
+          connectorNumber: con.wireDetails.fromConnNumber,
+          devName: con.wireDetails.fromDevName,
+          connPartNumber: con.wireDetails.fromConnPartNumber,
+          termPartNo: con.wireDetails.fromTermPartNo,
+          sealPartNo: con.wireDetails.fromSealPartNo || '',
+          cavity: con.wireDetails.fromCavity
+        },
+        to: con.wireDetails.to || {
+          connectorNumber: con.wireDetails.toConnNumber,
+          devName: con.wireDetails.toDevName,
+          connPartNumber: con.wireDetails.toConnPartNumber,
+          termPartNo: con.wireDetails.toTermPartNo,
+          sealPartNo: con.wireDetails.toSealPartNo || '',
+          cavity: con.wireDetails.toCavity
+        }
+      } : undefined
     }))
   };
 }

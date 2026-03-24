@@ -2,16 +2,17 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: "http://localhost:8080/api",
+  //baseURL: "http://13.205.92.12:8080/api",
   timeout: 10000,
 });
 
 
-export async function getAuthorCount(){
+export async function getAuthorCount() {
   const response = await api.get("/auth/authors/count");
   return response.data;
 }
 
-export async function getUploadsPerUser(){
+export async function getUploadsPerUser() {
   try {
     const response = await api.get("/uploads/uploadedByPerUser");
     return response.data;
@@ -28,17 +29,17 @@ export async function getUploadsPerUser(){
   }
 }
 
-export async function getTotalUploads(){
+export async function getTotalUploads() {
   const response = await api.get("/uploads/filescount");
   return response.data;
 }
 
-export async function getUploadSuccessRate(){
-  const response=await api.get("/uploads/stats");
+export async function getUploadSuccessRate() {
+  const response = await api.get("/uploads/stats");
   return response.data;
 }
 
-export async function getUploadedByUser(userId:string){
-  const response=await api.get(`/uploads/uploadedByPerUser/${userId}`);
+export async function getUploadedByUser(userId: string) {
+  const response = await api.get(`/uploads/uploadedByPerUser/${userId}`);
   return response.data;
 }

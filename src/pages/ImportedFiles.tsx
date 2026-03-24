@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { smartFileUpload, ImportResponse } from '../services/api';
 import '../Styles/ImportedFiles.css';
+import { safeRandomUUID } from '../utils/uuid'; // Import the safe UUID fallback
 import { getAllUploads, deleteUploadById, fetchUploadFile, trackSuccessfulUpload, trackFailedUpload } from "../services/uploadApi";  // only this one we keep
 import {
   FiSearch,
@@ -145,13 +146,13 @@ const ImportedFiles: React.FC = () => {
     for (const file of fileArray) {
       // Validate file
       if (!isValidFile(file)) {
-        const id = crypto.randomUUID();
+        const id = safeRandomUUID();
         addUploadStatus(id, file.name, 'error', 'Invalid file format.', file.size);
         continue;
       }
 
       // Local UI entry
-      const uiId = crypto.randomUUID();
+      const uiId = safeRandomUUID();
       addUploadStatus(uiId, file.name, 'uploading', 'Starting upload...', file.size);
 
       try {

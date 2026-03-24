@@ -2,6 +2,7 @@ import axios, { AxiosProgressEvent } from "axios";
 
 const api = axios.create({
   baseURL: "http://localhost:8080/api",
+  // baseURL: "http://13.205.92.12:8080/api",
   timeout: 10000,
 });
 
@@ -81,7 +82,7 @@ export async function getHarnesses() {
 
 export async function getWires() {
   try {
-    const res = await api.get(`/schematics/wires`); 
+    const res = await api.get(`/schematics/wires`);
     return res.data;
   } catch (err) {
     console.error("API ERROR → getWires:", err);
@@ -102,9 +103,9 @@ export async function getHarnessSchematic(code: string) {
   }
 }
 
-export async function getVoltageSupply(){
-  try{
-    const res=await api.get(`/schematics/supply`);
+export async function getVoltageSupply() {
+  try {
+    const res = await api.get(`/schematics/supply`);
     return res.data;
   } catch (err) {
     console.error("API Error-> getVoltageSupply:", err);
@@ -238,12 +239,12 @@ export async function smartFileUpload(
 
   try {
     console.log(` Uploading file for auto-detection: ${file.name} by author: ${authorName || 'unknown'}`);
-    
+
     // Get the JWT token from session storage
     const token = sessionStorage.getItem('token');
-    
+
     const res = await api.post<ImportResponse>(`/import/upload`, formData, {
-      headers: { 
+      headers: {
         "Content-Type": "multipart/form-data",
         ...(token && { "Authorization": `Bearer ${token}` })
       },

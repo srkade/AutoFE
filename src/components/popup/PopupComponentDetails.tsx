@@ -30,7 +30,7 @@ export default function PopupComponentDetails({
         flexDirection: "column",
       }}
     >
-    
+
       <div
         style={{
           position: "sticky",
@@ -65,7 +65,7 @@ export default function PopupComponentDetails({
             cursor: "pointer",
             marginLeft: "12px",
             userSelect: "none",
-           // backgroundColor: "red",
+            // backgroundColor: "red",
             width: "30px",
             height: "30px",
             display: "flex",
@@ -86,14 +86,21 @@ export default function PopupComponentDetails({
           padding: "20px",
         }}
       >
-         <div style={{ marginTop: '16px', textAlign: 'center' }}>
-        <img
-        src={`/images/components/${popupComponent.id}.png?.jpg?`}
-        alt={popupComponent.label}
-        style={{ maxWidth: '160px', width: '100%', borderRadius: '8px' }}
-        // onError={e => { e.currentTarget.src = '/images/components/default.jpg'; }}
-        />
-      </div>
+        <div style={{ marginTop: '16px', textAlign: 'center' }}>
+          <img
+            src={`/images/components/${popupComponent.id}.png`}
+            alt={popupComponent.label}
+            style={{ maxWidth: '160px', width: '100%', borderRadius: '8px' }}
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (target.src.endsWith('.png')) {
+                target.src = target.src.replace('.png', '.jpg');
+              } else if (target.src.endsWith('.jpg')) {
+                target.src = target.src.replace('.jpg', '.jpeg');
+              }
+            }}
+          />
+        </div>
         <table
           style={{
             width: "100%",
@@ -379,7 +386,7 @@ export default function PopupComponentDetails({
           </tbody>
         </table>
         <img src="" alt="" />
-        
+
       </div>
     </div>
   );

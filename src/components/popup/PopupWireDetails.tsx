@@ -372,17 +372,24 @@ export default function PopupWireDetails({
               </tr>
             </tbody>
           </table>
-          
+
         )}
       </div>
       <div>
-    <img
-      src={`/images/wires/${popupWire.wire?.wireDetails?.circuitNumber}.png?.jpg?`}
-      alt={popupWire.wire?.wireDetails?.circuitNumber}
-      style={{ maxWidth: '160px', width: '100%', borderRadius: '8px' }}
-      
-    />
-  </div>
+        <img
+          src={`/images/wires/${popupWire.wire?.wireDetails?.circuitNumber}.png`}
+          alt={popupWire.wire?.wireDetails?.circuitNumber}
+          style={{ maxWidth: '160px', width: '100%', borderRadius: '8px' }}
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target.src.endsWith('.png')) {
+              target.src = target.src.replace('.png', '.jpg');
+            } else if (target.src.endsWith('.jpg')) {
+              target.src = target.src.replace('.jpg', '.jpeg');
+            }
+          }}
+        />
+      </div>
     </div>
   );
 }

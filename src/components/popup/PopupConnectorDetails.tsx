@@ -190,10 +190,17 @@ export default function PopupConnectorDetails({
       {/* Popup Connector Image */}
       <div style={{ marginTop: '16px', textAlign: 'center' }}>
         <img
-          src={`/images/connectors/${popupConnector.connectorCode}.png?.jpg?`}
+          src={`/images/connectors/${popupConnector.connectorCode}.png`}
           alt={popupConnector.connectorCode}
           style={{ maxWidth: '160px', width: '100%', borderRadius: '8px' }}
-
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target.src.endsWith('.png')) {
+              target.src = target.src.replace('.png', '.jpg');
+            } else if (target.src.endsWith('.jpg')) {
+              target.src = target.src.replace('.jpg', '.jpeg');
+            }
+          }}
         />
       </div>
 
@@ -296,12 +303,12 @@ export default function PopupConnectorDetails({
                 return (
                   <>
                     <h3 style={{ fontWeight: "bold" }}>
-                        {dtcInfo.name}
-                      </h3>
+                      {dtcInfo.name}
+                    </h3>
 
-                      <p style={{ marginBottom: "8px", color: "#666" }}>
-                        <b>Code:</b> {dtcInfo.code}
-                      </p>
+                    <p style={{ marginBottom: "8px", color: "#666" }}>
+                      <b>Code:</b> {dtcInfo.code}
+                    </p>
 
                     {/* Probable Causes */}
                     {dtcInfo.probableCauses && dtcInfo.probableCauses.length > 0 && (

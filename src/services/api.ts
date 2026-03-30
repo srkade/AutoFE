@@ -388,4 +388,24 @@ export async function incrementUploadFailure() {
   }
 }
 
+export async function getUploadStats() {
+  try {
+    const res = await api.get(`/uploads/stats`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getUploadStats:", err);
+    throw err;
+  }
+}
+
+export async function getSystemConfig() {
+  try {
+    const res = await api.get(`/settings/config`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getSystemConfig:", err);
+    throw err;
+  }
+}
+
 export default api;

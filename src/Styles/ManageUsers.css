@@ -80,8 +80,15 @@
 }
 
 /* Table */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .user-table {
   width: 100%;
+  min-width: 800px;
   border-collapse: collapse;
   margin-top: 10px;
   background: #fff;
@@ -205,4 +212,14 @@
   justify-content: center;
   align-items: center;
   z-index: 999;
+}
+
+@media (max-width: 900px) {
+  .hide-mobile {
+    display: none !important;
+  }
+  
+  .user-table {
+    min-width: 100%;
+  }
 }

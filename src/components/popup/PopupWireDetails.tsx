@@ -20,8 +20,9 @@ export default function PopupWireDetails({
     position: "absolute",
     top: 0, // start from the top of SVG
     right: 0, // stick to top-right corner
-    width: "350px",
-    maxHeight: "92%", // same height as SVG
+    width: "100%",
+    maxWidth: "350px",
+    maxHeight: "100%", // same height as SVG
     background: "#ffffff",
     borderRadius: "12px 0 0 12px",
     boxShadow: "0px 6px 24px rgba(0,0,0,0.15)",
@@ -30,7 +31,6 @@ export default function PopupWireDetails({
     overflowY: "auto", // scrollable if content too long
     fontFamily: "'Segoe UI', Arial, sans-serif",
     lineHeight: "1.6",
-    overflow: "visible",
   };
 
   const headerStyle: React.CSSProperties = {
@@ -106,297 +106,301 @@ export default function PopupWireDetails({
 
   // ---------- Component JSX ----------
   return (
-    <div style={{ position: "relative", zIndex: 1000 }}>
-      <div style={containerStyle}>
+    <div style={containerStyle}>
+      <div
+        style={{
+          ...closeButtonStyle,
+          position: "absolute",
+          top: "10px",
+          right: "10px",
+          zIndex: 2000, // ensures it stays above everything
+        }}
+        title="Close"
+        onClick={onClose}
+        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+      >
+        ×
+      </div>
+
+      {/*  Fixed Header with Tabs */}
+      <div style={headerWrapperStyle}>
+        <div style={{ marginBottom: "10px" }}>Wire Information</div>
+
+        {/* Tabs */}
         <div
           style={{
-            ...closeButtonStyle,
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            zIndex: 2000, // ensures it stays above everything
+            display: "flex",
+            justifyContent: "space-around",
+            marginBottom: "10px",
           }}
-          title="Close"
-          onClick={onClose}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
         >
-          ×
+          <button
+            style={{
+              flex: 1,
+              textAlign: "center",
+              padding: "8px 0",
+              cursor: "pointer",
+              background: activeTab === "wire" ? "#007bff" : "#f0f0f0",
+              color: activeTab === "wire" ? "#fff" : "#333",
+              border: "none",
+              borderRadius: "6px",
+              margin: "0 4px",
+              fontWeight: 600,
+              transition: "all 0.3s ease",
+            }}
+            onClick={() => setActiveTab("wire")}
+          >
+            Wire Details
+          </button>
+
+          <button
+            style={{
+              flex: 1,
+              textAlign: "center",
+              padding: "8px 0",
+              cursor: "pointer",
+              background: activeTab === "connection" ? "#007bff" : "#f0f0f0",
+              color: activeTab === "connection" ? "#fff" : "#333",
+              border: "none",
+              borderRadius: "6px",
+              margin: "0 4px",
+              fontWeight: 600,
+              transition: "all 0.3s ease",
+            }}
+            onClick={() => setActiveTab("connection")}
+          >
+            Connection Details
+          </button>
         </div>
-
-
-        {/*  Fixed Header with Tabs */}
-        <div style={headerWrapperStyle}>
-          <div style={{ marginBottom: "10px" }}>Wire Information</div>
-
-          {/* Tabs */}
-          <div style={{ display: "flex", justifyContent: "space-around", marginBottom: "10px" }}>
-            <button
-              style={{
-                flex: 1,
-                textAlign: "center",
-                padding: "8px 0",
-                cursor: "pointer",
-                background: activeTab === "wire" ? "#007bff" : "#f0f0f0",
-                color: activeTab === "wire" ? "#fff" : "#333",
-                border: "none",
-                borderRadius: "6px",
-                margin: "0 4px",
-                fontWeight: 600,
-                transition: "all 0.3s ease",
-              }}
-              onClick={() => setActiveTab("wire")}
-            >
-              Wire Details
-            </button>
-
-            <button
-              style={{
-                flex: 1,
-                textAlign: "center",
-                padding: "8px 0",
-                cursor: "pointer",
-                background: activeTab === "connection" ? "#007bff" : "#f0f0f0",
-                color: activeTab === "connection" ? "#fff" : "#333",
-                border: "none",
-                borderRadius: "6px",
-                margin: "0 4px",
-                fontWeight: 600,
-                transition: "all 0.3s ease",
-              }}
-              onClick={() => setActiveTab("connection")}
-            >
-              Connection Details
-            </button>
-          </div>
-        </div>
-
-        {/* WIRE DETAILS TABLE */}
-        {activeTab === "wire" && (
-          <table style={tableStyle}>
-            <tbody>
-              <tr>
-                <td style={tdLabelStyle}>Wire Color</td>
-                <td style={tdValueStyle}>
-                  {popupWire.color ||
-                    popupWire.wire?.wireDetails?.wireColor ||
-                    "N/A"}
-                </td>
-              </tr>
-
-              {popupWire.wire?.wireDetails?.circuitNumber && (
-                <tr>
-                  <td style={tdLabelStyle}>Circuit Number</td>
-                  <td style={tdValueStyle}>
-                    {popupWire.wire.wireDetails.circuitNumber}
-                  </td>
-                </tr>
-              )}
-
-              {popupWire.wire?.wireDetails?.wireSize && (
-                <tr>
-                  <td style={tdLabelStyle}>Wire Size</td>
-                  <td style={tdValueStyle}>
-                    {popupWire.wire.wireDetails.wireSize} mm
-                  </td>
-                </tr>
-              )}
-
-              {popupWire.wire?.wireDetails?.wireLength !== undefined &&
-                popupWire.wire?.wireDetails?.wireLength !== null &&
-                popupWire.wire?.wireDetails?.wireLength !== 0 && (
-                  <tr>
-                    <td style={tdLabelStyle}>Wire Length</td>
-                    <td style={tdValueStyle}>
-                      {popupWire.wire.wireDetails.wireLength} mm
-                    </td>
-                  </tr>
-                )}
-
-
-              {popupWire.wire?.wireDetails?.wireType && (
-                <tr>
-                  <td style={tdLabelStyle}>Wire Type</td>
-                  <td style={tdValueStyle}>
-                    {popupWire.wire.wireDetails.wireType}
-                  </td>
-                </tr>
-              )}
-
-              {popupWire.wire?.wireDetails?.twistId && (
-                <tr>
-                  <td style={tdLabelStyle}>Twist ID</td>
-                  <td style={tdValueStyle}>
-                    {popupWire.wire.wireDetails.twistId}
-                  </td>
-                </tr>
-              )}
-
-              {popupWire.wire?.wireDetails?.shieldId && (
-                <tr>
-                  <td style={tdLabelStyle}>Shield ID</td>
-                  <td style={tdValueStyle}>
-                    {popupWire.wire.wireDetails.shieldId}
-                  </td>
-                </tr>
-              )}
-
-              {/* Wire Option */}
-              {popupWire.wire?.wireDetails?.wireOption && (
-                <tr>
-                  <td style={tdLabelStyle}>Wire Option</td>
-                  <td style={tdValueStyle}>{popupWire.wire.wireDetails.wireOption}</td>
-                </tr>
-              )}
-
-              {/* Mark */}
-              {popupWire.wire?.wireDetails?.mark && (
-                <tr>
-                  <td style={tdLabelStyle}>Mark</td>
-                  <td style={tdValueStyle}>{popupWire.wire.wireDetails.mark}</td>
-                </tr>
-              )}
-
-
-              {/* Fuse Information */}
-              {popupWire.wire?.wireDetails?.fuse && (
-                <tr>
-                  <td style={tdLabelStyle}>Fuse Info</td>
-                  <td style={tdValueStyle}>
-                    {popupWire.wire.wireDetails.fuse.code} ({popupWire.wire.wireDetails.fuse.ampere})
-                  </td>
-                </tr>
-              )}
-
-
-              {popupWire.fromComponent?.harness_name && (
-                <tr>
-                  <td style={tdLabelStyle}>Harness Name</td>
-                  <td style={tdValueStyle}>
-                    {popupWire.fromComponent.harness_name}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
-
-        {/* CONNECTION DETAILS */}
-        {activeTab === "connection" && (
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Property</th>
-                <th style={thStyle}>From</th>
-                <th style={thStyle}>To</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style={tdLabelStyle}>Component</td>
-                <td style={tdValueStyle}>
-                  {popupWire.fromComponent?.label ||
-                    popupWire.wire?.wireDetails?.from?.devName ||
-                    popupWire.wire?.from?.componentId ||
-                    "N/A"}
-                </td>
-                <td style={tdValueStyle}>
-                  {popupWire.toComponent?.label ||
-                    popupWire.wire?.wireDetails?.to?.devName ||
-                    popupWire.wire?.to?.componentId ||
-                    "N/A"}
-                </td>
-              </tr>
-
-              <tr>
-                <td style={tdLabelStyle}>Connector</td>
-                <td style={tdValueStyle}>
-                  {popupWire.fromConnector?.label ||
-                    popupWire.wire?.wireDetails?.from?.connectorNumber ||
-                    popupWire.wire?.from?.connectorId ||
-                    "N/A"}
-                </td>
-                <td style={tdValueStyle}>
-                  {popupWire.toConnector?.label ||
-                    popupWire.wire?.wireDetails?.to?.connectorNumber ||
-                    popupWire.wire?.to?.connectorId ||
-                    "N/A"}
-                </td>
-              </tr>
-
-              <tr>
-                <td style={tdLabelStyle}>Connector Part Number</td>
-                <td style={tdValueStyle}>
-                  {popupWire.wire?.wireDetails?.from?.connPartNumber || "N/A"}
-                </td>
-                <td style={tdValueStyle}>
-                  {popupWire.wire?.wireDetails?.to?.connPartNumber || "N/A"}
-                </td>
-              </tr>
-
-              <tr>
-                <td style={tdLabelStyle}>Terminal Part Number</td>
-                <td style={tdValueStyle}>
-                  {popupWire.wire?.wireDetails?.from?.termPartNo || "N/A"}
-                </td>
-                <td style={tdValueStyle}>
-                  {popupWire.wire?.wireDetails?.to?.termPartNo || "N/A"}
-                </td>
-              </tr>
-
-              <tr>
-                <td style={tdLabelStyle}>Seal Part Number</td>
-                <td style={tdValueStyle}>
-                  {popupWire.wire?.wireDetails?.from?.sealPartNo || "N/A"}
-                </td>
-                <td style={tdValueStyle}>
-                  {popupWire.wire?.wireDetails?.to?.sealPartNo || "N/A"}
-                </td>
-              </tr>
-
-              <tr>
-                <td style={tdLabelStyle}>Gender</td>
-                <td style={tdValueStyle}>
-                  {popupWire.fromConnector?.gender ||
-                    popupWire.wire?.from?.gender ||
-                    "N/A"}
-                </td>
-                <td style={tdValueStyle}>
-                  {popupWire.toConnector?.gender ||
-                    popupWire.wire?.to?.gender ||
-                    "N/A"}
-                </td>
-              </tr>
-
-              <tr>
-                <td style={tdLabelStyle}>Cavity</td>
-                <td style={tdValueStyle}>
-                  {popupWire.wire?.wireDetails?.from?.cavity ||
-                    popupWire.wire?.from?.cavity ||
-                    "N/A"}
-                </td>
-                <td style={tdValueStyle}>
-                  {popupWire.wire?.wireDetails?.to?.cavity ||
-                    popupWire.wire?.to?.cavity ||
-                    "N/A"}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-        )}
       </div>
-      <div>
+
+      {/* WIRE DETAILS TABLE */}
+      {activeTab === "wire" && (
+        <table style={tableStyle}>
+          <tbody>
+            <tr>
+              <td style={tdLabelStyle}>Wire Color</td>
+              <td style={tdValueStyle}>
+                {popupWire.color ||
+                  popupWire.wire?.wireDetails?.wireColor ||
+                  "N/A"}
+              </td>
+            </tr>
+
+            {popupWire.wire?.wireDetails?.circuitNumber && (
+              <tr>
+                <td style={tdLabelStyle}>Circuit Number</td>
+                <td style={tdValueStyle}>
+                  {popupWire.wire.wireDetails.circuitNumber}
+                </td>
+              </tr>
+            )}
+
+            {popupWire.wire?.wireDetails?.wireSize && (
+              <tr>
+                <td style={tdLabelStyle}>Wire Size</td>
+                <td style={tdValueStyle}>
+                  {popupWire.wire.wireDetails.wireSize} mm
+                </td>
+              </tr>
+            )}
+
+            {popupWire.wire?.wireDetails?.wireLength !== undefined &&
+              popupWire.wire?.wireDetails?.wireLength !== null &&
+              popupWire.wire?.wireDetails?.wireLength !== 0 && (
+                <tr>
+                  <td style={tdLabelStyle}>Wire Length</td>
+                  <td style={tdValueStyle}>
+                    {popupWire.wire.wireDetails.wireLength} mm
+                  </td>
+                </tr>
+              )}
+
+            {popupWire.wire?.wireDetails?.wireType && (
+              <tr>
+                <td style={tdLabelStyle}>Wire Type</td>
+                <td style={tdValueStyle}>
+                  {popupWire.wire.wireDetails.wireType}
+                </td>
+              </tr>
+            )}
+
+            {popupWire.wire?.wireDetails?.twistId && (
+              <tr>
+                <td style={tdLabelStyle}>Twist ID</td>
+                <td style={tdValueStyle}>
+                  {popupWire.wire.wireDetails.twistId}
+                </td>
+              </tr>
+            )}
+
+            {popupWire.wire?.wireDetails?.shieldId && (
+              <tr>
+                <td style={tdLabelStyle}>Shield ID</td>
+                <td style={tdValueStyle}>
+                  {popupWire.wire.wireDetails.shieldId}
+                </td>
+              </tr>
+            )}
+
+            {/* Wire Option */}
+            {popupWire.wire?.wireDetails?.wireOption && (
+              <tr>
+                <td style={tdLabelStyle}>Wire Option</td>
+                <td style={tdValueStyle}>
+                  {popupWire.wire.wireDetails.wireOption}
+                </td>
+              </tr>
+            )}
+
+            {/* Mark */}
+            {popupWire.wire?.wireDetails?.mark && (
+              <tr>
+                <td style={tdLabelStyle}>Mark</td>
+                <td style={tdValueStyle}>{popupWire.wire.wireDetails.mark}</td>
+              </tr>
+            )}
+
+            {/* Fuse Information */}
+            {popupWire.wire?.wireDetails?.fuse && (
+              <tr>
+                <td style={tdLabelStyle}>Fuse Info</td>
+                <td style={tdValueStyle}>
+                  {popupWire.wire.wireDetails.fuse.code} (
+                  {popupWire.wire.wireDetails.fuse.ampere})
+                </td>
+              </tr>
+            )}
+
+            {popupWire.fromComponent?.harness_name && (
+              <tr>
+                <td style={tdLabelStyle}>Harness Name</td>
+                <td style={tdValueStyle}>
+                  {popupWire.fromComponent.harness_name}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      )}
+
+      {/* CONNECTION DETAILS */}
+      {activeTab === "connection" && (
+        <table style={tableStyle}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Property</th>
+              <th style={thStyle}>From</th>
+              <th style={thStyle}>To</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={tdLabelStyle}>Component</td>
+              <td style={tdValueStyle}>
+                {popupWire.fromComponent?.label ||
+                  popupWire.wire?.wireDetails?.from?.devName ||
+                  popupWire.wire?.from?.componentId ||
+                  "N/A"}
+              </td>
+              <td style={tdValueStyle}>
+                {popupWire.toComponent?.label ||
+                  popupWire.wire?.wireDetails?.to?.devName ||
+                  popupWire.wire?.to?.componentId ||
+                  "N/A"}
+              </td>
+            </tr>
+
+            <tr>
+              <td style={tdLabelStyle}>Connector</td>
+              <td style={tdValueStyle}>
+                {popupWire.fromConnector?.label ||
+                  popupWire.wire?.wireDetails?.from?.connectorNumber ||
+                  popupWire.wire?.from?.connectorId ||
+                  "N/A"}
+              </td>
+              <td style={tdValueStyle}>
+                {popupWire.toConnector?.label ||
+                  popupWire.wire?.wireDetails?.to?.connectorNumber ||
+                  popupWire.wire?.to?.connectorId ||
+                  "N/A"}
+              </td>
+            </tr>
+
+            <tr>
+              <td style={tdLabelStyle}>Connector Part Number</td>
+              <td style={tdValueStyle}>
+                {popupWire.wire?.wireDetails?.from?.connPartNumber || "N/A"}
+              </td>
+              <td style={tdValueStyle}>
+                {popupWire.wire?.wireDetails?.to?.connPartNumber || "N/A"}
+              </td>
+            </tr>
+
+            <tr>
+              <td style={tdLabelStyle}>Terminal Part Number</td>
+              <td style={tdValueStyle}>
+                {popupWire.wire?.wireDetails?.from?.termPartNo || "N/A"}
+              </td>
+              <td style={tdValueStyle}>
+                {popupWire.wire?.wireDetails?.to?.termPartNo || "N/A"}
+              </td>
+            </tr>
+
+            <tr>
+              <td style={tdLabelStyle}>Seal Part Number</td>
+              <td style={tdValueStyle}>
+                {popupWire.wire?.wireDetails?.from?.sealPartNo || "N/A"}
+              </td>
+              <td style={tdValueStyle}>
+                {popupWire.wire?.wireDetails?.to?.sealPartNo || "N/A"}
+              </td>
+            </tr>
+
+            <tr>
+              <td style={tdLabelStyle}>Gender</td>
+              <td style={tdValueStyle}>
+                {popupWire.fromConnector?.gender ||
+                  popupWire.wire?.from?.gender ||
+                  "N/A"}
+              </td>
+              <td style={tdValueStyle}>
+                {popupWire.toConnector?.gender ||
+                  popupWire.wire?.to?.gender ||
+                  "N/A"}
+              </td>
+            </tr>
+
+            <tr>
+              <td style={tdLabelStyle}>Cavity</td>
+              <td style={tdValueStyle}>
+                {popupWire.wire?.wireDetails?.from?.cavity ||
+                  popupWire.wire?.from?.cavity ||
+                  "N/A"}
+              </td>
+              <td style={tdValueStyle}>
+                {popupWire.wire?.wireDetails?.to?.cavity ||
+                  popupWire.wire?.to?.cavity ||
+                  "N/A"}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      )}
+
+      {/* Wire Image */}
+      <div style={{ textAlign: "center", marginTop: "20px" }}>
         <img
           src={`/images/wires/${popupWire.wire?.wireDetails?.circuitNumber}.png`}
           alt={popupWire.wire?.wireDetails?.circuitNumber}
-          style={{ maxWidth: '160px', width: '100%', borderRadius: '8px' }}
+          style={{ maxWidth: "160px", width: "100%", borderRadius: "8px" }}
           onError={(e) => {
             const target = e.currentTarget;
-            if (target.src.endsWith('.png')) {
-              target.src = target.src.replace('.png', '.jpg');
-            } else if (target.src.endsWith('.jpg')) {
-              target.src = target.src.replace('.jpg', '.jpeg');
+            if (target.src.endsWith(".png")) {
+              target.src = target.src.replace(".png", ".jpg");
+            } else if (target.src.endsWith(".jpg")) {
+              target.src = target.src.replace(".jpg", ".jpeg");
             }
           }}
         />

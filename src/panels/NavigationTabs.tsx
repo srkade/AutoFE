@@ -10,6 +10,8 @@ import {
   AlertTriangle,
   Cable
 } from "lucide-react";
+import { FiLogOut } from "react-icons/fi";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 interface NavigationTabsProps {
   activeTab: string;
@@ -51,6 +53,10 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+  
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isSmallMobile = useMediaQuery("(max-width: 480px)");
+
   return (
 
     <div className="nav-tabs-wrapper" style={{ position: "relative" }}>
@@ -72,30 +78,33 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
         {!hideLogo && (
           <div
             style={{
-              width: "320px",
+              width: isMobile ? "auto" : "320px",
               display: "flex",
-              height: "80px",
+              height: isMobile ? "60px" : "80px",
               alignItems: "center",
+              padding: isMobile ? "0 10px" : "0",
             }}
           >
             <img
+              className="logo-crisp"
               style={{
-                width: "70px",
-                height: "70px",
-
+                width: isMobile ? "50px" : "70px",
+                height: isMobile ? "50px" : "70px",
               }}
               src={logo}
               alt="Logo"
             />
-            <h1
-              style={{
-                marginRight: "40px",
-                marginLeft: "10px",
-                fontSize: "20px",
-              }}
-            >
-              CRAZYBEES
-            </h1>
+            {!isSmallMobile && (
+              <h1
+                style={{
+                  marginRight: isMobile ? "10px" : "40px",
+                  marginLeft: "10px",
+                  fontSize: isMobile ? "16px" : "20px",
+                }}
+              >
+                CRAZYBEES
+              </h1>
+            )}
           </div>
         )}
 
@@ -147,110 +156,148 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
               <span>{tab.label}</span>
             </button>
           );
-        })}
-        {/* Search Bar */}
+        })}      </nav>
+
+      {/* SEARCH AND USER MENU (OUTSIDE NAV FOR MOBILE ACCESSIBILITY) */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          marginLeft: "auto",
+          paddingRight: "24px",
+          height: isMobile ? "60px" : "80px",
+          position: "absolute",
+          right: 0,
+          top: 0,
+          zIndex: 101, // Above nav menu
+        }}
+      >
         {!hideSearch && (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            margin: "0 20px",
-            flex: "1",
-            maxWidth: "400px"
-          }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              margin: isMobile ? "0 10px" : "0 20px",
+              maxWidth: "400px",
+            }}
+          >
             <SearchBar />
           </div>
         )}
+
         {!hideLogout && (
           <div
             ref={userMenuRef}
             style={{
               display: "flex",
               alignItems: "center",
-              marginLeft: "auto"
+              position: "relative",
             }}
           >
-            {/*  User icon (visible always) */}
             <div
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               style={{
                 width: "40px",
                 height: "40px",
                 borderRadius: "50%",
-                background: "#f1f3f5",
+                background: "#007bff",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                fontSize: "20px",
-                color: "#343a40",
-                transition: "background 0.3s ease",
+                fontSize: "14px",
+                fontWeight: "600",
+                color: "white",
+                transition: "all 0.2s ease",
+                boxShadow: userMenuOpen ? "0 0 0 2px rgba(0, 123, 255, 0.25)" : "none",
+                userSelect: "none",
               }}
-              title="User Menu"
-              onMouseEnter={(e) => ((e.currentTarget.style.background = "#e9ecef"))}
-              onMouseLeave={(e) => ((e.currentTarget.style.background = "#f1f3f5"))}
+              title="User Account"
             >
-              👤
+              {user?.name ? user.name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) : "U"}
             </div>
 
-            {/* Dropdown menu: User info + Logout */}
             {userMenuOpen && (
               <div
                 style={{
                   position: "absolute",
-                  top: "110%",
+                  top: "calc(100% + 8px)",
                   right: 0,
                   background: "white",
                   border: "1px solid #dee2e6",
-                  borderRadius: "10px",
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-                  padding: "12px",
+                  borderRadius: "8px",
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
                   zIndex: 1000,
-                  minWidth: "200px",
+                  minWidth: "260px",
+                  padding: "16px",
                 }}
               >
-                <div
-                  style={{
-                    textAlign: "center",
-                    marginBottom: "10px",
-                  }}
-                >
-                  <div style={{ fontWeight: "bold", color: "#212529" }}><span>Name:{user?.name}</span></div>
-                  <div style={{ fontSize: "bold", color: "#212529" }}><span>Email:{user?.email}</span></div>
-                  <div style={{ fontSize: "bold", color: "#212529" }}><span>Role:{user?.role}</span></div>
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ 
+                    fontSize: "14px", 
+                    fontWeight: "700", 
+                    color: "#212529",
+                    marginBottom: "4px" 
+                  }}>
+                    {user?.name || "User Profile"}
+                  </div>
+                  <div style={{ 
+                    fontSize: "12px", 
+                    color: "#6c757d" 
+                  }}>
+                    {user?.email || ""}
+                  </div>
                 </div>
 
-                <hr style={{ border: "none", borderTop: "1px solid #e9ecef" }} />
+                <div style={{ 
+                  padding: "10px", 
+                  background: "#f8f9fa", 
+                  borderRadius: "6px", 
+                  marginBottom: "16px" 
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                    <span style={{ fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase" }}>Role</span>
+                    <span style={{ 
+                      fontSize: "11px", 
+                      padding: "2px 8px", 
+                      borderRadius: "12px", 
+                      background: "#e7f1ff", 
+                      color: "#007bff",
+                      fontWeight: "700"
+                    }}>
+                      {user?.role?.toUpperCase() || "USER"}
+                    </span>
+                  </div>
+                </div>
 
                 <button
                   onClick={onLogout}
                   style={{
-                    // background: "#ae8c8fff",
-                    color: "black",
+                    width: "100%",
+                    padding: "10px",
+                    background: "#dc3545",
+                    color: "white",
                     border: "none",
-                    padding: "8px 16px",
                     borderRadius: "6px",
                     cursor: "pointer",
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    width: "100%",
-                    transition: "background 0.2s ease",
+                    fontWeight: "600",
+                    fontSize: "13px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "background 0.2s ease"
                   }}
-                  onMouseEnter={(e) =>
-                    ((e.target as HTMLButtonElement).style.background = "#a74550")
-                  }
-                  onMouseLeave={(e) =>
-                    ((e.target as HTMLButtonElement).style.background = "transparent")
-                  }
-
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#c82333")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "#dc3545")}
                 >
-                  <i className="fa-solid fa-arrow-right-from-bracket"></i>
-                  {/* Logout */}
+                  <FiLogOut size={16} /> Sign Out
                 </button>
               </div>
             )}
           </div>
         )}
-      </nav>
+      </div>
     </div>
   );
-}
+}

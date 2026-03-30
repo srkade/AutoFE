@@ -62,10 +62,14 @@
 .file-table-wrapper {
   background: white;
   border-radius: 14px;
-  padding: 18px;
-  max-height: 350px;
+  padding: 12px;
+  max-height: 450px;
   overflow-y: auto;
+  overflow-x: auto;
   scrollbar-gutter: stable;
+  border: 1px solid #e2e8f0;
+  width: 100%;
+  display: block;
 }
 
 /* ================= Table ================= */
@@ -74,7 +78,7 @@
   width: 100%;
   border-collapse: collapse;
   text-align: center;
-  table-layout: fixed;
+  min-width: 700px;
 }
 
 .file-table tbody tr {
@@ -277,4 +281,57 @@
 .sort-dropdown {
   right: 0;
   left: auto;
+}
+@media (max-width: 1024px) {
+  .import-dashboard {
+    padding: 12px;
+    margin-top: 10px;
+  }
+  
+  .dashboard-header h1 {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-controls-container {
+     flex-direction: column;
+     align-items: stretch !important;
+     gap: 16px;
+  }
+
+  .upload-bar {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .choose-file-display {
+    width: 100%;
+    min-width: 0;
+  }
+  
+  .btn-primary {
+    width: 100%;
+  }
+
+  .top-right-controls {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+  
+  .compact-search {
+    width: 100%;
+    flex: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .hide-mobile {
+    display: none !important;
+  }
+  
+  .file-table {
+    min-width: 100%;
+  }
 }

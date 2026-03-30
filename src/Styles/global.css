@@ -9,3 +9,13 @@ html {
     height: 100%;
     margin: 0;
 }
+
+/* Sharp logo rendering — prevents blurry downscaling on all screens */
+.logo-crisp {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform;
+}

@@ -299,8 +299,11 @@
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid #e2e8f0;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  display: block;
 }
 
 .im-table-header {
@@ -321,6 +324,7 @@
 .im-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 700px;
 }
 
 .im-table th {
@@ -464,7 +468,63 @@
 }
 
 @media (max-width: 1024px) {
+  .asset-management-page {
+    padding: 12px;
+  }
+  
+  .title {
+    font-size: 28px;
+  }
+  
   .im-upload-section {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .im-search-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .im-search-box {
+    max-width: none;
+  }
+  
+  .im-filter-controls {
+    overflow-x: auto;
+    padding: 8px;
+    justify-content: flex-start;
+  }
+  
+  .im-filter-btn {
+    white-space: nowrap;
+  }
+  
+  .im-btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .im-table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .im-table-header .im-btn-danger {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 900px) {
+  .hide-mobile {
+    display: none !important;
+  }
+  
+  .im-table {
+    min-width: 100%;
   }
 }

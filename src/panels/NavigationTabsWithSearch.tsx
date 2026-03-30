@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Cable
 } from "lucide-react";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 interface NavigationTabsProps {
   activeTab: string;
@@ -51,6 +52,8 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
     };
   }, []);
 
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isSmallMobile = useMediaQuery("(max-width: 480px)");
 
   return (
 
@@ -73,30 +76,32 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
         {!hideLogo && (
           <div
             style={{
-              width: "320px",
+              width: isMobile ? "auto" : "320px",
               display: "flex",
-              height: "80px",
+              height: isMobile ? "60px" : "80px",
               alignItems: "center",
+              padding: isMobile ? "0 10px" : "0",
             }}
           >
             <img
               style={{
-                width: "70px",
-                height: "70px",
-
+                width: isMobile ? "50px" : "70px",
+                height: isMobile ? "50px" : "70px",
               }}
               src={logo}
               alt="Logo"
             />
-            <h1
-              style={{
-                marginRight: "40px",
-                marginLeft: "10px",
-                fontSize: "20px",
-              }}
-            >
-              CRAZYBEES
-            </h1>
+            {!isSmallMobile && (
+              <h1
+                style={{
+                  marginRight: isMobile ? "10px" : "40px",
+                  marginLeft: "10px",
+                  fontSize: isMobile ? "16px" : "20px",
+                }}
+              >
+                CRAZYBEES
+              </h1>
+            )}
           </div>
         )}
 

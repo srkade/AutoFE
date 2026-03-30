@@ -31,17 +31,14 @@ export default function AuthorDashboard({ token }: { token: string | null }) {
     };
 
     return (
-        <div className="admin-container" style={{ display: "flex" }}>
+        <div className="admin-container">
             <AuthorNavigationTabs
                 active={activeTab}
                 onChange={setActiveTab}
                 onLogout={handleLogout}
                 user={userInfo}
             />
-            <div
-                className="content-panel"
-                style={{ flex: 1, paddingLeft: "260px", paddingTop: "60px", height: "100vh", overflow: "auto" }}
-            >
+            <div className="content-panel">
                 {renderContent()}
             </div>
         </div>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import logo from "../assets/Images/logo.png";
 import { loginUser, requestPasswordReset } from "../services/api";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 interface LoginPageProps {
   onLoginSuccess: (role: "superadmin" | "author" | "user", user: any) => void;
@@ -134,6 +135,8 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick, setToken, o
 
   };
 
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   const handleForgotPassword = () => {
     if (onForgotPasswordClick) {
       onForgotPasswordClick();
@@ -183,10 +186,11 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick, setToken, o
       <div
         style={{
           display: "flex",
-          width: "900px",
-          height: "500px",
+          flexDirection: isMobile ? "column" : "row",
+          width: isMobile ? "90%" : "900px",
+          height: isMobile ? "auto" : "500px",
           borderRadius: "12px",
-          overflow: "hidden",
+          overflowY: "auto",
           boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
           background: "white",
         }}
@@ -213,6 +217,7 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick, setToken, o
             }}
           >
             <img
+              className="logo-crisp"
               src={logo}
               alt="Company Logo"
               style={{
@@ -223,7 +228,7 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick, setToken, o
             />
           </div>
 
-          <h1 style={{ fontSize: "34px", marginBottom: "15px" }}>Welcome To CRAZYBEES</h1>
+          <h1 style={{ fontSize: isMobile ? "24px" : "34px", marginBottom: "15px", textAlign: "center" }}>Welcome To CRAZYBEES</h1>
           <p
             style={{
               fontSize: "20px",

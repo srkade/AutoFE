@@ -43,3 +43,49 @@ export async function getUploadedByUser(userId: string) {
   const response = await api.get(`/uploads/uploadedByPerUser/${userId}`);
   return response.data;
 }
+
+// New Dashboard Endpoints
+export async function getRecentActivity(limit = 50) {
+  const response = await api.get(`/user-activity/recent?limit=${limit}`);
+  return response.data;
+}
+
+export async function getActivityDistribution() {
+  const response = await api.get(`/user-activity/type-distribution`);
+  return response.data;
+}
+
+export async function getRecentActivities() {
+   const response = await api.get(`/user-activity/recent`);
+   return response.data;
+}
+
+export async function getActiveUserTrends(days = 7) {
+  const response = await api.get(`/user-activity/active-user-trends?days=${days}`);
+  return response.data;
+}
+
+export async function getDatabaseStats() {
+  const response = await api.get(`/database/stats`);
+  return response.data;
+}
+
+export async function getDatabaseSize() {
+  const response = await api.get(`/database/size`);
+  return response.data;
+}
+
+export async function analyzeDatabase() {
+  const response = await api.post(`/database/maintenance/analyze`);
+  return response.data;
+}
+
+export async function vacuumDatabase() {
+  const response = await api.post(`/database/maintenance/vacuum`);
+  return response.data;
+}
+
+export async function pruneActivityLogs() {
+  const response = await api.post(`/database/maintenance/prune-logs`);
+  return response.data;
+}

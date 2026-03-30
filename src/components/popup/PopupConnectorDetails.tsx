@@ -28,8 +28,9 @@ export default function PopupConnectorDetails({
     position: "absolute",
     top: 0, // starts from top of SVG
     right: 0, // sticks to top-right
-    width: "350px",
-    maxHeight: "91%", // same height as SVG container
+    width: "100%",
+    maxWidth: "350px",
+    maxHeight: "100%", // same height as SVG container
     background: "#ffffff",
     borderRadius: "12px 0 0 12px",
     boxShadow: "0px 6px 24px rgba(0,0,0,0.15)",
@@ -41,7 +42,7 @@ export default function PopupConnectorDetails({
   };
 
   const headerContainerStyle: React.CSSProperties = {
-    position: "relative",
+    position: "sticky",
     top: 0,
     background: "#fff",
     zIndex: 2,

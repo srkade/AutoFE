@@ -21,8 +21,9 @@ export default function PopupSpliceDetails({
     position: "absolute",
     top: 0,
     right: 0,
-    width: "350px",
-    maxHeight: "92%",
+    width: "100%",
+    maxWidth: "350px",
+    maxHeight: "100%",
     background: "#ffffff",
     borderRadius: "12px 0 0 12px",
     boxShadow: "0px 6px 24px rgba(0,0,0,0.15)",
@@ -31,7 +32,6 @@ export default function PopupSpliceDetails({
     overflowY: "auto",
     fontFamily: "'Segoe UI', Arial, sans-serif",
     lineHeight: "1.6",
-    overflow: "visible",
   };
 
   const headerWrapperStyle: React.CSSProperties = {
@@ -91,7 +91,6 @@ export default function PopupSpliceDetails({
   };
 
   return (
-    <div style={{ position: "relative", zIndex: 1000 }}>
       <div style={containerStyle}>
         <div
           style={{
@@ -206,6 +205,5 @@ export default function PopupSpliceDetails({
           </div>
         )}
       </div>
-    </div>
-  );
-}
+    );
+  }

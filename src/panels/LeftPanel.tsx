@@ -92,8 +92,9 @@ export default function LeftPanel({
       const newSelectedCodes = selectedCodes.filter((c) => c !== code);
       setSelectedCodes(newSelectedCodes);
 
-      if (newSelectedCodes.length > 0) {
-        onViewSchematic(newSelectedCodes);
+      // If nothing selected, clear merged view
+      if (newSelectedCodes.length === 0) {
+        onViewSchematic([]);
       }
       return;
     }
@@ -108,7 +109,8 @@ export default function LeftPanel({
     const newSelectedCodes = [...selectedCodes, code];
     setSelectedCodes(newSelectedCodes);
 
-    if (newSelectedCodes.length > 0) {
+    // Auto-merge on desktop
+    if (!isMobile) {
       onViewSchematic(newSelectedCodes);
     }
   };
@@ -122,8 +124,8 @@ export default function LeftPanel({
     <div
       className="left_panel"
       style={{
-        width: "320px",
-        minWidth: "320px",
+        width: isMobile ? "100%" : "320px",
+        minWidth: isMobile ? "100%" : "320px",
         background: "white",
         borderRight: "1px solid #e9ecef",
         display: "flex",
@@ -188,37 +190,54 @@ export default function LeftPanel({
             }}
           >
             {selectedCodes.length > 0 && (
-              <button
-                onClick={() => {
-                  setSelectedCodes([]);
-                  onViewSchematic([]); 
-                }}
-                title="Clear Selection"
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  background: "#f1f3f5",
-                  border: "1px solid #ced4da",
-                  borderRadius: "50%",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "18px",
-                  color: "#495057",
-                  transition: "background 0.2s ease",
-                }}
-                onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLButtonElement).style.background =
-                  "#e9ecef")
-                }
-                onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLButtonElement).style.background =
-                  "#f1f3f5")
-                }
-              >
-                🧹
-              </button>
+              <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: isMobile ? 'space-between' : 'flex-end' }}>
+                {isMobile && (
+                  <button
+                    onClick={() => onViewSchematic(selectedCodes)}
+                    className="view-merged-btn"
+                    title="View Selected"
+                    style={{
+                      padding: "8px 16px",
+                      background: "#0d6efd",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      flex: 1
+                    }}
+                  >
+                    👁️ View ({selectedCodes.length})
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setSelectedCodes([]);
+                    onViewSchematic([]);
+                  }}
+                  title="Clear Selection"
+                  style={{
+                    width: isMobile ? "auto" : "36px",
+                    height: "36px",
+                    background: "#f8f9fa",
+                    border: "1px solid #dee2e6",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "16px",
+                    padding: isMobile ? "0 12px" : "0",
+                    color: "#6c757d"
+                  }}
+                >
+                  {isMobile ? "🧹 Clear" : "🧹"}
+                </button>
+              </div>
             )}
           </div>
         )}

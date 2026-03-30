@@ -10,12 +10,13 @@ import LoginPage from "./pages/LoginPage";
 import { mergeSchematicConfigs } from './utils/mergeSchematicConfigs';
 import {
   getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarnesses,
-  getVoltageSupply, getSupplyFormula, getSystems, getSystemFormula, getHarnessSchematic, getWires, getWireDetailsByWireCode
+  getVoltageSupply, getSupplyFormula, getSystems, getSystemFormula, getHarnessSchematic, getWires, getWireDetailsByWireCode, fetchUsers
 } from "./services/api";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 import RegisterForm from "./pages/RegistrationForm";
 import { useTraceNavigation } from './hooks/useTraceNavigation';
 import PasswordResetPage from './pages/PasswordResetPage';
+import { useMediaQuery } from "./hooks/useMediaQuery";
 
 export type DashboardItem = {
   code: string;
@@ -53,7 +54,7 @@ export default function App() {
     role: "superadmin" | "author" | "user";
   } | null>(null);
 
-
+  const [token, setToken] = useState<string | null>(null);
 
 
   const handleLoginSuccess = (loggedInRole: "superadmin" | "author" | "user", user: any) => {
@@ -90,6 +91,8 @@ export default function App() {
     if (storedUser && storedRole && storedToken) {
       setCurrentUser(JSON.parse(storedUser));
       setRole(storedRole as "superadmin" | "author" | "user");
+      setToken(storedToken);
+      setLoggedIn(true);
       setPage("dashboard");
     } else {
       setPage("login");
@@ -119,7 +122,7 @@ export default function App() {
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const [mergedSchematic, setMergedSchematic] = useState<SchematicData | null>(null);
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [showWelcome, setShowWelcome] = useState(true);
 
   // API schematic data
@@ -131,6 +134,7 @@ export default function App() {
   const [supplyList, setVoltageSupplyList] = useState<any[]>([]);
   const [wireList, setWireList] = useState<any[]>([]);
   const [systemsList, setSystemsList] = useState<any[]>([]);
+  const [usersList, setUsersList] = useState<any[]>([]);
   // const [adminUser, setAdminUser] = useState<any>(null);
 
 
@@ -212,14 +216,6 @@ export default function App() {
     }
   }));
 
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener("resize", handleResize);
-    handleResize();
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   useEffect(() => {
     async function loadSchematics() {
       try {
@@ -295,20 +291,49 @@ export default function App() {
     loadWires();
   }, []);
 
+  useEffect(() => {
+    async function loadUsers() {
+      if (!loggedIn || !role || role === 'user') return;
+      try {
+        const data = await fetchUsers();
+        setUsersList(data);
+      } catch (err) {
+        console.error("Failed to load users:", err);
+      }
+    }
+    loadUsers();
+  }, [loggedIn, role]);
+
+  // Navigation Shortcuts
+  const navigationShortcuts = [
+    { id: 'sa-home', name: 'Home / Dashboard', targetTab: 'home', description: 'Main overview and stats', role: 'superadmin' },
+    { id: 'sa-settings', name: 'System Settings', targetTab: 'system-settings', description: 'Configure environment and parameters', role: 'superadmin' },
+    { id: 'sa-logs', name: 'Security Logs', targetTab: 'security-logs', description: 'Audit trails and access monitoring', role: 'superadmin' },
+    { id: 'sa-db', name: 'Database Management', targetTab: 'database-management', description: 'Table statistics and health', role: 'superadmin' },
+    { id: 'sa-analytics', name: 'User Analytics', targetTab: 'user-analytics', description: 'Engagement and behavioral metrics', role: 'superadmin' },
+    { id: 'sa-mon', name: 'System Monitoring', targetTab: 'system-monitoring', description: 'Hardware and uptime tracking', role: 'superadmin' },
+    { id: 'auth-users', name: 'Manage Users', targetTab: 'manage-users', targetPage: 'manage-users', description: 'Administer user accounts and roles', role: 'author' },
+    { id: 'auth-import', name: 'Import Files', targetTab: 'import-files', targetPage: 'import-files', description: 'Upload schematic data files', role: 'author' },
+    { id: 'auth-images', name: 'Image Management', targetTab: 'import-images', targetPage: 'import-images', description: 'Manage component and connector graphics', role: 'author' }
+  ];
+
   // Initialize Search Index when data changes
   useEffect(() => {
-    if (apiSchematics.length > 0) {
-      searchService.initializeSearchIndex(
-        apiSchematics,
-        dtcList,
-        [], // connectors - can be added later if available
-        wireList,
-        harnessesList,
-        systemsList,
-        supplyList
-      );
-    }
-  }, [apiSchematics, dtcList, wireList, harnessesList, systemsList, supplyList]);
+    // Filter navigation shortcuts by current user role
+    const filteredNav = navigationShortcuts.filter(nav => !nav.role || nav.role === role);
+
+    searchService.initializeSearchIndex(
+      apiSchematics,
+      dtcList,
+      [], // connectors
+      wireList,
+      harnessesList,
+      systemsList,
+      supplyList,
+      usersList,
+      filteredNav
+    );
+  }, [apiSchematics, dtcList, wireList, harnessesList, systemsList, supplyList, usersList, role]);
   const dashboardItems: DashboardItem[] = [
 
     // Components
@@ -438,9 +463,6 @@ export default function App() {
     }
   }
 
-  const [token, setToken] = useState<string | null>(
-    sessionStorage.getItem("token")
-  );
 
 
   const iccComponent = dashboardItems.find(item => item.name === "ICC") || null;
@@ -565,16 +587,20 @@ export default function App() {
   return (
     <div>
       {page === "login" && (
-        <LoginPage
-          onLoginSuccess={handleLoginSuccess}
-          onRegisterClick={() => setPage("register")}
-          setToken={setToken}
-        />
+        <div style={{ height: "100vh", overflowY: "auto", background: "#f4f6f9" }}>
+          <LoginPage
+            onLoginSuccess={handleLoginSuccess}
+            onRegisterClick={() => setPage("register")}
+            setToken={setToken}
+          />
+        </div>
       )}
 
       {page === "register" && (
-        <RegisterForm onBackToLogin={() => setPage("login")}
-          isAuthor={role === "author"} />
+        <div style={{ height: "100vh", overflowY: "auto", background: "#f4f6f9" }}>
+          <RegisterForm onBackToLogin={() => setPage("login")}
+            isAuthor={role === "author"} />
+        </div>
       )}
 
       {page === "password-reset" && (
@@ -616,61 +642,59 @@ export default function App() {
               }}
             />
           ) : (
-            <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-              <LeftPanel
-                activeTab={activeTab}
-                data={filteredItems}
-                traceMode={trace.isTraceMode}
-                onItemSelect={handleItemSelection}
-                selectedItem={selectedItem}
-                selectedCodes={selectedCodes}
-                setSelectedCodes={setSelectedCodes}
-                onViewSchematic={handleViewSchematic}
-                isMobile={isMobile}
-              />
+            <div style={{ display: "flex", flex: 1, overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
+              {(!isMobile || (!selectedItem && !mergedSchematic)) && (
+                <LeftPanel
+                  activeTab={activeTab}
+                  data={filteredItems}
+                  traceMode={trace.isTraceMode}
+                  onItemSelect={handleItemSelection}
+                  selectedItem={selectedItem}
+                  selectedCodes={selectedCodes}
+                  setSelectedCodes={setSelectedCodes}
+                  onViewSchematic={handleViewSchematic}
+                  isMobile={isMobile}
+                />
+              )}
 
-              {/* Render single item schematic only if no merged schematic is present */}
-              {/* {!isMobile && selectedItem?.schematicData && !mergedSchematic && (
-                <Schematic key={selectedItem.code} data={selectedItem.schematicData} activeTab={activeTab} />
-              )} */}
+              {(!isMobile || selectedItem || mergedSchematic) && (
+                <MainPanel
+                  selectedItem={
+                    mergedSchematic
+                      ? {
+                        code: "MERGED",
+                        name: "Merged Schematic",
+                        type: "Merged",
+                        status: "Active",
+                        voltage: "12V",
+                        description: "Merged API schematic view",
+                        schematicData: mergedSchematic,
+                      }
+                      : selectedItem
+                  }
+                  activeTab={activeTab}
+                  isMultipleComponents={!!mergedSchematic}
+                  isMobile={isMobile}
 
-
-              <MainPanel
-                selectedItem={
-                  mergedSchematic
-                    ? {
-                      code: "MERGED",
-                      name: "Merged Schematic",
-                      type: "Merged",
-                      status: "Active",
-                      voltage: "12V",
-                      description: "Merged API schematic view",
-                      schematicData: mergedSchematic,
-                    }
-                    : selectedItem
-                }
-                activeTab={activeTab}
-                isMultipleComponents={!!mergedSchematic}
-                isMobile={isMobile}
-
-                onComponentRightClick={handleComponentRightClick}
-                traceMode={trace.isTraceMode}
-                traceBreadcrumb={trace.getBreadcrumb()}
-                onBackClick={() => {
-                  const prevState = trace.exitTrace();
-                  setActiveTab(prevState.tab);
-                  setSelectedItem(prevState.selectedItem);
-                  setMergedSchematic(prevState.mergedSchematic);
-                  setSelectedCodes([]);
-                }}
-              />
+                  onComponentRightClick={handleComponentRightClick}
+                  traceMode={trace.isTraceMode}
+                  traceBreadcrumb={trace.getBreadcrumb()}
+                  onBackClick={() => {
+                    const prevState = trace.exitTrace();
+                    setActiveTab(prevState.tab);
+                    setSelectedItem(prevState.selectedItem);
+                    setMergedSchematic(prevState.mergedSchematic);
+                    setSelectedCodes([]);
+                  }}
+                />
+              )}
             </div>
           )}
         </div>
       )}
       {/* Author DASHBOARD */}
       {page === "dashboard" && role === "author" && token && (
-        <div style={{ height: "100vh", display: "flex", flexDirection: "row" }}>
+        <div className="admin-container">
 
           <AuthorNavigationTabs
             active={authorTab}
@@ -680,7 +704,7 @@ export default function App() {
           />
 
           {/* TAB CONTENT */}
-          <div style={{ flex: 1, paddingLeft: "260px", paddingTop: "60px", height: "100vh", overflow: "auto" }}>
+          <div className="content-panel">
             {authorTab === "manage-users" && (
               <ManageUsers />
             )}
@@ -729,52 +753,51 @@ export default function App() {
                     }}
                   />
                 ) : (
-                  <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-                    <LeftPanel
-                      activeTab={schematicTab}
-                      data={filteredItems}
-                      traceMode={trace.isTraceMode}
-                      onItemSelect={handleItemSelection}
-                      selectedItem={selectedItem}
-                      selectedCodes={selectedCodes}
-                      setSelectedCodes={setSelectedCodes}
-                      onViewSchematic={handleViewSchematic}
-                      isMobile={isMobile}
-                    />
+                  <div style={{ display: "flex", flex: 1, overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
+                    {(!isMobile || (!selectedItem && !mergedSchematic)) && (
+                      <LeftPanel
+                        activeTab={schematicTab}
+                        data={filteredItems}
+                        traceMode={trace.isTraceMode}
+                        onItemSelect={handleItemSelection}
+                        selectedItem={selectedItem}
+                        selectedCodes={selectedCodes}
+                        setSelectedCodes={setSelectedCodes}
+                        onViewSchematic={handleViewSchematic}
+                        isMobile={isMobile}
+                      />
+                    )}
 
-                    {/* Render single item schematic only if no merged schematic is present */}
-                    {/* {!isMobile && selectedItem?.schematicData && !mergedSchematic && (
-                      <Schematic key={selectedItem.code} data={selectedItem.schematicData} activeTab={schematicTab} />
-                    )} */}
-
-                    <MainPanel
-                      selectedItem={
-                        mergedSchematic
-                          ? {
-                            code: "MERGED",
-                            name: "Merged Schematic",
-                            type: "Merged",
-                            status: "Active",
-                            voltage: "12V",
-                            description: "Merged API schematic view",
-                            schematicData: mergedSchematic,
-                          }
-                          : selectedItem
-                      }
-                      activeTab={schematicTab}
-                      isMultipleComponents={!!mergedSchematic}
-                      isMobile={isMobile}
-                      onComponentRightClick={handleComponentRightClick}
-                      traceMode={trace.isTraceMode}
-                      traceBreadcrumb={trace.getBreadcrumb()}
-                      onBackClick={() => {
-                        const prevState = trace.exitTrace();
-                        setActiveTab(prevState.tab);
-                        setSelectedItem(prevState.selectedItem);
-                        setMergedSchematic(prevState.mergedSchematic);
-                        setSelectedCodes([]);
-                      }}
-                    />
+                    {(!isMobile || selectedItem || mergedSchematic) && (
+                      <MainPanel
+                        selectedItem={
+                          mergedSchematic
+                            ? {
+                              code: "MERGED",
+                              name: "Merged Schematic",
+                              type: "Merged",
+                              status: "Active",
+                              voltage: "12V",
+                              description: "Merged API schematic view",
+                              schematicData: mergedSchematic,
+                            }
+                            : selectedItem
+                        }
+                        activeTab={schematicTab}
+                        isMultipleComponents={!!mergedSchematic}
+                        isMobile={isMobile}
+                        onComponentRightClick={handleComponentRightClick}
+                        traceMode={trace.isTraceMode}
+                        traceBreadcrumb={trace.getBreadcrumb()}
+                        onBackClick={() => {
+                          const prevState = trace.exitTrace();
+                          setActiveTab(prevState.tab);
+                          setSelectedItem(prevState.selectedItem);
+                          setMergedSchematic(prevState.mergedSchematic);
+                          setSelectedCodes([]);
+                        }}
+                      />
+                    )}
                   </div>
                 )}
               </div>
@@ -783,14 +806,36 @@ export default function App() {
         </div>
       )}
 
-      {/* SUPER ADMIN DASHBOARD */}
       {page === "dashboard" && role === "superadmin" && token && (
-        <SuperAdminDashboard token={token} />
+        <SuperAdminDashboard token={token} onLogout={handleLogout} />
       )}
       <GlobalSearch
         isOpen={isSearchOpen}
         onClose={closeSearch}
         onItemSelected={(item) => {
+          // Handle Navigation shortcuts
+          if (item.type === 'navigation') {
+            if (role === 'superadmin') {
+              const event = new CustomEvent('navigateSuperAdminTab', { detail: item.metadata?.targetTab });
+              window.dispatchEvent(event);
+            } else if (role === 'author') {
+              if (item.metadata?.targetPage) setAuthorTab(item.metadata.targetPage);
+            }
+            return;
+          }
+
+          // Handle User search
+          if (item.type === 'user') {
+            if (role === 'author') {
+              setAuthorTab('manage-users');
+            } else if (role === 'superadmin') {
+              const event = new CustomEvent('navigateSuperAdminTab', { detail: 'user-analytics' });
+              window.dispatchEvent(event);
+            }
+            return;
+          }
+
+          // Default: Schematic items
           const dashboardItem = dashboardItems.find(di => di.code === item.code);
           if (dashboardItem) {
             handleItemSelection(dashboardItem);

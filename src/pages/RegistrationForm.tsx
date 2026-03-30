@@ -1,7 +1,7 @@
-import { useState } from "react";
-import React from "react";
+import React, { useState } from "react";
 import { User } from "../components/Schematic/SchematicTypes";
 import { registerUser } from "../services/api";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 interface RegisterPageProps {
   onBackToLogin: () => void;
@@ -22,6 +22,8 @@ export default function RegisterForm({
   customHeight = "650px",
   isAuthor = false,
 }: RegisterPageProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   // ---------------- FIELDS ----------------
   const [firstName, setFirstName] = useState(userToEdit?.firstName || "");
   const [lastName, setLastName] = useState(userToEdit?.lastName || "");
@@ -217,9 +219,11 @@ export default function RegisterForm({
       <div
         style={{
           display: "flex",
-          width: showLeftPanel ? "900px" : "500px",  // auto resize when left hidden
-          minHeight: customHeight,
+          flexDirection: isMobile ? "column" : "row",
+          width: isMobile ? "90%" : (showLeftPanel ? "900px" : "500px"),
+          minHeight: isMobile ? "auto" : customHeight,
           height: "auto",
+          padding: isMobile ? "20px 0" : "0",
           maxHeight: showCloseButton ? "90vh" : "none",
           borderRadius: "12px",
           overflowY: "auto",
@@ -242,7 +246,7 @@ export default function RegisterForm({
               textAlign: "center",
             }}
           >
-            <h1 style={{ fontSize: "32px", marginBottom: "20px" }}>
+            <h1 style={{ fontSize: isMobile ? "24px" : "32px", marginBottom: "20px" }}>
               Join Us Today!
             </h1>
             <p

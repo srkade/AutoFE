@@ -356,8 +356,8 @@ const ImportedFiles: React.FC = () => {
         <p>Upload CSV / Excel files and track their live status</p>
       </div>
 
-      {/* TOP UPLOAD BAR */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      {/* TOP UPLOAD BAR & CONTROLS */}
+      <div className="top-controls-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
         <div className="upload-bar">
           <input
             id="file-input"
@@ -445,10 +445,10 @@ const ImportedFiles: React.FC = () => {
             <tr>
               <th></th>
               <th>File Name</th>
-              <th>Size</th>
-              <th>Updated At</th>
+              <th className="hide-mobile">Size</th>
+              <th className="hide-mobile">Updated At</th>
               <th>Status</th>
-              <th>DB Table</th>
+              <th className="hide-mobile">DB Table</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -466,9 +466,8 @@ const ImportedFiles: React.FC = () => {
 
                 <td>{upload.fileName}</td>
 
-                <td>{upload.filesize ? formatFileSize(upload.filesize) : '--'}</td>
-
-                <td>{formatTimestamp(upload.timestamp)}</td>
+                <td className="hide-mobile">{upload.filesize ? formatFileSize(upload.filesize) : '--'}</td>
+                <td className="hide-mobile">{formatTimestamp(upload.timestamp)}</td>
 
                 <td>
                   <span className={`status-badge ${upload.status}`}>
@@ -476,7 +475,7 @@ const ImportedFiles: React.FC = () => {
                   </span>
                 </td>
 
-                <td>
+                <td className="hide-mobile">
                   {upload.status === 'success' ? (
                     upload.isTablePresent ? (
                       <span className="table-status present" title="Table exists in database">✅ Present</span>

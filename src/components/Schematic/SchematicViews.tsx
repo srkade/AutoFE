@@ -41,7 +41,8 @@ export const handleWheel = (
     e: WheelEvent | React.WheelEvent<SVGSVGElement>,
     svg: SVGSVGElement,
     viewBox: { x: number; y: number; w: number; h: number },
-    setViewBox: React.Dispatch<React.SetStateAction<{ x: number; y: number; w: number; h: number }>>
+    setViewBox: React.Dispatch<React.SetStateAction<{ x: number; y: number; w: number; h: number }>>,
+    rotation: number = 0
 ) => {
     const scaleFactor = 1.1;
     
@@ -67,10 +68,12 @@ export const handleWheel = (
     const svgX = (mouseX / svgWidth) * w + x;
     const svgY = (mouseY / svgHeight) * h + y;
 
+    // TODO: If rotation is 90, 180, 270, the mapping mouse -> svg might be different
+    // but let's test simple first.
+
     let newW = zoomIn ? w / scaleFactor : w * scaleFactor;
     let newH = zoomIn ? h / scaleFactor : h * scaleFactor;
 
-    // Keep mouse position centered after zoom
     const newX = svgX - (mouseX / svgWidth) * newW;
     const newY = svgY - (mouseY / svgHeight) * newH;
 
@@ -79,6 +82,50 @@ export const handleWheel = (
         y: newY,
         w: newW,
         h: newH,
+    });
+};
+
+export const handleMouseMove = (
+    e: MouseEvent | React.MouseEvent<SVGSVGElement>,
+    svg: SVGSVGElement | null,
+    dragging: boolean,
+    dragStart: { x: number; y: number } | null,
+    dragOrigin: { x: number; y: number } | null,
+    viewBox: { x: number; y: number; w: number; h: number },
+    setViewBox: (box: { x: number; y: number; w: number; h: number }) => void,
+    rotation: number = 0
+) => {
+    if (!dragging || !dragStart || !dragOrigin || !svg) return;
+
+    let dx = (e as any).clientX - dragStart.x;
+    let dy = (e as any).clientY - dragStart.y;
+
+    // Adjust dx/dy based on rotation to keep panning intuitive
+    let effectiveDx = dx;
+    let effectiveDy = dy;
+
+    if (rotation === 90) {
+        effectiveDx = dy;
+        effectiveDy = -dx;
+    } else if (rotation === 180) {
+        effectiveDx = -dx;
+        effectiveDy = -dy;
+    } else if (rotation === 270) {
+        effectiveDx = -dy;
+        effectiveDy = dx;
+    }
+
+    // Dynamic scaling based on SVG element dimensions vs viewBox dimensions
+    const svgWidth = svg.clientWidth || 800;
+    const svgHeight = svg.clientHeight || 600;
+    const scaleX = viewBox.w / svgWidth;
+    const scaleY = viewBox.h / svgHeight;
+
+    setViewBox({
+        x: dragOrigin.x - effectiveDx * scaleX,
+        y: dragOrigin.y - effectiveDy * scaleY,
+        w: viewBox.w,
+        h: viewBox.h,
     });
 };
 

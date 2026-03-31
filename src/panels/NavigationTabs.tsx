@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../Styles/NavigationTabs.css"
-import logo from "../assets/Images/logo.png";
 import SearchBar from "../components/SearchBar";
 import {
   Wrench,
@@ -10,8 +9,9 @@ import {
   AlertTriangle,
   Cable
 } from "lucide-react";
-import { FiLogOut } from "react-icons/fi";
+import { FiLogOut, FiSun, FiMoon, FiDroplet, FiBriefcase, FiEye } from "react-icons/fi";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { useTheme } from "../components/ThemeContext";
 
 interface NavigationTabsProps {
   activeTab: string;
@@ -38,6 +38,7 @@ const tabs = [
 ];
 
 export default function NavigationTabs({ activeTab, onTabChange, onLogout, user, hideLogout = false, hideLogo, hideSearch = false }: NavigationTabsProps) {
+  const { theme, setTheme, logo } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -59,54 +60,67 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
 
   return (
 
-    <div className="nav-tabs-wrapper" style={{ position: "relative" }}>
-
+    <div className="nav-tabs-wrapper" style={{ 
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "space-between",
+      background: "var(--bg-secondary)",
+      borderBottom: "1px solid var(--border-color)",
+      padding: isMobile ? "0 12px" : "0 24px",
+      minHeight: isMobile ? "68px" : "80px",
+      position: "relative",
+      gap: "10px"
+    }}>
       <div className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
         ☰
       </div>
+      
+      {/* LOGO AND BRANDING */}
+      {!hideLogo && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            flexShrink: 0,
+            cursor: "pointer"
+          }}
+          onClick={() => onTabChange("components")}
+        >
+          <img
+            className="logo-crisp"
+            style={{
+              width: isMobile ? "40px" : "50px",
+              height: isMobile ? "40px" : "50px",
+            }}
+            src={logo}
+            alt="Logo"
+          />
+          {!isSmallMobile && (
+            <h1
+              style={{
+                margin: 0,
+                fontSize: isMobile ? "16px" : "20px",
+                color: "var(--text-primary)",
+                fontWeight: "bold",
+                whiteSpace: "nowrap"
+              }}
+            >
+              CRAZYBEES
+            </h1>
+          )}
+        </div>
+      )}
+
       <nav
         className={`nav-tabs ${menuOpen ? "open" : ""}`}
         style={{
-          background: "white",
-          borderBottom: "1px solid #e9ecef",
-          padding: "0 24px",
           display: "flex",
-          gap: "2px"
-
+          gap: "2px",
+          flex: 1,
+          justifyContent: isMobile ? "flex-start" : "center",
+          height: "100%"
         }}>
-        {/* LOGO AND BRANDING */}
-        {!hideLogo && (
-          <div
-            style={{
-              width: isMobile ? "auto" : "320px",
-              display: "flex",
-              height: isMobile ? "60px" : "80px",
-              alignItems: "center",
-              padding: isMobile ? "0 10px" : "0",
-            }}
-          >
-            <img
-              className="logo-crisp"
-              style={{
-                width: isMobile ? "50px" : "70px",
-                height: isMobile ? "50px" : "70px",
-              }}
-              src={logo}
-              alt="Logo"
-            />
-            {!isSmallMobile && (
-              <h1
-                style={{
-                  marginRight: isMobile ? "10px" : "40px",
-                  marginLeft: "10px",
-                  fontSize: isMobile ? "16px" : "20px",
-                }}
-              >
-                CRAZYBEES
-              </h1>
-            )}
-          </div>
-        )}
 
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -118,39 +132,6 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
                 onTabChange(tab.id);
                 setMenuOpen(false);
               }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "12px 16px",
-                border: "none",
-                background: activeTab === tab.id ? "#a4cefcff" : "transparent",
-                //color: activeTab === tab.id ? "#495057" : "#6c757d",
-                color: activeTab === tab.id ? "black" : "black",
-                borderBottom: activeTab === tab.id ? "3px solid #007bff" : "3px solid transparent",
-                borderTop: activeTab === tab.id ? "3px solid #007bff" : "3px solid transparent",
-                cursor: "pointer",
-                fontSize: "15px",
-                fontWeight: "bold",
-                borderRadius: "8px 8px 0 0",
-                transition: "all 0.2s ease",
-                height: "60px",
-                justifyContent: "center",
-                outline: "none",
-                userSelect: "none",
-              }}
-              onMouseEnter={(e) => {
-                if (activeTab !== tab.id) {
-                  (e.currentTarget as HTMLElement).style.background = "#eaebeeff";
-                  (e.currentTarget as HTMLElement).style.color = "black";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTab !== tab.id) {
-                  (e.currentTarget as HTMLElement).style.background = "transparent";
-                  (e.currentTarget as HTMLElement).style.color = "black";
-                }
-              }}
             >
               <span><Icon size={18} /></span>
               <span>{tab.label}</span>
@@ -158,27 +139,23 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
           );
         })}      </nav>
 
-      {/* SEARCH AND USER MENU (OUTSIDE NAV FOR MOBILE ACCESSIBILITY) */}
+      {/* SEARCH AND USER MENU */}
       <div
+        className="nav-actions"
         style={{
           display: "flex",
           alignItems: "center",
-          marginLeft: "auto",
-          paddingRight: "24px",
-          height: isMobile ? "60px" : "80px",
-          position: "absolute",
-          right: 0,
-          top: 0,
-          zIndex: 101, // Above nav menu
+          gap: "10px",
+          flexShrink: 0
         }}
       >
         {!hideSearch && (
           <div
+            className="nav-search-bar"
             style={{
               display: "flex",
               alignItems: "center",
               margin: isMobile ? "0 10px" : "0 20px",
-              maxWidth: "400px",
             }}
           >
             <SearchBar />
@@ -200,16 +177,16 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
                 width: "40px",
                 height: "40px",
                 borderRadius: "50%",
-                background: "#007bff",
+                background: "var(--accent-primary)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
                 fontSize: "14px",
                 fontWeight: "600",
-                color: "white",
+                color: "var(--text-on-accent)",
                 transition: "all 0.2s ease",
-                boxShadow: userMenuOpen ? "0 0 0 2px rgba(0, 123, 255, 0.25)" : "none",
+                boxShadow: userMenuOpen ? "0 0 0 2px var(--accent-primary)" : "none",
                 userSelect: "none",
               }}
               title="User Account"
@@ -223,10 +200,10 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
                   position: "absolute",
                   top: "calc(100% + 8px)",
                   right: 0,
-                  background: "white",
-                  border: "1px solid #dee2e6",
+                  background: "var(--bg-secondary)",
+                  border: "1px solid var(--border-color)",
                   borderRadius: "8px",
-                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                  boxShadow: 'var(--card-shadow)',
                   zIndex: 1000,
                   minWidth: "260px",
                   padding: "16px",
@@ -236,14 +213,14 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
                   <div style={{ 
                     fontSize: "14px", 
                     fontWeight: "700", 
-                    color: "#212529",
+                    color: "var(--text-primary)",
                     marginBottom: "4px" 
                   }}>
                     {user?.name || "User Profile"}
                   </div>
                   <div style={{ 
                     fontSize: "12px", 
-                    color: "#6c757d" 
+                    color: "var(--text-secondary)" 
                   }}>
                     {user?.email || ""}
                   </div>
@@ -251,22 +228,64 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
 
                 <div style={{ 
                   padding: "10px", 
-                  background: "#f8f9fa", 
+                  background: "var(--bg-primary)", 
                   borderRadius: "6px", 
                   marginBottom: "16px" 
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                    <span style={{ fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase" }}>Role</span>
+                    <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase" }}>Role</span>
                     <span style={{ 
                       fontSize: "11px", 
                       padding: "2px 8px", 
                       borderRadius: "12px", 
-                      background: "#e7f1ff", 
-                      color: "#007bff",
+                      background: "var(--accent-primary)", 
+                      color: "var(--text-on-accent)",
                       fontWeight: "700"
                     }}>
                       {user?.role?.toUpperCase() || "USER"}
                     </span>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase", marginBottom: "8px" }}>Theme</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px" }}>
+                    {[
+                      { id: 'light', icon: FiSun, label: 'Light', color: '#f8f9fa' },
+                      { id: 'dark', icon: FiMoon, label: 'Dark', color: '#1e293b' },
+                      { id: 'blue', icon: FiDroplet, label: 'Blue', color: '#0284c7' },
+                      { id: 'corporate', icon: FiBriefcase, label: 'Corporate', color: '#475569' },
+                      { id: 'high-contrast', icon: FiEye, label: 'High Contrast', color: '#000000' }
+                    ].map((t) => {
+                      const TIcon = t.icon;
+                      const isSelected = theme === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTheme(t.id as any);
+                            setUserMenuOpen(false);
+                          }}
+                          style={{
+                            padding: "8px",
+                            background: isSelected ? "#007bff" : "#f1f3f5",
+                            color: isSelected ? "white" : "#495057",
+                            border: "none",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            transition: "all 0.2s ease",
+                            boxShadow: isSelected ? "0 2px 4px rgba(0, 123, 255, 0.3)" : "none"
+                          }}
+                          title={t.label}
+                        >
+                          <TIcon size={16} />
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -300,4 +319,4 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
       </div>
     </div>
   );
-}
+}

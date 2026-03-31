@@ -332,10 +332,10 @@ export default function ManageUsersModern() {
 
       <div className="filter-wrapper" ref={filterRef} style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         {/* ROLE FILTER */}
-        <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "role" ? null : "role")} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
+        <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "role" ? null : "role")} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px solid var(--border-color)', cursor: 'pointer', position: 'relative', color: 'var(--text-primary)' }}>
           <FiFilter /> Role <IoIosArrowDown />
           {activeFilter === "role" && (
-            <div className="filter-dropdown" style={{ position: 'absolute', top: '100%', left: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', zIndex: 10, padding: '8px' }}>
+            <div className="filter-dropdown" style={{ position: 'absolute', top: '100%', left: 0, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 10, padding: '8px', boxShadow: 'var(--card-shadow)', minWidth: '120px' }}>
               {["User", "Author"].map(role => (
                 <div key={role} onClick={() => { setRoleFilter(role as User["role"]); setActiveFilter(null); }} style={{ padding: '8px', cursor: 'pointer' }}>
                   {role}
@@ -347,10 +347,10 @@ export default function ManageUsersModern() {
         </div>
 
         {/* STATUS FILTER */}
-        <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "status" ? null : "status")} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', cursor: 'pointer', position: 'relative' }}>
+        <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "status" ? null : "status")} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px solid var(--border-color)', cursor: 'pointer', position: 'relative', color: 'var(--text-primary)' }}>
           <FiFilter /> Status <IoIosArrowDown />
           {activeFilter === "status" && (
-            <div className="filter-dropdown" style={{ position: 'absolute', top: '100%', left: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', zIndex: 10, padding: '8px', minWidth: '120px' }}>
+            <div className="filter-dropdown" style={{ position: 'absolute', top: '100%', left: 0, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 10, padding: '8px', minWidth: '120px', boxShadow: 'var(--card-shadow)' }}>
               {["Active", "Inactive", "Pending", "Banned", "Suspended"].map(status => (
                 <div key={status} onClick={() => { setStatusFilter(status as User["status"]); setActiveFilter(null); }} style={{ padding: '8px', cursor: 'pointer' }}>
                   {status}
@@ -362,10 +362,10 @@ export default function ManageUsersModern() {
         </div>
 
         {/* DATE FILTER */}
-        <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "date" ? null : "date")} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', cursor: 'pointer', position: 'relative' }}>
+        <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "date" ? null : "date")} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px solid var(--border-color)', cursor: 'pointer', position: 'relative', color: 'var(--text-primary)' }}>
           <FiCalendar /> Date <IoIosArrowDown />
           {activeFilter === "date" && (
-            <div className="filter-dropdown" style={{ position: 'absolute', top: '100%', left: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', zIndex: 10, padding: '8px', minWidth: '150px' }}>
+            <div className="filter-dropdown" style={{ position: 'absolute', top: '100%', left: 0, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 10, padding: '8px', minWidth: '150px', boxShadow: 'var(--card-shadow)' }}>
               {["Last 7 days", "Last 30 days", "Last year"].map(date => (
                 <div key={date} onClick={() => { setDateFilter(date as any); setActiveFilter(null); }} style={{ padding: '8px', cursor: 'pointer' }}>
                   {date}
@@ -441,7 +441,7 @@ export default function ManageUsersModern() {
                     </select>
                   ) : (
                     <span
-                      style={{ cursor: "pointer", padding: "4px 8px", borderRadius: "4px", backgroundColor: "#e9ecef", fontSize: '11px' }}
+                      style={{ cursor: "pointer", padding: "4px 8px", borderRadius: "4px", backgroundColor: "var(--bg-primary)", color: "var(--text-primary)", fontSize: '11px', border: "1px solid var(--border-color)" }}
                       onClick={() => setRoleEditingUserId(u.id)}
                     >
                       {u.role || "User"}
@@ -462,8 +462,8 @@ export default function ManageUsersModern() {
 
       {/* REGISTER / EDIT FORM MODAL */}
       {showRegisterForm && (
-        <div className="form-modal" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: 'white', borderRadius: '12px', padding: '20px', maxWidth: '600px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div className="form-modal" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: '12px', padding: '20px', maxWidth: '600px', width: '90%', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--border-color)', boxShadow: 'var(--card-shadow)' }}>
             <RegisterForm
               userToEdit={editingUser}
               onSave={handleSaveUser}

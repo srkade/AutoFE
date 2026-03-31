@@ -1,0 +1,94 @@
+:root {
+  /* Restoration of Original Light Theme */
+  --bg-primary: #f6f8fc;
+  --bg-secondary: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --accent-primary: #0a65cc;
+  --accent-secondary: #1e3a8a;
+  --border-color: #cfd6e1;
+  --header-bg: #ffffff;
+  --sidebar-bg: #1e2a47;
+  --sidebar-text: #ffffff;
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --text-on-accent: #ffffff;
+  --transition-speed: 0.3s;
+  
+  /* Welcome Page Specific Original Gradient fallback */
+  --welcome-bg: linear-gradient(135deg, #e8f0ff, #d7e3fc);
+}
+
+[data-theme='dark'] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --accent-primary: #38bdf8;
+  --accent-secondary: #7dd3fc;
+  --border-color: #334155;
+  --header-bg: #1e293b;
+  --sidebar-bg: #1e293b;
+  --sidebar-text: #f1f5f9;
+  --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --text-on-accent: #000000;
+  --welcome-bg: var(--bg-primary);
+}
+
+[data-theme='blue'] {
+  --bg-primary: #e0f2fe;
+  --bg-secondary: #f0f9ff;
+  --text-primary: #0369a1;
+  --text-secondary: #0ea5e9;
+  --accent-primary: #0284c7;
+  --accent-secondary: #075985;
+  --border-color: #bae6fd;
+  --header-bg: #bae6fd;
+  --sidebar-bg: #f0f9ff;
+  --sidebar-text: #0369a1;
+  --card-shadow: 0 4px 6px -1px rgb(2 132 199 / 0.1);
+  --text-on-accent: #ffffff;
+  --welcome-bg: var(--bg-primary);
+}
+
+[data-theme='corporate'] {
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #ffffff;
+  --text-primary: #334155;
+  --text-secondary: #475569;
+  --accent-primary: #475569;
+  --accent-secondary: #1e293b;
+  --border-color: #e2e8f0;
+  --header-bg: #1e293b;
+  --sidebar-bg: #f8fafc;
+  --sidebar-text: #334155;
+  --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  --text-on-accent: #ffffff;
+  --welcome-bg: var(--bg-primary);
+}
+
+[data-theme='high-contrast'] {
+  --bg-primary: #000000;
+  --bg-secondary: #000000;
+  --text-primary: #ffffff;
+  --text-secondary: #ffff00;
+  --accent-primary: #ffff00;
+  --accent-secondary: #ffffff;
+  --border-color: #ffffff;
+  --header-bg: #000000;
+  --sidebar-bg: #000000;
+  --sidebar-text: #ffffff;
+  --card-shadow: none;
+  --text-on-accent: #000000;
+  --welcome-bg: var(--bg-primary);
+}
+
+/* Global transitions for theme switching */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+}
+
+* {
+  transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease, color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}

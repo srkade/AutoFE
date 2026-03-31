@@ -20,6 +20,7 @@ export default function SuperAdminDashboard({ token, onLogout }: { token: string
     } | null>(null);
     const [showUserPopup, setShowUserPopup] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isPanelHidden, setIsPanelHidden] = useState(false);
     const userIconRef = useRef<HTMLDivElement>(null);
     const popupRef = useRef<HTMLDivElement>(null);
 
@@ -92,7 +93,7 @@ export default function SuperAdminDashboard({ token, onLogout }: { token: string
     };
 
     return (
-        <div className="admin-container">
+        <div className={`admin-container ${isPanelHidden ? 'panel-hidden' : ''}`}>
             <SuperAdminNavigationTabs
                 active={activeTab}
                 onChange={handleTabChange}
@@ -100,6 +101,8 @@ export default function SuperAdminDashboard({ token, onLogout }: { token: string
                 user={userInfo}
                 isMenuOpen={isMenuOpen}
                 setIsMenuOpen={setIsMenuOpen}
+                isPanelHidden={isPanelHidden}
+                onPanelToggle={setIsPanelHidden}
             />
             <div className="content-panel sa-content">
                 {/* Mobile Header */}

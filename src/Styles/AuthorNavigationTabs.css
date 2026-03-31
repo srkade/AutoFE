@@ -2,11 +2,11 @@
   display: flex;
   flex-direction: column;
   width: 260px;
-  background-color: #1e2a47;
+  background-color: var(--sidebar-bg);
   padding: 20px;
   border-radius: 0;
   font-family: 'Segoe UI', sans-serif;
-  color: #cbd5e1;
+  color: var(--text-secondary);
   height: 100vh;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
   position: fixed;
@@ -15,6 +15,11 @@
   box-sizing: border-box;
   z-index: 1001;
   transition: transform 0.3s ease-in-out;
+}
+
+/* Panel Hidden State */
+.admin-container.panel-hidden .admin-nav {
+  transform: translateX(-100%);
 }
 
 .admin-nav.mobile-drawer {
@@ -38,7 +43,7 @@
 .hamburger-btn {
   background: none;
   border: none;
-  color: #1e293b;
+  color: var(--text-primary);
   cursor: pointer;
   padding: 8px;
   display: flex;
@@ -71,12 +76,21 @@
   gap: 10px;
   padding: 10px;
   cursor: pointer;
-  color: #cbd5e1;
+  color: var(--sidebar-text);
+  opacity: 0.6;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.tab-item:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .tab-item.active {
-  background-color: #3b82f6;
-  color: white;
+  background-color: var(--accent-primary);
+  color: var(--text-on-accent);
+  opacity: 1;
 }
 
 .logout {
@@ -85,8 +99,8 @@
   cursor: pointer;
   position: relative;
   padding: 8px 12px;
-  background-color: #f1f5f9;
-  color: #1e293b;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   border-radius: 8px;
   display: flex;
   gap: 8px;
@@ -98,17 +112,17 @@
   position: absolute;
   top: 50px;
   right: 0;
-  background: #ffffff;
-  color: #1e293b;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   padding: 16px;
   border-radius: 12px;
   width: 240px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--card-shadow);
   display: flex;
   flex-direction: column;
   gap: 12px;
   z-index: 1002;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
 }
 
 .user-info-row {
@@ -139,22 +153,47 @@
   left: 260px;
   width: calc(100% - 260px);
   height: 60px;
-  background-color: #ffffff;
+  background-color: var(--header-bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
   z-index: 1000;
   box-sizing: border-box;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
   transition: left 0.3s ease, width 0.3s ease;
+}
+
+/* Panel Hidden - Adjust Topbar */
+.admin-container.panel-hidden .admin-topbar {
+  left: 0;
+  width: 100%;
+}
+
+/* Toggle Panel Button */
+.toggle-panel-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.toggle-panel-btn:hover {
+  background: var(--bg-secondary);
 }
 
 .admin-container {
   display: flex;
   height: 100vh;
   width: 100%;
-  background-color: #f8fafc;
+  background-color: var(--bg-primary);
   overflow: hidden;
 }
 
@@ -166,6 +205,11 @@
   box-sizing: border-box;
   transition: all 0.3s ease;
   scroll-behavior: smooth;
+}
+
+/* Panel Hidden - Adjust Content Panel */
+.admin-container.panel-hidden .content-panel {
+  padding-left: 24px;
 }
 
 .sa-content {
@@ -186,7 +230,16 @@
 /* Super Admin Specifics */
 .sa-nav {
   width: 300px;
-  background: #0f172a;
+  background-color: var(--sidebar-bg);
+}
+
+/* Panel Hidden State for Super Admin */
+.admin-container.panel-hidden .sa-nav {
+  transform: translateX(-100%);
+}
+
+.admin-container.panel-hidden .sa-content {
+  padding-left: 24px !important;
 }
 
 .sa-wrapper {
@@ -251,7 +304,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: var(--accent-primary);
   display: flex;
   align-items: center;
   justify-content: center;

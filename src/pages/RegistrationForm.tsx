@@ -57,15 +57,17 @@ export default function RegisterForm({
     >
       <div
         style={{
-          backgroundColor: "#fff",
+          backgroundColor: "var(--bg-secondary)",
           padding: "30px",
           borderRadius: "12px",
           maxWidth: "500px",
           maxHeight: "80vh",
           overflowY: "auto",
-          boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+          boxShadow: "var(--card-shadow)",
           position: "relative",
           lineHeight: "1.6",
+          color: "var(--text-primary)",
+          border: "1px solid var(--border-color)"
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -79,13 +81,13 @@ export default function RegisterForm({
             border: "none",
             fontSize: "20px",
             cursor: "pointer",
-            color: "#666",
+            color: "var(--text-secondary)",
           }}
         >
           ✖
         </button>
-        <h3 style={{ color: "#007bff", marginBottom: "20px", borderBottom: "2px solid #f0f0f0", paddingBottom: "10px" }}>Terms & Conditions</h3>
-        <div style={{ fontSize: "14px", color: "#444" }}>
+        <h3 style={{ color: "var(--accent-primary)", marginBottom: "20px", borderBottom: "2px solid var(--border-color)", paddingBottom: "10px" }}>Terms & Conditions</h3>
+        <div style={{ fontSize: "14px", color: "var(--text-primary)" }}>
           <p>Welcome to <b>CRAZYBEES</b>. By creating an account, you agree to the following terms:</p>
           <ol style={{ paddingLeft: "20px" }}>
             <li><b>Usage:</b> This platform is provided for design and analysis of schematics. Unauthorized use is prohibited.</li>
@@ -207,7 +209,7 @@ export default function RegisterForm({
   return (
     <div
       style={{
-        backgroundColor: showCloseButton ? "transparent" : "#f4f6f9",
+        backgroundColor: showCloseButton ? "transparent" : "var(--bg-primary)",
         minHeight: showCloseButton ? "auto" : "100vh",
         display: "flex",
         justifyContent: "center",
@@ -227,8 +229,10 @@ export default function RegisterForm({
           maxHeight: showCloseButton ? "90vh" : "none",
           borderRadius: "12px",
           overflowY: "auto",
-          boxShadow: "0 6px 30px rgba(0,0,0,0.1)",
-          backgroundColor: "#ffffff",
+          boxShadow: "var(--card-shadow)",
+          backgroundColor: "var(--bg-secondary)",
+          color: "var(--text-primary)",
+          border: "1px solid var(--border-color)"
         }}
       >
         {/* LEFT SECTION */}
@@ -287,7 +291,7 @@ export default function RegisterForm({
         <div
           style={{
             flex: 1,
-            backgroundColor: "#ffffff",
+            backgroundColor: "var(--bg-secondary)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -307,7 +311,7 @@ export default function RegisterForm({
                 fontSize: "22px",
                 cursor: "pointer",
                 fontWeight: "bold",
-                color: "#333",
+                color: "var(--text-primary)",
               }}
             >
               ✖
@@ -324,7 +328,7 @@ export default function RegisterForm({
             }}
             onSubmit={handleSubmit}
           >
-            <h2 style={{ color: "#007bff", marginBottom: "10px" }}>
+            <h2 style={{ color: "var(--accent-primary)", marginBottom: "10px" }}>
               {userToEdit ? "Edit User" : "Create Account"}
             </h2>
 
@@ -483,5 +487,7 @@ const inputStyle = {
   width: "100%",
   padding: "12px",
   borderRadius: "6px",
-  border: "1px solid #ccc",
+  border: "1px solid var(--border-color)",
+  backgroundColor: "var(--bg-primary)",
+  color: "var(--text-primary)",
 };

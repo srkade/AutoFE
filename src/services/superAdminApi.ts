@@ -1,8 +1,8 @@
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/api",
-  //baseURL: "http://13.205.92.12:8080/api",
+  baseURL: API_BASE_URL,
   timeout: 10000,
 });
 

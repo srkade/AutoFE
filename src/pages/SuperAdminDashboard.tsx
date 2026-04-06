@@ -9,7 +9,15 @@ import SuperAdminHomePage from "./SuperAdminHomePage";
 import SearchBar from "../components/SearchBar";
 import "../Styles/AuthorNavigationTabs.css";
 
-export default function SuperAdminDashboard({ token }: { token: string | null }) {
+export default function SuperAdminDashboard({
+    token,
+    selectedModelId,
+    onModelChange
+}: {
+    token: string | null;
+    selectedModelId?: string | null;
+    onModelChange?: (modelId: string | null) => void;
+}) {
     const [activeTab, setActiveTab] = useState("home");
     const [userInfo, setUserInfo] = useState<{
         name: string;
@@ -90,6 +98,8 @@ export default function SuperAdminDashboard({ token }: { token: string | null })
                 onChange={handleTabChange}
                 onLogout={handleLogout}
                 user={userInfo}
+                selectedModelId={selectedModelId}
+                onModelChange={onModelChange}
             />
             <div
                 className="content-panel"

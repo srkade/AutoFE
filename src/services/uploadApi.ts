@@ -1,9 +1,9 @@
 import axios from "axios";
 import { incrementUploadSuccess, incrementUploadFailure } from "./api";
+import { API_BASE_URL } from "../config";
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/api/uploads",
-  //baseURL: "http://13.205.92.12:8080/api/uploads",  
+  baseURL: `${API_BASE_URL}/uploads`,
 });
 
 export const getAllUploads = () =>
@@ -19,8 +19,7 @@ export const updateUploadEntry = (id: string, data: any) =>
   api.put(`/${id}`, data).then(res => res.data);
 
 export const deleteUploadById = async (id: string) => {
-  await axios.delete(`http://localhost:8080/api/uploads/${id}`);
-  // await axios.delete(`http://13.205.92.12:8080/api/uploads/${id}`);
+  await axios.delete(`${API_BASE_URL}/uploads/${id}`);
 };
 export const fetchUploadFile = async (id: string) => {
   const res = await api.get(`/${id}/view`, {

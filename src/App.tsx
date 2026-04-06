@@ -12,6 +12,8 @@ import {
   getComponents, getComponentSchematic, getDtcs, getDtcSchematic, getHarnesses,
   getVoltageSupply, getSupplyFormula, getSystems, getSystemFormula, getHarnessSchematic, getWires, getWireDetailsByWireCode
 } from "./services/api";
+import { AuditLogProvider } from "./context/AuditLogContext";
+import { AuditLogViewer } from "./components/AuditLogViewer";
 import { normalizeSchematic } from "./utils/normalizeSchematic";
 import RegisterForm from "./pages/RegistrationForm";
 import { useTraceNavigation } from './hooks/useTraceNavigation';
@@ -38,11 +40,12 @@ import { useGlobalSearch } from "./hooks/useGlobalSearch";
 import { searchService } from "./services/searchService";
 
 
-export default function App() {
+function AppContent() {
   const trace = useTraceNavigation();
   const { isSearchOpen, closeSearch } = useGlobalSearch();
   const [isTraceMode, setIsTraceMode] = useState(false);
   const [traceBreadcrumb, setTraceBreadcrumb] = useState("");
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(sessionStorage.getItem("selectedModelId"));
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [page, setPage] = useState<"login" | "register" | "dashboard" | "password-reset">("login");
@@ -223,7 +226,7 @@ export default function App() {
   useEffect(() => {
     async function loadSchematics() {
       try {
-        const data = await getComponents();
+        const data = await getComponents(selectedModelId || undefined);
         setApiSchematics(data);
       } catch (err) {
         console.error("Failed to load components:", err);
@@ -231,12 +234,12 @@ export default function App() {
     }
 
     loadSchematics();
-  }, []);
+  }, [selectedModelId]);
 
   useEffect(() => {
     async function loadSystems() {
       try {
-        const data = await getSystems();
+        const data = await getSystems(selectedModelId || undefined);
         setSystemsList(data);
       } catch (err) {
         console.error("Failed to load systems:", err);
@@ -244,12 +247,12 @@ export default function App() {
     }
 
     loadSystems();
-  }, []);
+  }, [selectedModelId]);
 
   useEffect(() => {
     async function loadDtcs() {
       try {
-        const data = await getDtcs();
+        const data = await getDtcs(selectedModelId || undefined);
         setDtcList(data);
       } catch (err) {
         console.error("Failed to load DTC list:", err);
@@ -257,12 +260,12 @@ export default function App() {
     }
 
     loadDtcs();
-  }, []);
+  }, [selectedModelId]);
 
   useEffect(() => {
     async function loadHarnesses() {
       try {
-        const data = await getHarnesses();
+        const data = await getHarnesses(selectedModelId || undefined);
         setHarnessesList(data);
       } catch (err) {
         console.error("Failed to load harnesses:", err);
@@ -270,30 +273,30 @@ export default function App() {
     }
 
     loadHarnesses();
-  }, []);
+  }, [selectedModelId]);
   useEffect(() => {
     async function loadSupply() {
       try {
-        const data = await getVoltageSupply();
+        const data = await getVoltageSupply(selectedModelId || undefined);
         setVoltageSupplyList(data);
       } catch (err) {
         console.error("failed to load supply: ", err);
       }
     }
     loadSupply();
-  }, []);
+  }, [selectedModelId]);
 
   useEffect(() => {
     async function loadWires() {
       try {
-        const data = await getWires();
+        const data = await getWires(selectedModelId || undefined);
         setWireList(data);
       } catch (err) {
         console.error("failed to load wires: ", err);
       }
     }
     loadWires();
-  }, []);
+  }, [selectedModelId]);
 
   // Initialize Search Index when data changes
   useEffect(() => {
@@ -356,7 +359,7 @@ export default function App() {
         // Use only the first selected harness for now
         const harnessCode = codes[0];
 
-        const data = await getHarnessSchematic(harnessCode);
+        const data = await getHarnessSchematic(harnessCode, selectedModelId || undefined);
 
         const normalized = normalizeSchematic(data);
 
@@ -388,29 +391,29 @@ export default function App() {
           if (dashboardItem) {
             switch (dashboardItem.type) {
               case "Supply":
-                data = await getSupplyFormula(code);
+                data = await getSupplyFormula(code, selectedModelId || undefined);
                 sourceType = "Supply";
                 break;
               case "DTC":
-                data = await getDtcSchematic(code);
+                data = await getDtcSchematic(code, selectedModelId || undefined);
                 sourceType = "DTC";
                 break;
               case "System":
-                data = await getSystemFormula(Number(code));
+                data = await getSystemFormula(code, selectedModelId || undefined);
                 sourceType = "System";
                 break;
               case "Harness":
-                data = await getHarnessSchematic(code);
+                data = await getHarnessSchematic(code, selectedModelId || undefined);
                 sourceType = "Harness";
                 break;
               default: // Component, Controller, etc.
-                data = await getComponentSchematic(code);
+                data = await getComponentSchematic(code, selectedModelId || undefined);
                 sourceType = "Component";
                 break;
             }
           } else {
             // Fallback to component schematic if type is unknown
-            data = await getComponentSchematic(code);
+            data = await getComponentSchematic(code, selectedModelId || undefined);
             sourceType = "Component";
           }
 
@@ -472,11 +475,11 @@ export default function App() {
 
     try {
       let rawData;
-      if (targetTab === 'harnesses') rawData = await getHarnessSchematic(componentCode);
-      else if (targetTab === 'voltage') rawData = await getSupplyFormula(componentCode);
-      else if (targetTab === 'DTC') rawData = await getDtcSchematic(componentCode);
-      else if (targetTab === 'systems') rawData = await getSystemFormula(Number(componentCode));
-      else rawData = await getComponentSchematic(componentCode);
+      if (targetTab === 'harnesses') rawData = await getHarnessSchematic(componentCode, selectedModelId || undefined);
+      else if (targetTab === 'voltage') rawData = await getSupplyFormula(componentCode, selectedModelId || undefined);
+      else if (targetTab === 'DTC') rawData = await getDtcSchematic(componentCode, selectedModelId || undefined);
+      else if (targetTab === 'systems') rawData = await getSystemFormula(componentCode, selectedModelId || undefined);
+      else rawData = await getComponentSchematic(componentCode, selectedModelId || undefined);
 
 
       const normalized = normalizeSchematic(rawData);
@@ -517,18 +520,18 @@ export default function App() {
 
       let schematicData;
       if (item.type === "Harness") {
-        schematicData = await getHarnessSchematic(item.code);
+        schematicData = await getHarnessSchematic(item.code, selectedModelId || undefined);
       } else if (item.type === "System") {
-        schematicData = await getSystemFormula(Number(item.code));
+        schematicData = await getSystemFormula(item.code, selectedModelId || undefined);
       } else if (item.type === "Supply") {
-        schematicData = await getSupplyFormula(item.code);
+        schematicData = await getSupplyFormula(item.code, selectedModelId || undefined);
       } else if (item.type === "DTC") {
-        schematicData = await getDtcSchematic(item.code);
+        schematicData = await getDtcSchematic(item.code, selectedModelId || undefined);
       } else if (item.type === "wire") {
-        const wireDetails = await getWireDetailsByWireCode(item.code);
+        const wireDetails = await getWireDetailsByWireCode(item.code, selectedModelId || undefined);
         schematicData = { name: `Wire ${item.code}`, wires: wireDetails };
       } else {
-        schematicData = await getComponentSchematic(item.code);
+        schematicData = await getComponentSchematic(item.code, selectedModelId || undefined);
       }
 
       const converted = normalizeSchematic(schematicData);
@@ -606,6 +609,15 @@ export default function App() {
             }}
             onLogout={handleLogout}
             user={currentUser}
+            selectedModelId={selectedModelId}
+            onModelChange={(id) => {
+              setSelectedModelId(id);
+              if (id) sessionStorage.setItem("selectedModelId", id);
+              else sessionStorage.removeItem("selectedModelId");
+              setSelectedItem(null);
+              setMergedSchematic(null);
+              setSelectedCodes([]);
+            }}
           />
 
           {showWelcome ? (
@@ -677,6 +689,12 @@ export default function App() {
             onChange={setAuthorTab}
             onLogout={handleLogout}
             user={currentUser}
+            selectedModelId={selectedModelId}
+            onModelChange={(id) => {
+              setSelectedModelId(id);
+              if (id) sessionStorage.setItem("selectedModelId", id);
+              else sessionStorage.removeItem("selectedModelId");
+            }}
           />
 
           {/* TAB CONTENT */}
@@ -719,6 +737,16 @@ export default function App() {
                   hideLogout={true}
                   hideLogo={true}
                   hideSearch={true}
+                  hideModelSelector={true}
+                  selectedModelId={selectedModelId}
+                  onModelChange={(id) => {
+                    setSelectedModelId(id);
+                    if (id) sessionStorage.setItem("selectedModelId", id);
+                    else sessionStorage.removeItem("selectedModelId");
+                    setSelectedItem(null);
+                    setMergedSchematic(null);
+                    setSelectedCodes([]);
+                  }}
                 />
 
                 {showWelcome ? (
@@ -785,7 +813,15 @@ export default function App() {
 
       {/* SUPER ADMIN DASHBOARD */}
       {page === "dashboard" && role === "superadmin" && token && (
-        <SuperAdminDashboard token={token} />
+        <SuperAdminDashboard
+          token={token}
+          selectedModelId={selectedModelId}
+          onModelChange={(id) => {
+            setSelectedModelId(id);
+            if (id) sessionStorage.setItem("selectedModelId", id);
+            else sessionStorage.removeItem("selectedModelId");
+          }}
+        />
       )}
       <GlobalSearch
         isOpen={isSearchOpen}
@@ -797,6 +833,8 @@ export default function App() {
           }
         }}
       />
+      <AuditLogViewer currentUserEmail={currentUser?.email} />
     </div>
   );
 }
+export default function App() { return ( <AuditLogProvider> <AppContent /> </AuditLogProvider> ); }

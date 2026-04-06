@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ModelSelector from "../components/ModelSelector";
 import { FiUser, FiHome, FiSettings, FiShield, FiDatabase, FiBarChart2, FiActivity, FiLogOut } from "react-icons/fi";
 import logo from "../assets/Images/logo.png";
 
@@ -11,6 +12,8 @@ interface SuperAdminNavigationTabsProps {
     email: string;
     role: string;
   } | null;
+  selectedModelId?: string | null;
+  onModelChange?: (modelId: string | null) => void;
 }
 
 export default function SuperAdminNavigationTabs({
@@ -18,6 +21,8 @@ export default function SuperAdminNavigationTabs({
   onChange,
   onLogout,
   user,
+  selectedModelId,
+  onModelChange
 }: SuperAdminNavigationTabsProps) {
 
   const tabs = [
@@ -49,6 +54,17 @@ export default function SuperAdminNavigationTabs({
           <img src={logo} alt="Logo" style={{ width: 48, height: 48, borderRadius: "8px" }} />
           <h1 style={{ marginLeft: 12, fontSize: 22, color: "#f1f5f9", fontWeight: "700" }}>CRAZYBEES</h1>
         </div>
+
+        {/* MODEL SELECTOR FOR SUPER ADMIN */}
+        {onModelChange && (
+          <div style={{ padding: '0 16px 20px 16px', borderBottom: '1px solid #334155', marginBottom: '20px' }}>
+            <ModelSelector
+              selectedModelId={selectedModelId || null}
+              onModelChange={onModelChange}
+              isAuthor={true}
+            />
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="tabs" style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>

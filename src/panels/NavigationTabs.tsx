@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import "../Styles/NavigationTabs.css"
 import logo from "../assets/Images/logo.png";
 import SearchBar from "../components/SearchBar";
+import ModelSelector from "../components/ModelSelector";
 import {
   Wrench,
   Cpu,
@@ -23,6 +24,9 @@ interface NavigationTabsProps {
   hideLogout?: boolean;
   hideLogo?: boolean;
   hideSearch?: boolean;
+  hideModelSelector?: boolean;
+  selectedModelId?: string | null;
+  onModelChange?: (modelId: string | null) => void;
 }
 
 const tabs = [
@@ -35,7 +39,18 @@ const tabs = [
   { id: "harnesses", label: "Harnesses", icon: Cable },
 ];
 
-export default function NavigationTabs({ activeTab, onTabChange, onLogout, user, hideLogout = false, hideLogo, hideSearch = false }: NavigationTabsProps) {
+export default function NavigationTabs({
+  activeTab,
+  onTabChange,
+  onLogout,
+  user,
+  hideLogout = false,
+  hideLogo,
+  hideSearch = false,
+  hideModelSelector = false,
+  selectedModelId,
+  onModelChange
+}: NavigationTabsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -76,6 +91,7 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
               display: "flex",
               height: "80px",
               alignItems: "center",
+              flexShrink: 0
             }}
           >
             <img
@@ -89,13 +105,24 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
             />
             <h1
               style={{
-                marginRight: "40px",
+                marginRight: "20px",
                 marginLeft: "10px",
                 fontSize: "20px",
               }}
             >
               CRAZYBEES
             </h1>
+          </div>
+        )}
+
+        {/* MODEL SELECTOR */}
+        {onModelChange && !hideModelSelector && (
+          <div style={{ display: 'flex', alignItems: 'center', marginRight: '20px' }}>
+            <ModelSelector
+              selectedModelId={selectedModelId || null}
+              onModelChange={onModelChange}
+              isAuthor={user?.role === 'superadmin' || user?.role === 'author'}
+            />
           </div>
         )}
 

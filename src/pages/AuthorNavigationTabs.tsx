@@ -3,6 +3,7 @@ import "../Styles/AuthorNavigationTabs.css";
 import { FiUsers, FiUpload, FiCpu, FiUser, FiImage } from "react-icons/fi";
 import logo from "../assets/Images/logo.png";
 import SearchBar from "../components/SearchBar";
+import ModelSelector from "../components/ModelSelector";
 
 interface AuthorNavigationTabsProps {
   active: string;
@@ -14,6 +15,8 @@ interface AuthorNavigationTabsProps {
     email: string;
     role: string
   } | null;
+  selectedModelId?: string | null;
+  onModelChange?: (modelId: string | null) => void;
 }
 
 export default function AuthorNavigationTabs({
@@ -21,6 +24,8 @@ export default function AuthorNavigationTabs({
   onChange,
   onLogout,
   user,
+  selectedModelId,
+  onModelChange
 }: AuthorNavigationTabsProps) {
   const [showPopup, setShowPopup] = useState(false);
   const userIconRef = useRef<HTMLDivElement>(null);
@@ -54,8 +59,17 @@ export default function AuthorNavigationTabs({
     <div>
       <div className="admin-topbar">
         {/* Search Bar in Topbar */}
-        <div style={{ flex: "1", maxWidth: "500px", margin: "0 20px" }}>
+        <div style={{ flex: "1", maxWidth: "500px", margin: "0 20px", display: 'flex', alignItems: 'center' }}>
           <SearchBar />
+          {onModelChange && (
+            <div style={{ marginLeft: '20px' }}>
+              <ModelSelector
+                selectedModelId={selectedModelId || null}
+                onModelChange={onModelChange}
+                isAuthor={true}
+              />
+            </div>
+          )}
         </div>
 
         <div

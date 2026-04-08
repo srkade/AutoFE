@@ -29,6 +29,7 @@ interface NavigationTabsProps {
   hideModelSelector?: boolean;
   selectedModelId?: string | null;
   onModelChange?: (modelId: string | null) => void;
+  onModelsLoaded?: (count: number) => void;
 }
 
 const tabs = [
@@ -51,7 +52,8 @@ export default function NavigationTabs({
   hideSearch = false,
   hideModelSelector = false,
   selectedModelId,
-  onModelChange
+  onModelChange,
+  onModelsLoaded
 }: NavigationTabsProps) {
   const { theme, setTheme, logo } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -145,6 +147,7 @@ export default function NavigationTabs({
               selectedModelId={selectedModelId || null}
               onModelChange={onModelChange}
               isAuthor={user?.role === 'superadmin' || user?.role === 'author'}
+              onModelsLoaded={onModelsLoaded}
             />
           </div>
         )}

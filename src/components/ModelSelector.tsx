@@ -5,9 +5,10 @@ interface ModelSelectorProps {
   selectedModelId: string | null;
   onModelChange: (modelId: string | null) => void;
   isAuthor?: boolean;
+  onModelsLoaded?: (count: number) => void;
 }
 
-const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModelId, onModelChange, isAuthor }) => {
+const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModelId, onModelChange, isAuthor, onModelsLoaded }) => {
   const [models, setModels] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -22,6 +23,8 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModelId, onModelC
     try {
       const data = await getModels();
       setModels(data);
+      if (onModelsLoaded) onModelsLoaded(data.length);
+      
       // If no model selected, default to first model if exists
       if (!selectedModelId && data.length > 0) {
         // Find existing model matching 'Default' or just pick first

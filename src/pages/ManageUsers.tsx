@@ -407,7 +407,16 @@ export default function ManageUsersModern() {
                         handleStatusChange(u.id, e.target.value as User["status"])
                       }
                       onBlur={() => setStatusEditingUserId(null)}
-                      style={{ padding: '4px', borderRadius: '4px' }}
+                      className="status-select"
+                      style={{ 
+                        padding: '6px 20px', 
+                        borderRadius: '16px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        minWidth: '95px',
+                        textAlign: 'center',
+                        cursor: 'pointer'
+                      }}
                     >
                       {STATUS_OPTIONS.map(status => (
                         <option key={status} value={status}>
@@ -418,7 +427,7 @@ export default function ManageUsersModern() {
                   ) : (
                     <span
                       className={`status-chip ${(u.status || "pending").toLowerCase()}`}
-                      style={{ cursor: "pointer", padding: '4px 8px', borderRadius: '12px', fontSize: '11px' }}
+                      style={{ cursor: "pointer" }}
                       onClick={() => setStatusEditingUserId(u.id)}
                     >
                       {u.status}
@@ -434,14 +443,27 @@ export default function ManageUsersModern() {
                         handleRoleChange(u.id, e.target.value as User["role"])
                       }
                       onBlur={() => setRoleEditingUserId(null)}
-                      style={{ padding: '4px', borderRadius: '4px' }}
+                      className="role-select"
+                      style={{ 
+                        padding: '6px 20px', 
+                        borderRadius: '16px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        minWidth: '95px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        backgroundColor: "var(--bg-primary)",
+                        color: "var(--text-primary)",
+                        border: "1px solid var(--border-color)"
+                      }}
                     >
                       <option value="User">User</option>
                       <option value="Author">Author</option>
                     </select>
                   ) : (
                     <span
-                      style={{ cursor: "pointer", padding: "4px 8px", borderRadius: "4px", backgroundColor: "var(--bg-primary)", color: "var(--text-primary)", fontSize: '11px', border: "1px solid var(--border-color)" }}
+                      className="role-chip"
+                      style={{ cursor: "pointer" }}
                       onClick={() => setRoleEditingUserId(u.id)}
                     >
                       {u.role || "User"}
@@ -481,4 +503,4 @@ export default function ManageUsersModern() {
       )}
     </div>
   );
-}
+}

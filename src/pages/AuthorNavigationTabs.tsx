@@ -16,6 +16,8 @@ interface AuthorNavigationTabsProps {
   } | null;
   isPanelHidden?: boolean;
   onPanelToggle?: (hidden: boolean) => void;
+  isPanelCollapsed?: boolean;
+  onPanelCollapse?: (collapsed: boolean) => void;
 }
 
 export default function AuthorNavigationTabs({
@@ -25,17 +27,23 @@ export default function AuthorNavigationTabs({
   user,
   isPanelHidden: parentIsPanelHidden,
   onPanelToggle,
+  isPanelCollapsed: parentIsPanelCollapsed,
+  onPanelCollapse,
 }: AuthorNavigationTabsProps) {
   const { theme, setTheme, logo } = useTheme();
   const [showPopup, setShowPopup] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [internalPanelHidden, setInternalPanelHidden] = useState(false);
+  const [internalPanelCollapsed, setInternalPanelCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
   const userIconRef = useRef<HTMLDivElement>(null);
 
   // Use parent state if provided, otherwise use internal state
   const isPanelHidden = parentIsPanelHidden !== undefined ? parentIsPanelHidden : internalPanelHidden;
   const setIsPanelHidden = onPanelToggle ? onPanelToggle : setInternalPanelHidden;
+  
+  const isPanelCollapsed = parentIsPanelCollapsed !== undefined ? parentIsPanelCollapsed : internalPanelCollapsed;
+  const setIsPanelCollapsed = onPanelCollapse ? onPanelCollapse : setInternalPanelCollapsed;
 
   useEffect(() => {
     const handleResize = () => {
@@ -43,8 +51,11 @@ export default function AuthorNavigationTabs({
       setIsMobile(mobile);
       if (!mobile) {
         setIsMenuOpen(false);
-        // Auto-hide panel on desktop when switching to mobile
-        if (mobile) setIsPanelHidden(false);
+        // Reset panel states when switching to mobile
+        if (mobile) {
+          setIsPanelHidden(false);
+          setIsPanelCollapsed(false);
+        }
       }
     };
     window.addEventListener("resize", handleResize);
@@ -78,7 +89,7 @@ export default function AuthorNavigationTabs({
 
   return (
     <>
-      <div className={`admin-nav ${isMobile ? 'mobile-drawer' : ''} ${isMenuOpen ? 'open' : ''}`}>
+      <div className={`admin-nav ${isMobile ? 'mobile-drawer' : ''} ${isMenuOpen ? 'open' : ''} ${!isMobile && isPanelCollapsed ? 'collapsed' : ''}`}>
         {isMobile && (
           <button className="close-drawer" onClick={() => setIsMenuOpen(false)}>
             <FiX size={24} />
@@ -91,11 +102,12 @@ export default function AuthorNavigationTabs({
             display: "flex",
             height: "80px",
             alignItems: "center",
-            marginBottom: "40px",
+            marginBottom: isPanelCollapsed ? "16px" : "40px",
+            justifyContent: isPanelCollapsed ? "center" : "flex-start"
           }}
         >
-          <img className="logo-crisp" src={logo} alt="Logo" style={{ width: 70, height: 70, borderRadius: "8px", objectFit: "contain" }} />
-          <h1 style={{ marginLeft: 12, fontSize: 22, color: "var(--sidebar-text)", fontWeight: "700" }}>CRAZYBEES</h1>
+          <img className="logo-crisp" src={logo} alt="Logo" style={{ width: isPanelCollapsed ? 45 : 70, height: isPanelCollapsed ? 45 : 70, borderRadius: "8px", objectFit: "contain" }} />
+          {!isPanelCollapsed && <h1 style={{ marginLeft: 12, fontSize: 22, color: "var(--sidebar-text)", fontWeight: "700" }}>CRAZYBEES</h1>}
         </div>
 
         {/* Tabs */}
@@ -106,18 +118,52 @@ export default function AuthorNavigationTabs({
               <div
                 key={t.id}
                 className={`tab-item ${active === t.id ? "active" : ""}`}
+                style={{
+                  justifyContent: isPanelCollapsed ? "center" : "flex-start",
+                  padding: isPanelCollapsed ? "10px 8px" : "10px",
+                  position: "relative"
+                }}
                 onClick={() => {
                   onChange(t.id);
                   if (isMobile) {
                     setIsMenuOpen(false);
                   } else {
-                    // Auto-hide panel on desktop when switching tabs
-                    setIsPanelHidden(true);
+                    // Collapse panel instead of hiding
+                    setIsPanelCollapsed(!isPanelCollapsed);
                   }
                 }}
+                title={isPanelCollapsed ? t.label : ""}
               >
-                <Icon size={18} />
-                <span>{t.label}</span>
+                <Icon size={18} style={{ marginRight: isPanelCollapsed ? "0" : "10px" }} />
+                {!isPanelCollapsed && <span>{t.label}</span>}
+                
+                {/* Tooltip on hover when collapsed */}
+                {isPanelCollapsed && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: "100%",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "#1e293b",
+                      color: "#f1f5f9",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      whiteSpace: "nowrap",
+                      opacity: 0,
+                      pointerEvents: "none",
+                      transition: "opacity 0.2s ease",
+                      marginLeft: "8px",
+                      boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
+                      zIndex: 1003
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+                  >
+                    {t.label}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -125,25 +171,16 @@ export default function AuthorNavigationTabs({
       </div>
       
       <div className="admin-topbar">
-        {/* Show Panel Toggle - Only visible when panel is hidden */}
-        {isPanelHidden && !isMobile && (
+        {/* Toggle Panel Button - Always visible on desktop */}
+        {!isMobile && (
           <button 
             className="toggle-panel-btn" 
-            onClick={() => setIsPanelHidden(false)}
-            aria-label="Show Navigation"
-            title="Show Navigation"
-          >
-            <FiMenu size={20} />
-          </button>
-        )}
-        
-        {/* Hide Panel Button - Only visible when panel is shown */}
-        {!isPanelHidden && !isMobile && (
-          <button 
-            className="toggle-panel-btn" 
-            onClick={() => setIsPanelHidden(true)}
-            aria-label="Hide Navigation"
-            title="Hide Navigation"
+            onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}
+            aria-label={isPanelCollapsed ? "Expand Navigation" : "Collapse Navigation"}
+            title={isPanelCollapsed ? "Expand Navigation" : "Collapse Navigation"}
+            style={{
+              marginRight: isPanelCollapsed ? "8px" : "12px"
+            }}
           >
             <FiMenu size={20} />
           </button>

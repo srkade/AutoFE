@@ -14,12 +14,33 @@
   left: 0;
   box-sizing: border-box;
   z-index: 1001;
-  transition: transform 0.3s ease-in-out;
+  transition: width 0.3s ease, transform 0.3s ease-in-out, padding 0.3s ease;
+  overflow: hidden;
 }
 
 /* Panel Hidden State */
 .admin-container.panel-hidden .admin-nav {
   transform: translateX(-100%);
+}
+
+/* Collapsed State - Show Only Icons */
+.admin-nav.collapsed {
+  width: 70px;
+  padding: 20px 8px;
+}
+
+.admin-nav.collapsed .nav-logo {
+  justify-content: center !important;
+  margin-bottom: 16px !important;
+}
+
+.admin-nav.collapsed .tab-item {
+  justify-content: center !important;
+  padding: 14px 8px !important;
+}
+
+.admin-nav.collapsed .tab-item span:not(.tab-item svg ~ span) {
+  display: none;
 }
 
 .admin-nav.mobile-drawer {
@@ -170,6 +191,13 @@
   width: 100%;
 }
 
+/* Panel Collapsed - Adjust Topbar */
+.admin-nav.collapsed ~ .admin-topbar,
+.admin-container .admin-nav.collapsed ~ .admin-topbar {
+  left: 70px;
+  width: calc(100% - 70px);
+}
+
 /* Toggle Panel Button */
 .toggle-panel-btn {
   background: none;
@@ -212,6 +240,12 @@
   padding-left: 24px;
 }
 
+/* Panel Collapsed - Adjust Content Panel */
+.admin-container .admin-nav.collapsed ~ .content-panel,
+.admin-nav.collapsed ~ .content-panel {
+  padding-left: 70px !important;
+}
+
 .sa-content {
   padding: 0 0 0 300px !important; /* Margin for 300px sa-nav */
   background: #f1f5f9;
@@ -238,8 +272,30 @@
   transform: translateX(-100%);
 }
 
+/* Collapsed State for Super Admin */
+.sa-nav.collapsed {
+  width: 70px !important;
+  padding: 20px 8px !important;
+}
+
+.sa-nav.collapsed .nav-logo {
+  justify-content: center !important;
+  margin-bottom: 16px !important;
+}
+
+.sa-nav.collapsed .tab-item {
+  justify-content: center !important;
+  padding: 14px 8px !important;
+}
+
 .admin-container.panel-hidden .sa-content {
   padding-left: 24px !important;
+}
+
+/* Panel Collapsed - Adjust Super Admin Content */
+.sa-nav.collapsed ~ .sa-content,
+.admin-container .sa-nav.collapsed ~ .sa-content {
+  padding-left: 70px !important;
 }
 
 .sa-wrapper {

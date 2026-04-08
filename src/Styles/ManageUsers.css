@@ -109,6 +109,10 @@
   font-weight: 600;
 }
 
+.user-table th:last-child {
+  text-align: center;
+}
+
 .user-table td {
   padding: 14px;
   border-bottom: 1px solid var(--border-color);
@@ -116,13 +120,21 @@
   color: var(--text-primary);
 }
 
-/* Status Chips */
+.user-table td:last-child {
+  text-align: center;
+}
+
+/* Status Chips - CONSISTENT WIDTH */
 .status-chip {
-  padding: 4px 12px;
-  border-radius: 20px;
+  padding: 6px 20px;
+  border-radius: 16px;
   font-size: 12px;
   font-weight: 600;
   color: white;
+  display: inline-block;
+  min-width: 95px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .status-chip.active { background: #22c55e; }
@@ -131,19 +143,52 @@
 .status-chip.banned { background: #ef4444; }
 .status-chip.suspended { background: #f97316; }
 
-/* Action Icons */
+/* Role Chip - CONSISTENT WIDTH */
+.role-chip {
+  padding: 6px 20px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  min-width: 95px;
+  text-align: center;
+  white-space: nowrap;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+/* Action Icons - CONSISTENT WITH OTHER COLUMNS */
 .actions {
   display: flex;
   gap: 12px;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 20px;
+  min-width: 95px;
+}
+
+.edit-icon,
+.delete-icon {
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.edit-icon:hover {
+  transform: scale(1.15);
+  opacity: 0.8;
+}
+
+.delete-icon:hover {
+  transform: scale(1.15);
+  opacity: 0.8;
 }
 
 .edit-icon {
-  cursor: pointer;
   color: var(--accent-primary);
 }
 
 .delete-icon {
-  cursor: pointer;
   color: #dc2626;
 }
 

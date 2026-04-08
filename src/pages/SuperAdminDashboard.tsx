@@ -10,7 +10,17 @@ import SearchBar from "../components/SearchBar";
 import { FiLogOut, FiMenu } from "react-icons/fi";
 import "../Styles/AuthorNavigationTabs.css";
 
-export default function SuperAdminDashboard({ token, onLogout }: { token: string | null, onLogout: () => void }) {
+export default function SuperAdminDashboard({
+    token,
+    onLogout,
+    selectedModelId,
+    onModelChange
+}: {
+    token: string | null;
+    onLogout: () => void;
+    selectedModelId?: string | null;
+    onModelChange?: (modelId: string | null) => void;
+}) {
     const [activeTab, setActiveTab] = useState("home");
     const [userInfo, setUserInfo] = useState<{
         name: string;
@@ -100,6 +110,8 @@ export default function SuperAdminDashboard({ token, onLogout }: { token: string
                 onChange={handleTabChange}
                 onLogout={onLogout}
                 user={userInfo}
+                selectedModelId={selectedModelId}
+                onModelChange={onModelChange}
                 isMenuOpen={isMenuOpen}
                 setIsMenuOpen={setIsMenuOpen}
                 isPanelHidden={isPanelHidden}

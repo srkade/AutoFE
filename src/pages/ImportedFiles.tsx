@@ -1,6 +1,6 @@
 // ImportedFiles.tsx
 import React, { useState, useEffect } from 'react';
-import { smartFileUpload, ImportResponse } from '../services/api';
+import { smartFileUpload, ImportResponse, Model, getModels } from '../services/api';
 import '../Styles/ImportedFiles.css';
 import { safeRandomUUID } from '../utils/uuid'; // Import the safe UUID fallback
 import { getAllUploads, deleteUploadById, fetchUploadFile, trackSuccessfulUpload, trackFailedUpload } from "../services/uploadApi";  // only this one we keep
@@ -34,6 +34,24 @@ const ImportedFiles: React.FC = () => {
   const [selectedUploads, setSelectedUploads] = useState<Set<string>>(new Set());
   const [dragOver, setDragOver] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [models, setModels] = useState<Model[]>([]);
+  const [targetModelId, setTargetModelId] = useState<string>(sessionStorage.getItem("selectedModelId") || '');
+
+  useEffect(() => {
+    fetchModels();
+  }, []);
+
+  const fetchModels = async () => {
+    try {
+      const data = await getModels();
+      setModels(data);
+      if (!targetModelId && data.length > 0) {
+        // Just leave empty or pick a default if needed
+      }
+    } catch (err) {
+      console.error("Failed to fetch models in Import page", err);
+    }
+  };
   
   // --- Table Editor State ---
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -185,7 +203,7 @@ const ImportedFiles: React.FC = () => {
         }
 
         // Upload the file (smartFileUpload should POST file to backend and wait for import)
-        const response: ImportResponse = await smartFileUpload(file, (progress: number) => {
+        const response: ImportResponse = await smartFileUpload(file, targetModelId || undefined, (progress: number) => {
           updateUploadProgress(uiId, progress);
         }, authorName);
 
@@ -357,7 +375,32 @@ const ImportedFiles: React.FC = () => {
       </div>
 
       {/* TOP UPLOAD BAR & CONTROLS */}
-      <div className="top-controls-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <div className="top-controls-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '16px' }}>
+        
+        {/* TARGET MODEL SELECTION */}
+        <div className="upload-options" style={{ padding: '16px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+          <h3 style={{ marginBottom: '12px', fontSize: '14px', color: 'var(--text-primary)' }}>🎯 Target Model</h3>
+          <select
+            value={targetModelId}
+            onChange={(e) => setTargetModelId(e.target.value)}
+            style={{ 
+              width: '100%', 
+              maxWidth: '300px', 
+              padding: '10px', 
+              borderRadius: '6px', 
+              border: '1px solid var(--border-color)', 
+              background: 'var(--bg-primary)',
+              color: 'var(--text-primary)'
+            }}
+          >
+            <option value="">No Model (Shared Data)</option>
+            {models.map(m => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div className="upload-bar">
           <input
             id="file-input"
@@ -436,6 +479,7 @@ const ImportedFiles: React.FC = () => {
           </div>
         </div>
 
+      </div>
       </div>
 
       {/* FILE TABLE */}

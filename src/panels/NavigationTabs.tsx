@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../Styles/NavigationTabs.css"
 import SearchBar from "../components/SearchBar";
+import ModelSelector from "../components/ModelSelector";
 import {
   Wrench,
   Cpu,
@@ -25,6 +26,9 @@ interface NavigationTabsProps {
   hideLogout?: boolean;
   hideLogo?: boolean;
   hideSearch?: boolean;
+  hideModelSelector?: boolean;
+  selectedModelId?: string | null;
+  onModelChange?: (modelId: string | null) => void;
 }
 
 const tabs = [
@@ -37,7 +41,18 @@ const tabs = [
   { id: "harnesses", label: "Harnesses", icon: Cable },
 ];
 
-export default function NavigationTabs({ activeTab, onTabChange, onLogout, user, hideLogout = false, hideLogo, hideSearch = false }: NavigationTabsProps) {
+export default function NavigationTabs({
+  activeTab,
+  onTabChange,
+  onLogout,
+  user,
+  hideLogout = false,
+  hideLogo,
+  hideSearch = false,
+  hideModelSelector = false,
+  selectedModelId,
+  onModelChange
+}: NavigationTabsProps) {
   const { theme, setTheme, logo } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -92,6 +107,7 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
             style={{
               width: isMobile ? "40px" : "50px",
               height: isMobile ? "40px" : "50px",
+              flexShrink: 0
             }}
             src={logo}
             alt="Logo"
@@ -121,6 +137,17 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
           justifyContent: isMobile ? "flex-start" : "center",
           height: "100%"
         }}>
+
+        {/* MODEL SELECTOR */}
+        {onModelChange && !hideModelSelector && (
+          <div style={{ display: 'flex', alignItems: 'center', marginRight: '20px' }}>
+            <ModelSelector
+              selectedModelId={selectedModelId || null}
+              onModelChange={onModelChange}
+              isAuthor={user?.role === 'superadmin' || user?.role === 'author'}
+            />
+          </div>
+        )}
 
         {tabs.map((tab) => {
           const Icon = tab.icon;

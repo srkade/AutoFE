@@ -1,18 +1,45 @@
 import axios, { AxiosProgressEvent } from "axios";
+import { API_BASE_URL } from "../config";
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/api",
-  // baseURL: "http://13.205.92.12:8080/api",
+  baseURL: API_BASE_URL,
   timeout: 10000,
 });
+
+// Add a request interceptor to inject the JWT token automatically
+api.interceptors.request.use(
+  (config) => {
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// ======================
+// Types
+// ======================
+
+export interface Model {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt?: string;
+}
 
 // ======================
 // Existing APIs (unchanged)
 // ======================
 
-export async function getComponents() {
+export async function getComponents(modelId?: string) {
   try {
-    const res = await api.get(`/schematics/components`);
+    const res = await api.get(`/schematics/components`, {
+      params: { modelId },
+    });
     return res.data;
   } catch (err) {
     console.error("API ERROR → getComponents:", err);
@@ -20,9 +47,11 @@ export async function getComponents() {
   }
 }
 
-export async function getComponentSchematic(code: string) {
+export async function getComponentSchematic(code: string, modelId?: string) {
   try {
-    const res = await api.get(`/wires/schematic/${code}`);
+    const res = await api.get(`/wires/schematic/${code}`, {
+      params: { modelId },
+    });
     return res.data;
   } catch (err) {
     console.error("API ERROR → getComponentSchematic:", err);
@@ -30,19 +59,23 @@ export async function getComponentSchematic(code: string) {
   }
 }
 
-export async function getSystems() {
+export async function getSystems(modelId?: string) {
   try {
-    const res = await api.get(`/schematics/systems`);
+    const res = await api.get(`/schematics/systems`, {
+      params: { modelId },
+    });
     return res.data;
   } catch (err) {
-    console.error("API ERROR → getComponents:", err);
+    console.error("API ERROR → getSystems:", err);
     throw err;
   }
 }
 
-export async function getSystemFormula(code: number) {
+export async function getSystemFormula(code: number | string, modelId?: string) {
   try {
-    const res = await api.get(`wires/schematic/system/${code}`);
+    const res = await api.get(`wires/schematic/system/${code}`, {
+      params: { modelId },
+    });
     return res.data;
   } catch (err) {
     console.error("API ERROR → getSystemFormula:", err);
@@ -50,9 +83,11 @@ export async function getSystemFormula(code: number) {
   }
 }
 
-export async function getDtcs() {
+export async function getDtcs(modelId?: string) {
   try {
-    const res = await api.get(`/schematics/dtcs`);
+    const res = await api.get(`/schematics/dtcs`, {
+      params: { modelId },
+    });
     return res.data;
   } catch (err) {
     console.error("API ERROR → getDtcs:", err);
@@ -60,9 +95,11 @@ export async function getDtcs() {
   }
 }
 
-export async function getDtcSchematic(code: string) {
+export async function getDtcSchematic(code: string, modelId?: string) {
   try {
-    const res = await api.get(`/wires/dtc/${code}`);
+    const res = await api.get(`/wires/dtc/${code}`, {
+      params: { modelId },
+    });
     return res.data;
   } catch (err) {
     console.error("API ERROR → getDtcSchematic:", err);
@@ -70,9 +107,11 @@ export async function getDtcSchematic(code: string) {
   }
 }
 
-export async function getHarnesses() {
+export async function getHarnesses(modelId?: string) {
   try {
-    const res = await api.get(`/schematics/harnesses`);
+    const res = await api.get(`/schematics/harnesses`, {
+      params: { modelId },
+    });
     return res.data;
   } catch (err) {
     console.error("API ERROR → getHarnesses:", err);
@@ -80,9 +119,11 @@ export async function getHarnesses() {
   }
 }
 
-export async function getWires() {
+export async function getWires(modelId?: string) {
   try {
-    const res = await api.get(`/schematics/wires`);
+    const res = await api.get(`/schematics/wires`, {
+      params: { modelId },
+    });
     return res.data;
   } catch (err) {
     console.error("API ERROR → getWires:", err);
@@ -91,9 +132,11 @@ export async function getWires() {
 }
 
 //  Harness schematic endpoint
-export async function getHarnessSchematic(code: string) {
+export async function getHarnessSchematic(code: string, modelId?: string) {
   try {
-    const res = await api.get(`/wires/harness/${code}`);
+    const res = await api.get(`/wires/harness/${code}`, {
+      params: { modelId },
+    });
     return res.data;
   } catch (err) {
     console.error("API ERROR → getHarnessSchematic:", err);
@@ -101,9 +144,11 @@ export async function getHarnessSchematic(code: string) {
   }
 }
 
-export async function getVoltageSupply() {
+export async function getVoltageSupply(modelId?: string) {
   try {
-    const res = await api.get(`/schematics/supply`);
+    const res = await api.get(`/schematics/supply`, {
+      params: { modelId },
+    });
     return res.data;
   } catch (err) {
     console.error("API Error-> getVoltageSupply:", err);
@@ -111,9 +156,11 @@ export async function getVoltageSupply() {
   }
 }
 
-export async function getSupplyFormula(code: string) {
+export async function getSupplyFormula(code: string, modelId?: string) {
   try {
-    const res = await api.get(`/wires/schematic/supply/${code}`);
+    const res = await api.get(`/wires/schematic/supply/${code}`, {
+      params: { modelId },
+    });
     return res.data;
   } catch (err) {
     console.error("API ERROR → getSupplyFormula:", err);
@@ -122,10 +169,11 @@ export async function getSupplyFormula(code: string) {
 }
 
 
-export async function getWireDetailsByWireCode(wireCode: string) {
+export async function getWireDetailsByWireCode(wireCode: string, modelId?: string) {
   try {
     const res = await api.get(
-      `/wires/schematic/wire/${wireCode}`
+      `/wires/schematic/wire/${wireCode}`,
+      { params: { modelId } }
     );
     return res.data;
   } catch (err) {
@@ -230,15 +278,113 @@ export interface ImportResponse {
 }
 
 
+// ======================
+// Model APIs
+// ======================
+
+export async function getModels(): Promise<Model[]> {
+  try {
+    const res = await api.get<Model[]>(`/models`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getModels:", err);
+    throw err;
+  }
+}
+
+export async function createModel(name: string, description?: string): Promise<Model> {
+  try {
+    const res = await api.post<Model>(`/models`, { name, description });
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → createModel:", err);
+    throw err;
+  }
+}
+
+export async function updateModel(id: string, name: string, description?: string): Promise<void> {
+  try {
+    await api.put(`/models/${id}`, { name, description });
+  } catch (err) {
+    console.error("API ERROR → updateModel:", err);
+    throw err;
+  }
+}
+
+export async function deleteModel(id: string) {
+  try {
+    const res = await api.delete(`/models/${id}`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → deleteModel:", err);
+    throw err;
+  }
+}
+
+// ======================
+// Model Assignment APIs
+// ======================
+
+export async function assignModelsToUser(userId: string, modelIds: string[]): Promise<void> {
+  try {
+    await api.post(`/models/assignments/user/${userId}`, modelIds);
+  } catch (err) {
+    console.error("API ERROR → assignModelsToUser:", err);
+    throw err;
+  }
+}
+
+export async function assignUsersToModel(modelId: string, userIds: string[]): Promise<void> {
+  try {
+    await api.post(`/models/assignments/model/${modelId}`, userIds);
+  } catch (err) {
+    console.error("API ERROR → assignUsersToModel:", err);
+    throw err;
+  }
+}
+
+export async function getModelsForUser(userId: string): Promise<string[]> {
+  try {
+    const res = await api.get<string[]>(`/models/assignments/user/${userId}`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getModelsForUser:", err);
+    throw err;
+  }
+}
+
+export async function getUsersForModel(modelId: string): Promise<string[]> {
+  try {
+    const res = await api.get<string[]>(`/models/assignments/model/${modelId}`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getUsersForModel:", err);
+    throw err;
+  }
+}
+
+export async function getAssignedUserCount(modelId: string): Promise<number> {
+  try {
+    const res = await api.get<number>(`/models/assignments/model/${modelId}/count`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getAssignedUserCount:", err);
+    return 0;
+  }
+}
+
 export async function smartFileUpload(
   file: File,
+  modelId?: string,
   onProgress?: (progress: number) => void,
   authorName?: string
 ): Promise<ImportResponse> {
   const formData = new FormData();
   formData.append("file", file);
+  if (modelId) {
+    formData.append("modelId", modelId);
+  }
   if (authorName && authorName !== "unknown") {
-    // Send the author name to the backend
     formData.append("uploadedBy", authorName);
   }
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FiSearch, FiFilter, FiTrash2, FiUpload, FiDownload } from "react-icons/fi";
 import "../Styles/ImageManagement.css";
+import { API_BASE_URL as CONFIG_API_BASE_URL } from "../config";
 
 interface ImageAsset {
   id: string;
@@ -34,8 +35,8 @@ interface ApiError {
   details?: string;
 }
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
-const DIRECTORY_API = process.env.REACT_APP_DIRECTORY_API || "http://localhost:8080";
+const API_BASE_URL = process.env.REACT_APP_API_URL || CONFIG_API_BASE_URL;
+const DIRECTORY_API = process.env.REACT_APP_DIRECTORY_API || CONFIG_API_BASE_URL;
 
 export default function ImageManagement() {
   // ==================== STATE MANAGEMENT ====================

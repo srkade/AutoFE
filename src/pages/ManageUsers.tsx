@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../Styles/ManageUsers.css";
-import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2 } from "react-icons/fi";
+
+  import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2, FiShield } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
 import RegisterForm from "./RegistrationForm";
 import { User } from "../components/Schematic/SchematicTypes";
 import { fetchUsers, updateUser, deleteUserById, registerUser, updateUserStatus as apiUpdateUserStatus, updateUserRole } from "../services/api";
+import AssignModelsModal from "../components/AssignModelsModal";
 
 export default function ManageUsersModern() {
   const [users, setUsers] = useState<User[]>([]);
@@ -60,6 +62,7 @@ export default function ManageUsersModern() {
   const [roleFilter, setRoleFilter] = useState<User["role"] | null>(null);
   const [statusFilter, setStatusFilter] = useState<User["status"] | null>(null);
   const [dateFilter, setDateFilter] = useState<"Last 7 days" | "Last 30 days" | "Last year" | null>(null);
+  const [assigningModelsUser, setAssigningModelsUser] = useState<{id: string, name: string} | null>(null);
 
   // Save users to sessionStorage
   useEffect(() => {
@@ -473,8 +476,10 @@ export default function ManageUsersModern() {
                 <td className="hide-mobile">{u.joined ? new Date(u.joined).toLocaleDateString() : "-"}</td>
                 <td className="hide-mobile">{u.lastActive ? new Date(u.lastActive).toLocaleDateString() : "-"}</td>
                 <td className="actions">
-                  <FiEdit2 className="edit-icon" onClick={() => editUser(u)} style={{ marginRight: '8px', cursor: 'pointer', color: '#3b82f6' }} />
-                  <FiTrash2 className="delete-icon" onClick={() => handleDeleteUser(u.id)} style={{ cursor: 'pointer', color: '#ef4444' }} />
+                  <div className="actions-cell">
+                    <FiEdit2 className="edit-icon" onClick={() => editUser(u)} title="Edit user" />
+                    <FiTrash2 className="delete-icon" onClick={() => handleDeleteUser(u.id)} title="Delete user" />
+                  </div>
                 </td>
               </tr>
             ))}

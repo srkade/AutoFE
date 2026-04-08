@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import "../Styles/AuthorNavigationTabs.css";
 import { FiUsers, FiUpload, FiCpu, FiUser, FiImage, FiMenu, FiX, FiLogOut, FiSun, FiMoon, FiDroplet, FiBriefcase, FiEye } from "react-icons/fi";
 import SearchBar from "../components/SearchBar";
+import ModelSelector from "../components/ModelSelector";
 import { useTheme } from "../components/ThemeContext";
 
 interface AuthorNavigationTabsProps {
@@ -14,6 +15,8 @@ interface AuthorNavigationTabsProps {
     email: string;
     role: string
   } | null;
+  selectedModelId?: string | null;
+  onModelChange?: (modelId: string | null) => void;
   isPanelHidden?: boolean;
   onPanelToggle?: (hidden: boolean) => void;
   isPanelCollapsed?: boolean;
@@ -25,6 +28,8 @@ export default function AuthorNavigationTabs({
   onChange,
   onLogout,
   user,
+  selectedModelId,
+  onModelChange,
   isPanelHidden: parentIsPanelHidden,
   onPanelToggle,
   isPanelCollapsed: parentIsPanelCollapsed,
@@ -64,6 +69,7 @@ export default function AuthorNavigationTabs({
 
   const tabs = [
     { id: "manage-users", label: "Manage Users", icon: FiUsers },
+    { id: "manage-models", label: "Model Management", icon: FiBriefcase },
     { id: "import-files", label: "Import Files", icon: FiUpload },
     { id: "import-images", label: "Asset Management", icon: FiImage },
     { id: "view-schematic", label: "View Schematic", icon: FiCpu },
@@ -201,8 +207,17 @@ export default function AuthorNavigationTabs({
         </div>
 
         {/* Search Bar in Topbar */}
-        <div style={{ flex: "1", maxWidth: "500px", margin: isMobile ? "0 10px" : "0 20px" }}>
+        <div style={{ flex: "1", maxWidth: "500px", margin: isMobile ? "0 10px" : "0 20px", display: 'flex', alignItems: 'center' }}>
           <SearchBar />
+          {onModelChange && (
+            <div style={{ marginLeft: '20px' }}>
+              <ModelSelector
+                selectedModelId={selectedModelId || null}
+                onModelChange={onModelChange}
+                isAuthor={true}
+              />
+            </div>
+          )}
         </div>
 
         <div

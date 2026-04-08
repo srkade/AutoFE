@@ -1,7 +1,7 @@
-import { useState } from "react";
-import React from "react";
+import React, { useState } from "react";
 import { User } from "../components/Schematic/SchematicTypes";
 import { registerUser } from "../services/api";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 interface RegisterPageProps {
   onBackToLogin: () => void;
@@ -22,6 +22,8 @@ export default function RegisterForm({
   customHeight = "650px",
   isAuthor = false,
 }: RegisterPageProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   // ---------------- FIELDS ----------------
   const [firstName, setFirstName] = useState(userToEdit?.firstName || "");
   const [lastName, setLastName] = useState(userToEdit?.lastName || "");
@@ -55,15 +57,17 @@ export default function RegisterForm({
     >
       <div
         style={{
-          backgroundColor: "#fff",
+          backgroundColor: "var(--bg-secondary)",
           padding: "30px",
           borderRadius: "12px",
           maxWidth: "500px",
           maxHeight: "80vh",
           overflowY: "auto",
-          boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+          boxShadow: "var(--card-shadow)",
           position: "relative",
           lineHeight: "1.6",
+          color: "var(--text-primary)",
+          border: "1px solid var(--border-color)"
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -77,13 +81,13 @@ export default function RegisterForm({
             border: "none",
             fontSize: "20px",
             cursor: "pointer",
-            color: "#666",
+            color: "var(--text-secondary)",
           }}
         >
           ✖
         </button>
-        <h3 style={{ color: "#007bff", marginBottom: "20px", borderBottom: "2px solid #f0f0f0", paddingBottom: "10px" }}>Terms & Conditions</h3>
-        <div style={{ fontSize: "14px", color: "#444" }}>
+        <h3 style={{ color: "var(--accent-primary)", marginBottom: "20px", borderBottom: "2px solid var(--border-color)", paddingBottom: "10px" }}>Terms & Conditions</h3>
+        <div style={{ fontSize: "14px", color: "var(--text-primary)" }}>
           <p>Welcome to <b>CRAZYBEES</b>. By creating an account, you agree to the following terms:</p>
           <ol style={{ paddingLeft: "20px" }}>
             <li><b>Usage:</b> This platform is provided for design and analysis of schematics. Unauthorized use is prohibited.</li>
@@ -205,7 +209,7 @@ export default function RegisterForm({
   return (
     <div
       style={{
-        backgroundColor: showCloseButton ? "transparent" : "#f4f6f9",
+        backgroundColor: showCloseButton ? "transparent" : "var(--bg-primary)",
         minHeight: showCloseButton ? "auto" : "100vh",
         display: "flex",
         justifyContent: "center",
@@ -217,14 +221,18 @@ export default function RegisterForm({
       <div
         style={{
           display: "flex",
-          width: showLeftPanel ? "900px" : "500px",  // auto resize when left hidden
-          minHeight: customHeight,
+          flexDirection: isMobile ? "column" : "row",
+          width: isMobile ? "90%" : (showLeftPanel ? "900px" : "500px"),
+          minHeight: isMobile ? "auto" : customHeight,
           height: "auto",
+          padding: isMobile ? "20px 0" : "0",
           maxHeight: showCloseButton ? "90vh" : "none",
           borderRadius: "12px",
           overflowY: "auto",
-          boxShadow: "0 6px 30px rgba(0,0,0,0.1)",
-          backgroundColor: "#ffffff",
+          boxShadow: "var(--card-shadow)",
+          backgroundColor: "var(--bg-secondary)",
+          color: "var(--text-primary)",
+          border: "1px solid var(--border-color)"
         }}
       >
         {/* LEFT SECTION */}
@@ -242,7 +250,7 @@ export default function RegisterForm({
               textAlign: "center",
             }}
           >
-            <h1 style={{ fontSize: "32px", marginBottom: "20px" }}>
+            <h1 style={{ fontSize: isMobile ? "24px" : "32px", marginBottom: "20px" }}>
               Join Us Today!
             </h1>
             <p
@@ -283,7 +291,7 @@ export default function RegisterForm({
         <div
           style={{
             flex: 1,
-            backgroundColor: "#ffffff",
+            backgroundColor: "var(--bg-secondary)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -303,7 +311,7 @@ export default function RegisterForm({
                 fontSize: "22px",
                 cursor: "pointer",
                 fontWeight: "bold",
-                color: "#333",
+                color: "var(--text-primary)",
               }}
             >
               ✖
@@ -320,7 +328,7 @@ export default function RegisterForm({
             }}
             onSubmit={handleSubmit}
           >
-            <h2 style={{ color: "#007bff", marginBottom: "10px" }}>
+            <h2 style={{ color: "var(--accent-primary)", marginBottom: "10px" }}>
               {userToEdit ? "Edit User" : "Create Account"}
             </h2>
 
@@ -479,5 +487,7 @@ const inputStyle = {
   width: "100%",
   padding: "12px",
   borderRadius: "6px",
-  border: "1px solid #ccc",
+  border: "1px solid var(--border-color)",
+  backgroundColor: "var(--bg-primary)",
+  color: "var(--text-primary)",
 };

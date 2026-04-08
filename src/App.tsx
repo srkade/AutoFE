@@ -38,6 +38,7 @@ import ImageManagement from "./pages/ImageManagement";
 import GlobalSearch from "./components/GlobalSearch";
 import { useGlobalSearch } from "./hooks/useGlobalSearch";
 import { searchService } from "./services/searchService";
+import ModelManagement from "./pages/ModelManagement";
 
 
 function AppContent() {
@@ -702,6 +703,9 @@ function AppContent() {
             {authorTab === "manage-users" && (
               <ManageUsers />
             )}
+            {authorTab === "manage-models" && (
+              <ModelManagement />
+            )}
 
             {authorTab === "import-files" && (
               <ImportFiles />
@@ -815,6 +819,7 @@ function AppContent() {
       {page === "dashboard" && role === "superadmin" && token && (
         <SuperAdminDashboard
           token={token}
+          onLogout={handleLogout}
           selectedModelId={selectedModelId}
           onModelChange={(id) => {
             setSelectedModelId(id);

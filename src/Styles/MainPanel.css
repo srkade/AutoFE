@@ -25,10 +25,6 @@
 
 /* Mobile ≤480px */
 @media (max-width: 480px) {
-    .main-panel-wrapper.has-selection {
-        display: none !important;
-    }
-
     .mobile-only {
         display: block;
     }
@@ -41,12 +37,6 @@
     }
 }
 
-/* Hide schematic viewer on mobile */
-@media (max-width: 768px) {
-    .main-panel-wrapper {
-        display: none !important;
-    }
-}
 /* default: desktop/tablet layout */
 .main-content {
   display: flex;

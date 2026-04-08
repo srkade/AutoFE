@@ -110,6 +110,8 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
       case 'harness': return '📦';
       case 'system': return '🔧';
       case 'supply': return '⚡';
+      case 'user': return '👤';
+      case 'navigation': return '🚀';
       default: return '🔍';
     }
   };
@@ -123,6 +125,8 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
       case 'harness': return '#6f42c1';
       case 'system': return '#17a2b8';
       case 'supply': return '#fd7e14';
+      case 'user': return '#e83e8c';
+      case 'navigation': return '#20c997';
       default: return '#6c757d';
     }
   };

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../Styles/NavigationTabs.css"
-import logo from "../assets/Images/logo.png";
 import SearchBar from "../components/SearchBar";
 import ModelSelector from "../components/ModelSelector";
 import {
@@ -11,6 +10,9 @@ import {
   AlertTriangle,
   Cable
 } from "lucide-react";
+import { FiLogOut, FiSun, FiMoon, FiDroplet, FiBriefcase, FiEye } from "react-icons/fi";
+import { useMediaQuery } from "../hooks/useMediaQuery";
+import { useTheme } from "../components/ThemeContext";
 
 interface NavigationTabsProps {
   activeTab: string;
@@ -51,6 +53,7 @@ export default function NavigationTabs({
   selectedModelId,
   onModelChange
 }: NavigationTabsProps) {
+  const { theme, setTheme, logo } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -66,54 +69,74 @@ export default function NavigationTabs({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+  
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isSmallMobile = useMediaQuery("(max-width: 480px)");
+
   return (
 
-    <div className="nav-tabs-wrapper" style={{ position: "relative" }}>
-
+    <div className="nav-tabs-wrapper" style={{ 
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "space-between",
+      background: "var(--bg-secondary)",
+      borderBottom: "1px solid var(--border-color)",
+      padding: isMobile ? "0 12px" : "0 24px",
+      minHeight: isMobile ? "68px" : "80px",
+      position: "relative",
+      gap: "10px"
+    }}>
       <div className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
         ☰
       </div>
-      <nav
-        className={`nav-tabs ${menuOpen ? "open" : ""}`}
-        style={{
-          background: "white",
-          borderBottom: "1px solid #e9ecef",
-          padding: "0 24px",
-          display: "flex",
-          gap: "2px"
-
-        }}>
-        {/* LOGO AND BRANDING */}
-        {!hideLogo && (
-          <div
+      
+      {/* LOGO AND BRANDING */}
+      {!hideLogo && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            flexShrink: 0,
+            cursor: "pointer"
+          }}
+          onClick={() => onTabChange("components")}
+        >
+          <img
+            className="logo-crisp"
             style={{
-              width: "320px",
-              display: "flex",
-              height: "80px",
-              alignItems: "center",
+              width: isMobile ? "40px" : "50px",
+              height: isMobile ? "40px" : "50px",
               flexShrink: 0
             }}
-          >
-            <img
-              style={{
-                width: "70px",
-                height: "70px",
-
-              }}
-              src={logo}
-              alt="Logo"
-            />
+            src={logo}
+            alt="Logo"
+          />
+          {!isSmallMobile && (
             <h1
               style={{
-                marginRight: "20px",
-                marginLeft: "10px",
-                fontSize: "20px",
+                margin: 0,
+                fontSize: isMobile ? "16px" : "20px",
+                color: "var(--text-primary)",
+                fontWeight: "bold",
+                whiteSpace: "nowrap"
               }}
             >
               CRAZYBEES
             </h1>
-          </div>
-        )}
+          )}
+        </div>
+      )}
+
+      <nav
+        className={`nav-tabs ${menuOpen ? "open" : ""}`}
+        style={{
+          display: "flex",
+          gap: "2px",
+          flex: 1,
+          justifyContent: isMobile ? "flex-start" : "center",
+          height: "100%"
+        }}>
 
         {/* MODEL SELECTOR */}
         {onModelChange && !hideModelSelector && (
@@ -136,148 +159,191 @@ export default function NavigationTabs({
                 onTabChange(tab.id);
                 setMenuOpen(false);
               }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "12px 16px",
-                border: "none",
-                background: activeTab === tab.id ? "#a4cefcff" : "transparent",
-                //color: activeTab === tab.id ? "#495057" : "#6c757d",
-                color: activeTab === tab.id ? "black" : "black",
-                borderBottom: activeTab === tab.id ? "3px solid #007bff" : "3px solid transparent",
-                borderTop: activeTab === tab.id ? "3px solid #007bff" : "3px solid transparent",
-                cursor: "pointer",
-                fontSize: "15px",
-                fontWeight: "bold",
-                borderRadius: "8px 8px 0 0",
-                transition: "all 0.2s ease",
-                height: "60px",
-                justifyContent: "center",
-                outline: "none",
-                userSelect: "none",
-              }}
-              onMouseEnter={(e) => {
-                if (activeTab !== tab.id) {
-                  (e.currentTarget as HTMLElement).style.background = "#eaebeeff";
-                  (e.currentTarget as HTMLElement).style.color = "black";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTab !== tab.id) {
-                  (e.currentTarget as HTMLElement).style.background = "transparent";
-                  (e.currentTarget as HTMLElement).style.color = "black";
-                }
-              }}
             >
               <span><Icon size={18} /></span>
               <span>{tab.label}</span>
             </button>
           );
-        })}
-        {/* Search Bar */}
+        })}      </nav>
+
+      {/* SEARCH AND USER MENU */}
+      <div
+        className="nav-actions"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          flexShrink: 0
+        }}
+      >
         {!hideSearch && (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            margin: "0 20px",
-            flex: "1",
-            maxWidth: "400px"
-          }}>
+          <div
+            className="nav-search-bar"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              margin: isMobile ? "0 10px" : "0 20px",
+            }}
+          >
             <SearchBar />
           </div>
         )}
+
         {!hideLogout && (
           <div
             ref={userMenuRef}
             style={{
               display: "flex",
               alignItems: "center",
-              marginLeft: "auto"
+              position: "relative",
             }}
           >
-            {/*  User icon (visible always) */}
             <div
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               style={{
                 width: "40px",
                 height: "40px",
                 borderRadius: "50%",
-                background: "#f1f3f5",
+                background: "var(--accent-primary)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                fontSize: "20px",
-                color: "#343a40",
-                transition: "background 0.3s ease",
+                fontSize: "14px",
+                fontWeight: "600",
+                color: "var(--text-on-accent)",
+                transition: "all 0.2s ease",
+                boxShadow: userMenuOpen ? "0 0 0 2px var(--accent-primary)" : "none",
+                userSelect: "none",
               }}
-              title="User Menu"
-              onMouseEnter={(e) => ((e.currentTarget.style.background = "#e9ecef"))}
-              onMouseLeave={(e) => ((e.currentTarget.style.background = "#f1f3f5"))}
+              title="User Account"
             >
-              👤
+              {user?.name ? user.name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) : "U"}
             </div>
 
-            {/* Dropdown menu: User info + Logout */}
             {userMenuOpen && (
               <div
                 style={{
                   position: "absolute",
-                  top: "110%",
+                  top: "calc(100% + 8px)",
                   right: 0,
-                  background: "white",
-                  border: "1px solid #dee2e6",
-                  borderRadius: "10px",
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-                  padding: "12px",
+                  background: "var(--bg-secondary)",
+                  border: "1px solid var(--border-color)",
+                  borderRadius: "8px",
+                  boxShadow: 'var(--card-shadow)',
                   zIndex: 1000,
-                  minWidth: "200px",
+                  minWidth: "260px",
+                  padding: "16px",
                 }}
               >
-                <div
-                  style={{
-                    textAlign: "center",
-                    marginBottom: "10px",
-                  }}
-                >
-                  <div style={{ fontWeight: "bold", color: "#212529" }}><span>Name:{user?.name}</span></div>
-                  <div style={{ fontSize: "bold", color: "#212529" }}><span>Email:{user?.email}</span></div>
-                  <div style={{ fontSize: "bold", color: "#212529" }}><span>Role:{user?.role}</span></div>
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ 
+                    fontSize: "14px", 
+                    fontWeight: "700", 
+                    color: "var(--text-primary)",
+                    marginBottom: "4px" 
+                  }}>
+                    {user?.name || "User Profile"}
+                  </div>
+                  <div style={{ 
+                    fontSize: "12px", 
+                    color: "var(--text-secondary)" 
+                  }}>
+                    {user?.email || ""}
+                  </div>
                 </div>
 
-                <hr style={{ border: "none", borderTop: "1px solid #e9ecef" }} />
+                <div style={{ 
+                  padding: "10px", 
+                  background: "var(--bg-primary)", 
+                  borderRadius: "6px", 
+                  marginBottom: "16px" 
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                    <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase" }}>Role</span>
+                    <span style={{ 
+                      fontSize: "11px", 
+                      padding: "2px 8px", 
+                      borderRadius: "12px", 
+                      background: "var(--accent-primary)", 
+                      color: "var(--text-on-accent)",
+                      fontWeight: "700"
+                    }}>
+                      {user?.role?.toUpperCase() || "USER"}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase", marginBottom: "8px" }}>Theme</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px" }}>
+                    {[
+                      { id: 'light', icon: FiSun, label: 'Light', color: '#f8f9fa' },
+                      { id: 'dark', icon: FiMoon, label: 'Dark', color: '#1e293b' },
+                      { id: 'blue', icon: FiDroplet, label: 'Blue', color: '#0284c7' },
+                      { id: 'corporate', icon: FiBriefcase, label: 'Corporate', color: '#475569' },
+                      { id: 'high-contrast', icon: FiEye, label: 'High Contrast', color: '#000000' }
+                    ].map((t) => {
+                      const TIcon = t.icon;
+                      const isSelected = theme === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTheme(t.id as any);
+                            setUserMenuOpen(false);
+                          }}
+                          style={{
+                            padding: "8px",
+                            background: isSelected ? "#007bff" : "#f1f3f5",
+                            color: isSelected ? "white" : "#495057",
+                            border: "none",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            transition: "all 0.2s ease",
+                            boxShadow: isSelected ? "0 2px 4px rgba(0, 123, 255, 0.3)" : "none"
+                          }}
+                          title={t.label}
+                        >
+                          <TIcon size={16} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 <button
                   onClick={onLogout}
                   style={{
-                    // background: "#ae8c8fff",
-                    color: "black",
+                    width: "100%",
+                    padding: "10px",
+                    background: "#dc3545",
+                    color: "white",
                     border: "none",
-                    padding: "8px 16px",
                     borderRadius: "6px",
                     cursor: "pointer",
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    width: "100%",
-                    transition: "background 0.2s ease",
+                    fontWeight: "600",
+                    fontSize: "13px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "background 0.2s ease"
                   }}
-                  onMouseEnter={(e) =>
-                    ((e.target as HTMLButtonElement).style.background = "#a74550")
-                  }
-                  onMouseLeave={(e) =>
-                    ((e.target as HTMLButtonElement).style.background = "transparent")
-                  }
-
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#c82333")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "#dc3545")}
                 >
-                  <i className="fa-solid fa-arrow-right-from-bracket"></i>
-                  {/* Logout */}
+                  <FiLogOut size={16} /> Sign Out
                 </button>
               </div>
             )}
           </div>
         )}
-      </nav>
+      </div>
     </div>
   );
 }

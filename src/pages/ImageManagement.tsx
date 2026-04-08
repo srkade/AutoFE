@@ -778,10 +778,10 @@ export default function ImageManagement() {
                   />
                 </th>
                 <th>Code</th>
-                <th>Type</th>
+                <th className="hide-mobile">Type</th>
                 <th>Filename</th>
-                <th>Size</th>
-                <th>Uploaded</th>
+                <th className="hide-mobile">Size</th>
+                <th className="hide-mobile">Uploaded</th>
                 <th className="im-actions-col">Actions</th>
               </tr>
             </thead>
@@ -799,7 +799,7 @@ export default function ImageManagement() {
                   <td className="im-code-cell">
                     <strong>{asset.entityCode}</strong>
                   </td>
-                  <td>
+                  <td className="hide-mobile">
                     <span
                       className={`im-badge im-badge-${asset.entityType.toLowerCase()}`}
                     >
@@ -807,8 +807,9 @@ export default function ImageManagement() {
                     </span>
                   </td>
                   <td>{asset.fileName}</td>
-                  <td>{(asset.fileSize / 1024).toFixed(2)} KB</td>
-                  <td>{new Date(asset.uploadedAt).toLocaleDateString()}</td>                  <td className="im-actions-col">
+                  <td className="hide-mobile">{(asset.fileSize / 1024).toFixed(2)} KB</td>
+                  <td className="hide-mobile">{new Date(asset.uploadedAt).toLocaleDateString()}</td>
+                  <td className="im-actions-col">
                     <button
                       className="im-action-btn-danger"
                       onClick={() => handleDeleteSingle(asset.id)}

@@ -8,32 +8,84 @@
   user-select: none;
 }
 
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-bottom: 3px solid transparent;
+  border-top: 3px solid transparent;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: bold;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.2s ease;
+  height: 60px;
+  justify-content: center;
+  outline: none;
+  user-select: none;
+}
 
-/* older desktop */
-@media(max-width:1024px) {
-  .nav-tabs {
-    gap: 1px !important;
-    padding: 0 8px !important;
-  }
-  .nav-tab {
-    padding: 10px 12px !important;
-    font-size: 13px !important;
+.nav-tab:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.nav-tab.active {
+  background: var(--bg-primary);
+  color: var(--accent-primary);
+  border-bottom: 3px solid var(--accent-primary);
+  border-top: 3px solid var(--accent-primary);
+  opacity: 1 !important;
+}
+
+
+.nav-search-bar {
+  width: 100%;
+  max-width: 450px;
+  transition: max-width 0.3s ease;
+}
+
+/* laptop/tablet */
+@media(max-width:1200px) {
+  .nav-search-bar {
+    max-width: 300px !important;
   }
 }
 
-/* laptop */
+@media(max-width:1100px) {
+  .nav-tabs {
+    gap: 4px !important;
+  }
+  .nav-tab span:last-child {
+    display: none; /* Hide labels on tablet to save space */
+  }
+  .nav-tab {
+    padding: 10px 14px !important;
+  }
+  .nav-actions {
+    gap: 8px !important;
+  }
+}
+
 @media(max-width:786px) {
   .nav-tabs {
     justify-content: center !important;
-    flex-wrap:wrap;
-    padding :4px 8px;
-    gap:6px;
+    flex-wrap: wrap;
+    padding: 4px 8px;
+    gap: 6px;
   }
   .nav-tab {
-    flex:1 1 auto;
-    min-width: 90px;
+    flex: 1 1 auto;
+    min-width: 60px;
     padding: 8px 8px !important;
     font-size: 12px !important;
+  }
+  .nav-tab span:last-child {
+    display: inline; /* Re-show labels if they wrap */
   }
 }
 
@@ -50,7 +102,7 @@
     top: 50px; 
     left: 0;
     width: 100%;
-    background: white;
+    background: var(--bg-secondary);
     z-index: 100;
   }
 

@@ -222,8 +222,8 @@ export function mergeSchematicConfigs(
   }
 
   const mergedConnections = Array.from(connectionMap.values());
-  console.log("Merged Components:", mergedComponents);
-  console.log("Merged Connections:", mergedConnections);
+  //console.log("Merged Components:", mergedComponents);
+  //console.log("Merged Connections:", mergedConnections);
 
   //  STEP 4: RETURN
   return {

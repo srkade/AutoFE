@@ -7,14 +7,17 @@ import UserAnalytics from "./UserAnalytics";
 import SystemMonitoring from "./SystemMonitoring";
 import SuperAdminHomePage from "./SuperAdminHomePage";
 import SearchBar from "../components/SearchBar";
+import { FiLogOut, FiMenu } from "react-icons/fi";
 import "../Styles/AuthorNavigationTabs.css";
 
 export default function SuperAdminDashboard({
     token,
+    onLogout,
     selectedModelId,
     onModelChange
 }: {
     token: string | null;
+    onLogout: () => void;
     selectedModelId?: string | null;
     onModelChange?: (modelId: string | null) => void;
 }) {
@@ -26,7 +29,10 @@ export default function SuperAdminDashboard({
         role: string;
     } | null>(null);
     const [showUserPopup, setShowUserPopup] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isPanelHidden, setIsPanelHidden] = useState(false);
     const userIconRef = useRef<HTMLDivElement>(null);
+    const popupRef = useRef<HTMLDivElement>(null);
 
     // Fetch user info on component mount
     useEffect(() => {
@@ -61,10 +67,26 @@ export default function SuperAdminDashboard({
     }, [activeTab]);
 
     useEffect(() => {
+        const handleExternalNav = (e: any) => {
+            if (e.detail) {
+                setActiveTab(e.detail);
+            }
+        };
+
+        window.addEventListener('navigateSuperAdminTab', handleExternalNav);
+        return () => {
+            window.removeEventListener('navigateSuperAdminTab', handleExternalNav);
+        };
+    }, []);
+
+    useEffect(() => {
         const handleClickOutside = (event: any) => {
             const target = event.target as HTMLElement;
 
-            if (showUserPopup && userIconRef.current && !userIconRef.current.contains(target)) {
+            const isInsideIcon = userIconRef.current && userIconRef.current.contains(target);
+            const isInsidePopup = popupRef.current && popupRef.current.contains(target);
+
+            if (showUserPopup && !isInsideIcon && !isInsidePopup) {
                 setShowUserPopup(false);
             }
         };
@@ -75,67 +97,52 @@ export default function SuperAdminDashboard({
         };
     }, [showUserPopup]);
 
-    const handleLogout = () => {
-        sessionStorage.clear();
-        window.location.href = "/login";
-    };
 
     const handleTabChange = (tabId: string) => {
         setActiveTab(tabId);
     };
 
     return (
-        <div className="admin-container" style={{
-            display: "flex",
-            flexDirection: "row",
-            height: "100vh",
-            backgroundColor: "#f0f4f8",
-            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-            overflow: "hidden"
-        }}>
+        <div className={`admin-container ${isPanelHidden ? 'panel-hidden' : ''}`}>
             <SuperAdminNavigationTabs
                 active={activeTab}
                 onChange={handleTabChange}
-                onLogout={handleLogout}
+                onLogout={onLogout}
                 user={userInfo}
                 selectedModelId={selectedModelId}
                 onModelChange={onModelChange}
+                isMenuOpen={isMenuOpen}
+                setIsMenuOpen={setIsMenuOpen}
+                isPanelHidden={isPanelHidden}
+                onPanelToggle={setIsPanelHidden}
             />
-            <div
-                className="content-panel"
-                style={{
-                    flex: 1,
-                    padding: "24px",
-                    backgroundColor: "#f8fafc",
-                    overflowY: "auto",
-                    display: "flex",
-                    flexDirection: "column"
-                }}
-            >
+            <div className="content-panel sa-content">
+                {/* Mobile Header */}
                 <div style={{
-                    maxWidth: "1400px",
-                    margin: "0 auto",
-                    width: "100%",
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column"
+                    display: window.innerWidth <= 1024 ? 'flex' : 'none',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    background: '#0f172a',
+                    color: 'white',
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 100
                 }}>
-                    <div style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: "24px",
-                        padding: "16px 0",
-                        borderBottom: "1px solid #e2e8f0"
-                    }}>
-                        <div>
-                            <h1 style={{
-                                fontSize: "28px",
-                                fontWeight: "700",
-                                color: "#1e293b",
-                                margin: 0,
-                                lineHeight: "1.3"
-                            }}>
+                    <button 
+                        onClick={() => setIsMenuOpen(true)}
+                        style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
+                    >
+                        <FiMenu size={24} />
+                    </button>
+                    <span style={{ fontWeight: 700 }}>CRAZYBEES</span>
+                    <div style={{ width: 24 }}></div> {/* spacer */}
+                </div>
+
+                <div className="sa-wrapper">
+                    <div className="sa-topbar">
+                        <div className="sa-topbar-left">
+                            <h1 className="sa-title">
                                 {activeTab === "home" && "Welcome.."}
                                 {activeTab === "system-settings" && "System Configuration"}
                                 {activeTab === "security-logs" && "Security Monitoring"}
@@ -143,120 +150,69 @@ export default function SuperAdminDashboard({
                                 {activeTab === "user-analytics" && "User Analytics"}
                                 {activeTab === "system-monitoring" && "System Monitoring"}
                             </h1>
-                            <p style={{
-                                color: "#64748b",
-                                margin: "8px 0 0 0",
-                                fontSize: "16px"
-                            }}>
-                                {activeTab === "home" && "Welcome to the Super Admin Dashboard"}
-                                {activeTab === "system-settings" && "Configure system-wide settings and parameters"}
-                                {activeTab === "security-logs" && "Monitor and analyze security events"}
-                                {activeTab === "database-management" && "Manage database operations and performance"}
-                                {activeTab === "user-analytics" && "Analyze user activity and engagement"}
-                                {activeTab === "system-monitoring" && "Monitor system performance and health"}
-                            </p>
                         </div>
 
                         {/* Global Search Bar */}
-                        <div style={{ flex: "1", maxWidth: "400px", margin: "0 24px" }}>
+                        <div className="sa-search-container">
                             <SearchBar />
                         </div>
 
                         {/* User Icon */}
-                        <div style={{ position: "relative", display: "inline-block", marginRight: "130px" }}>
+                        <div className="sa-user-container">
                             <div
                                 ref={userIconRef}
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    cursor: "pointer",
-                                    padding: "8px 12px",
-                                    borderRadius: "8px",
-                                    background: "white",
-                                    boxShadow: "0 1px 3px 0 rgba(0,0,0,0.1)",
-                                }}
+                                className="sa-user-icon"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setShowUserPopup(prev => !prev);
                                 }}
                             >
-                                <div style={{
-                                    width: "40px",
-                                    height: "40px",
-                                    borderRadius: "50%",
-                                    background: "#3b82f6",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    color: "white",
-                                    fontWeight: "bold",
-                                    marginRight: "12px",
-                                }}>
+                                <div className="sa-avatar">
                                     {userInfo?.name?.charAt(0) || "S"}
                                 </div>
                             </div>
 
                             {/* USER POPUP */}
                             {showUserPopup && (
-                                <div
-                                    style={{
-                                        position: "absolute",
-                                        top: "calc(100% + 8px)",
-                                        left: "50%",
-                                        transform: "translateX(-50%)",
-                                        zIndex: 1001,
-                                        background: "white",
-                                        border: "1px solid #e2e8f0",
-                                        borderRadius: "12px",
-                                        padding: "20px",
-                                        width: "280px",
-                                        boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <div style={{ marginBottom: "16px" }}>
-                                        <div style={{ marginBottom: "10px" }}><strong style={{ color: "#64748b", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>User</strong><div style={{ color: "#1e293b", fontWeight: "600", fontSize: "15px" }}>{userInfo?.name || "Super Admin"}</div></div>
-                                        <div style={{ marginBottom: "10px" }}><strong style={{ color: "#64748b", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Email</strong><div style={{ color: "#1e293b", fontSize: "14px" }}>{userInfo?.email || "superadmin@company.com"}</div></div>
-                                        <div><strong style={{ color: "#64748b", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Role</strong><div style={{ color: "#3b82f6", fontWeight: "600", fontSize: "14px" }}>{userInfo?.role || "Super Admin"}</div></div>
+                                <div ref={popupRef} className="sa-user-popup">
+                                    <div className="sa-popup-info">
+                                        <div className="sa-popup-item">
+                                            <span className="sa-label">User</span>
+                                            <div className="sa-value">{userInfo?.name || "Super Admin"}</div>
+                                        </div>
+                                        <div className="sa-popup-item">
+                                            <span className="sa-label">Email</span>
+                                            <div className="sa-value">{userInfo?.email || "superadmin@company.com"}</div>
+                                        </div>
+                                        <div className="sa-popup-item">
+                                            <span className="sa-label">Role</span>
+                                            <div className="sa-value sa-role">{userInfo?.role || "Super Admin"}</div>
+                                        </div>
                                     </div>
-                                    <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "16px" }}>
-                                        <button
-                                            onClick={handleLogout}
+                                    <div className="sa-popup-footer">
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onLogout();
+                                            }} 
+                                            className="sa-logout-btn"
                                             style={{
-                                                width: "100%",
-                                                padding: "10px",
-                                                background: "#ef4444",
-                                                color: "white",
-                                                border: "none",
-                                                borderRadius: "8px",
-                                                cursor: "pointer",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                fontWeight: "600",
-                                                fontSize: "14px",
-                                                transition: "all 0.2s"
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '8px',
+                                                transition: 'all 0.2s ease'
                                             }}
-                                            onMouseEnter={(e) => (e.target as HTMLButtonElement).style.background = "#dc2626"}
-                                            onMouseLeave={(e) => (e.target as HTMLButtonElement).style.background = "#ef4444"}
                                         >
-                                            Logout
+                                            <FiLogOut size={16} /> Logout
                                         </button>
                                     </div>
                                 </div>
                             )}
                         </div>
                     </div>
-                    <div style={{
-                        backgroundColor: "white",
-                        borderRadius: "12px",
-                        boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.005)",
-                        padding: "24px",
-                        border: "1px solid #e2e8f0",
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column"
-                    }}>
+
+                    <div className="sa-main-card">
                         <div style={{ flex: 1 }}>
                             {activeTab === "home" && (
                                 <div key="home" style={{ height: '100%' }}>

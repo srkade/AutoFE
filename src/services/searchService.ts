@@ -3,7 +3,7 @@
 
 export interface SearchItem {
   id: string;
-  type: 'component' | 'dtc' | 'connector' | 'wire' | 'harness' | 'system' | 'supply';
+  type: 'component' | 'dtc' | 'connector' | 'wire' | 'harness' | 'system' | 'supply' | 'user' | 'navigation';
   code: string;
   name: string;
   description?: string;
@@ -32,16 +32,16 @@ class SearchService {
 
   // Initialize search index with all project data
   async initializeSearchIndex(
-    components: any[],
-    dtcs: any[],
-    connectors: any[],
-    wires: any[],
-    harnesses: any[],
-    systems: any[],
-    supplies: any[]
+    components: any[] = [],
+    dtcs: any[] = [],
+    connectors: any[] = [],
+    wires: any[] = [],
+    harnesses: any[] = [],
+    systems: any[] = [],
+    supplies: any[] = [],
+    users: any[] = [],
+    navigation: any[] = []
   ) {
-
-
     this.searchIndex = [];
 
     // Add components
@@ -79,7 +79,7 @@ class SearchService {
       });
     });
 
-    // Add connectors (from DTC_STEPS_DATA or API data)
+    // Add connectors
     connectors.forEach((conn: any) => {
       this.searchIndex.push({
         id: `conn-${conn.code || conn.id}`,
@@ -169,6 +169,42 @@ class SearchService {
       });
     });
 
+    // Add users
+    users.forEach((user: any) => {
+      this.searchIndex.push({
+        id: `user-${user.id || user.email}`,
+        type: 'user',
+        code: user.role || 'User',
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Unnamed User',
+        description: user.email || '',
+        category: 'System Users',
+        status: 'Active',
+        searchableText: `${user.firstName} ${user.lastName} ${user.username} ${user.email} ${user.role}`.toLowerCase(),
+        metadata: {
+           email: user.email,
+           role: user.role
+        }
+      });
+    });
+
+    // Add navigation shortcuts
+    navigation.forEach((nav: any) => {
+      this.searchIndex.push({
+        id: `nav-${nav.id}`,
+        type: 'navigation',
+        code: 'GOTO',
+        name: nav.name,
+        description: nav.description || `Navigate to ${nav.name}`,
+        category: 'Shortcuts',
+        status: 'Active',
+        searchableText: `navigate go to jump tab ${nav.name} ${nav.description || ''}`.toLowerCase(),
+        metadata: {
+          targetTab: nav.targetTab,
+          targetPage: nav.targetPage
+        }
+      });
+    });
+
     this.isInitialized = true;
   }
 
@@ -249,25 +285,3 @@ class SearchService {
 
 // Export singleton instance
 export const searchService = new SearchService();
-
-// Type guard functions
-export const isComponentItem = (item: SearchItem): item is SearchItem & { type: 'component' } =>
-  item.type === 'component';
-
-export const isDtcItem = (item: SearchItem): item is SearchItem & { type: 'dtc' } =>
-  item.type === 'dtc';
-
-export const isConnectorItem = (item: SearchItem): item is SearchItem & { type: 'connector' } =>
-  item.type === 'connector';
-
-export const isWireItem = (item: SearchItem): item is SearchItem & { type: 'wire' } =>
-  item.type === 'wire';
-
-export const isHarnessItem = (item: SearchItem): item is SearchItem & { type: 'harness' } =>
-  item.type === 'harness';
-
-export const isSystemItem = (item: SearchItem): item is SearchItem & { type: 'system' } =>
-  item.type === 'system';
-
-export const isSupplyItem = (item: SearchItem): item is SearchItem & { type: 'supply' } =>
-  item.type === 'supply';

@@ -6,6 +6,20 @@ const api = axios.create({
   timeout: 10000,
 });
 
+// Add a request interceptor to inject the JWT token automatically
+api.interceptors.request.use(
+  (config) => {
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // ======================
 // Types
 // ======================
@@ -13,6 +27,7 @@ const api = axios.create({
 export interface Model {
   id: string;
   name: string;
+  description?: string;
   createdAt?: string;
 }
 
@@ -287,6 +302,15 @@ export async function createModel(name: string, description?: string): Promise<M
   }
 }
 
+export async function updateModel(id: string, name: string, description?: string): Promise<void> {
+  try {
+    await api.put(`/models/${id}`, { name, description });
+  } catch (err) {
+    console.error("API ERROR → updateModel:", err);
+    throw err;
+  }
+}
+
 export async function deleteModel(id: string) {
   try {
     const res = await api.delete(`/models/${id}`);
@@ -294,6 +318,58 @@ export async function deleteModel(id: string) {
   } catch (err) {
     console.error("API ERROR → deleteModel:", err);
     throw err;
+  }
+}
+
+// ======================
+// Model Assignment APIs
+// ======================
+
+export async function assignModelsToUser(userId: string, modelIds: string[]): Promise<void> {
+  try {
+    await api.post(`/models/assignments/user/${userId}`, modelIds);
+  } catch (err) {
+    console.error("API ERROR → assignModelsToUser:", err);
+    throw err;
+  }
+}
+
+export async function assignUsersToModel(modelId: string, userIds: string[]): Promise<void> {
+  try {
+    await api.post(`/models/assignments/model/${modelId}`, userIds);
+  } catch (err) {
+    console.error("API ERROR → assignUsersToModel:", err);
+    throw err;
+  }
+}
+
+export async function getModelsForUser(userId: string): Promise<string[]> {
+  try {
+    const res = await api.get<string[]>(`/models/assignments/user/${userId}`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getModelsForUser:", err);
+    throw err;
+  }
+}
+
+export async function getUsersForModel(modelId: string): Promise<string[]> {
+  try {
+    const res = await api.get<string[]>(`/models/assignments/model/${modelId}`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getUsersForModel:", err);
+    throw err;
+  }
+}
+
+export async function getAssignedUserCount(modelId: string): Promise<number> {
+  try {
+    const res = await api.get<number>(`/models/assignments/model/${modelId}/count`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getAssignedUserCount:", err);
+    return 0;
   }
 }
 
@@ -454,6 +530,26 @@ export async function incrementUploadFailure() {
     return res.data;
   } catch (err) {
     console.error("API ERROR → incrementUploadFailure:", err);
+    throw err;
+  }
+}
+
+export async function getUploadStats() {
+  try {
+    const res = await api.get(`/uploads/stats`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getUploadStats:", err);
+    throw err;
+  }
+}
+
+export async function getSystemConfig() {
+  try {
+    const res = await api.get(`/settings/config`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getSystemConfig:", err);
     throw err;
   }
 }

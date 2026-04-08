@@ -50,6 +50,7 @@ import {
   resetView,
   handleWheel,
   zoom,
+  handleMouseMove,
   enterFullscreen,
   exitFullscreen,
 } from "./SchematicViews";
@@ -57,6 +58,7 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
+  RefreshCw,
   Maximize,
   Minimize,
   Download,
@@ -74,6 +76,13 @@ const safe = (val: number, fallback: number = 0): number => {
   return Number.isFinite(val) ? val : fallback;
 };
 
+// Global constants for schematic layout
+const componentSize = { width: 100, height: 60 };
+const padding = 20;
+const connectorSpacing = 30;
+const connectorHeight = 20;
+const connectorNamePadding = 25;
+
 export default function Schematic({
   data,
   scale = 1,
@@ -88,35 +97,71 @@ export default function Schematic({
   onComponentRightClick?: (component: ComponentType, pos: { x: number; y: number }) => void; // <-- ADDED
 }) {
   const svgWrapperRef = useRef<HTMLDivElement>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, component: ComponentType } | null>(null);
-
-  // Track render count
-  const [renderCount, setRenderCount] = useState(0);
-
-  // Track render count
+  const svgRef = useRef<SVGSVGElement>(null);
+  const popupRef = useRef<HTMLDivElement | null>(null);
   const renderInitialized = useRef(false);
+  const clickTimeout = useRef<number | null>(null);
+  const componentNameRefs = useRef<{ [id: string]: SVGTextElement | null }>({});
+  const connectorNameRefs = useRef<{ [id: string]: SVGTextElement | null }>({});
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [renderCount, setRenderCount] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [dragOrigin, setDragOrigin] = useState<{ x: number; y: number } | null>(null);
+  const [rotation, setRotation] = useState(0); // 0, 90, 180, 270
+  const [viewBox, setViewBox] = useState({ x: 0, y: 0, w: 800, h: 600 });
+  const [fitViewBox, setFitViewBox] = useState(viewBox);
+  
+  const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>([]);
+  const [selectedWires, setSelectedWires] = useState<string[]>([]);
+  const [selectedConnector, setSelectedConnector] = useState<ConnectorType | null>(null);
+  const [selectedDTC, setSelectedDTC] = useState<any>(null);
+  
+  const [popupComponent, setPopupComponent] = useState<ComponentType | null>(null);
+  const [popupPosition, setPopupPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [popupWire, setPopupWire] = useState<WirePopupType | null>(null);
+  const [popupWirePosition, setPopupWirePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [popupConnector, setPopupConnector] = useState<PopupConnectorType | null>(null);
+  const [popupSplice, setPopupSplice] = useState<SplicePopupType | null>(null);
+  const [popupSpliceLoading, setPopupSpliceLoading] = useState(false);
+  const [popupSpliceError, setPopupSpliceError] = useState<string | null>(null);
+  const [popupClosedManually, setPopupClosedManually] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, component: ComponentType } | null>(null);
+  const [componentNameWidths, setComponentNameWidths] = useState<{ [id: string]: number }>({});
+  const [connectorNameWidths, setConnectorNameWidths] = useState<{ [id: string]: number }>({});
+  const [connectorConnectionCount, setConnectorConnectionCount] = useState<{ [id: string]: number }>({});
+
+  // Temporary storage for connection points during wire rendering
+  let connectionPoints: { [id: string]: { x: number; y: number } } = {};
+
+  const draggingRef = useRef(dragging);
+  const dragStartRef = useRef(dragStart);
+  const dragOriginRef = useRef(dragOrigin);
+  const rotationRef = useRef(rotation);
+  const viewBoxRef = useRef(viewBox);
+
+  // Sync refs with state
+  useEffect(() => { draggingRef.current = dragging; }, [dragging]);
+  useEffect(() => { dragStartRef.current = dragStart; }, [dragStart]);
+  useEffect(() => { dragOriginRef.current = dragOrigin; }, [dragOrigin]);
+  useEffect(() => { rotationRef.current = rotation; }, [rotation]);
+  useEffect(() => { viewBoxRef.current = viewBox; }, [viewBox]);
+
+  // Track render count and analytics
   useEffect(() => {
     setRenderCount(prev => prev + 1);
-
-    // Only track the render once per schematic load to avoid double counting
     if (!renderInitialized.current) {
       renderInitialized.current = true;
-
-      // Track schematic render for analytics - increment daily count in localStorage
       try {
         const today = new Date().toDateString();
         const storedData = localStorage.getItem('schematicRendersAnalytics');
         let renderData = storedData ? JSON.parse(storedData) : { date: today, count: 0 };
-
-        // If it's a new day, reset the count
         if (renderData.date !== today) {
           renderData = { date: today, count: 1 };
         } else {
           renderData.count += 1;
         }
-
         localStorage.setItem('schematicRendersAnalytics', JSON.stringify(renderData));
       } catch (error) {
         console.error('Failed to update schematic render analytics:', error);
@@ -124,46 +169,66 @@ export default function Schematic({
     }
   }, [data]);
 
-  // Dragging state
-  const [dragging, setDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(
-    null
-  );
-  const [dragOrigin, setDragOrigin] = useState<{ x: number; y: number } | null>(
-    null
-  );
+  // Global interactions
+  useEffect(() => {
+    const handleGlobalClick = (event: MouseEvent) => {
+      const svgWrapper = svgWrapperRef.current;
+      const popup = popupRef.current;
+      if (svgWrapper && !svgWrapper.contains(event.target as Node) && (!popup || !popup.contains(event.target as Node))) {
+        setSelectedComponentIds([]);
+        setSelectedWires([]);
+        setSelectedConnector(null);
+        setPopupComponent(null);
+        setPopupConnector(null);
+        setPopupWire(null);
+        setPopupSplice(null);
+        setSelectedDTC(null);
+        setPopupClosedManually(false);
+        setContextMenu(null);
+      }
+    };
+    document.addEventListener("click", handleGlobalClick);
+    return () => document.removeEventListener("click", handleGlobalClick);
+  }, []);
 
-  //states for managing the component selection
-  const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>(
-    []
-  );
-  const [popupComponent, setPopupComponent] = useState<ComponentType | null>(
-    null
-  );
-  const [popupPosition, setPopupPosition] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
-  const [selectedDTC, setSelectedDTC] = useState<any>(null);
+  useEffect(() => {
+    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
-  //states to manage the wire selection
-  const [selectedWires, setSelectedWires] = useState<string[]>([]);
-  const [popupWire, setPopupWire] = useState<WirePopupType | null>(null);
-  const [popupWirePosition, setPopupWirePosition] = useState<{
-    x: number;
-    y: number;
-  }>({ x: 0, y: 0 });
+  useEffect(() => {
+    if (activeTab !== 'DTC') setSelectedDTC(null);
+  }, [activeTab]);
 
-  //state to manange the connector selection
-  const [selectedConnector, setSelectedConnector] =
-    useState<ConnectorType | null>(null);
-  const [popupConnector, setPopupConnector] =
-    useState<PopupConnectorType | null>(null);
+  const handleRotate = () => {
+    setRotation((prev) => (prev + 90) % 360);
+  };
 
-  // state to manage splice selection
-  const [popupSplice, setPopupSplice] = useState<SplicePopupType | null>(null);
-  const [popupSpliceLoading, setPopupSpliceLoading] = useState(false);
-  const [popupSpliceError, setPopupSpliceError] = useState<string | null>(null);
+  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    setDragging(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+    setDragOrigin({ x: viewBoxRef.current.x, y: viewBoxRef.current.y });
+  };
+
+  const handleMouseUp = () => {
+    setDragging(false);
+    setDragStart(null);
+    setDragOrigin(null);
+  };
+
+  const handleMouseMoveLocal = (e: React.MouseEvent<SVGSVGElement> | MouseEvent) => {
+    handleMouseMove(
+      e as any,
+      svgRef.current,
+      draggingRef.current,
+      dragStartRef.current,
+      dragOriginRef.current,
+      viewBoxRef.current,
+      setViewBox,
+      rotationRef.current
+    );
+  };
 
 
 
@@ -246,240 +311,62 @@ export default function Schematic({
 
   };
 
-  useEffect(() => {
-    const closeMenu = () => setContextMenu(null);
-    window.addEventListener('click', closeMenu);
-    return () => window.removeEventListener('click', closeMenu);
-  }, []);
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    };
-  }, []);
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      // If click is outside both the SVG and popup
-      if (
-        !svgWrapperRef.current?.contains(e.target as Node) &&
-        !popupRef.current?.contains(e.target as Node)
-      ) {
-        setSelectedComponentIds([]);
-        setSelectedWires([]);
-        // Close all popups and clear selections
-        setPopupComponent(null);
-        setPopupWire(null);
-        setPopupConnector(null);
-        setSelectedConnector(null); // Clear connector highlight
-        setSelectedDTC(null);
-        setPopupSplice(null);
-      }
-    };
+  // 5. EFFECTS (LISTENERS & VIEW MANAGEMENT)
+  useLayoutEffect(() => {
+    if (fitViewBox) resetView(svgWrapperRef, fitViewBox, setViewBox);
+  }, [fitViewBox, rotation]);
 
-    window.addEventListener("click", handleClickOutside);
-    return () => window.removeEventListener("click", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (!svgWrapperRef.current?.contains(e.target as Node)) {
-        setSelectedComponentIds([]);
-        setSelectedWires([]);
-        // Close all popups and clear selections
-        setPopupComponent(null);
-        setPopupWire(null);
-        setPopupConnector(null);
-        setSelectedConnector(null); // Clear connector highlight
-        setSelectedDTC(null);
-        setPopupSplice(null);
-      }
-    };
-
-    window.addEventListener("click", handleClickOutside);
-    return () => window.removeEventListener("click", handleClickOutside);
-  }, []);
-
-  const handleClosePopup = (e: React.MouseEvent) => {
-    e.stopPropagation(); // prevent outside-click effect
-    setPopupConnector(null); // close popup
-    setSelectedConnector(null); // clear highlight
-    setSelectedDTC(null); // clear DTC data
-  };
-
-  // Mouse event handlers for pan/drag
-  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    setDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
-    setDragOrigin({ x: viewBox.x, y: viewBox.y });
-  };
-
-  const handleMouseUp = () => {
-    setDragging(false);
-    setDragStart(null);
-    setDragOrigin(null);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!dragging || !dragStart || !dragOrigin) return;
-    const dx = e.clientX - dragStart.x;
-    const dy = e.clientY - dragStart.y;
-    setViewBox({
-      x: dragOrigin.x - dx * (viewBox.w / 300),
-      y: dragOrigin.y - dy * (viewBox.h / 100),
-      w: viewBox.w,
-      h: viewBox.h,
-    });
-  };
-  const popupRef = useRef<HTMLDivElement | null>(null);
-  const viewBoxRef = useRef({ x: 0, y: 0, w: 800, h: 600 });
-
-  const [viewBox, setViewBox] = useState({ x: 0, y: 0, w: 800, h: 600 });
-  const [fitViewBox, setFitViewBox] = useState(viewBox);
-  // Track if popup was manually closed
-  const [popupClosedManually, setPopupClosedManually] = useState(false);
-
-  // Keep viewBoxRef in sync with state
-  useEffect(() => {
-    viewBoxRef.current = viewBox;
-  }, [viewBox]);
-
-  //change deafault view box on data change
-  useEffect(() => {
-    if (fitViewBox) {
-      resetView(svgWrapperRef, fitViewBox, setViewBox);
-    }
-  }, [fitViewBox]);
-
-  // Clear DTC selection when tab changes
-  useEffect(() => {
-    // Only clear if we're moving away from DTC tab
-    if (activeTab !== 'DTC') {
-      setSelectedDTC(null);
-    }
-  }, [activeTab]);
-
-  // Reset view when data changes
-  useEffect(() => {
-    if (fitViewBox) {
-      resetView(svgWrapperRef, fitViewBox, setViewBox);
-    }
-  }, [data, fitViewBox]);
-
-  // Attach wheel listener with { passive: false } to allow preventDefault
   useEffect(() => {
     const svgElement = svgWrapperRef.current?.querySelector("svg");
     if (!svgElement) return;
-
     const handleWheelEvent = (e: WheelEvent) => {
-      handleWheel(e, svgElement as SVGSVGElement, viewBoxRef.current, setViewBox);
+      handleWheel(e, svgElement as SVGSVGElement, viewBoxRef.current, setViewBox, rotationRef.current);
     };
-
     svgElement.addEventListener("wheel", handleWheelEvent, { passive: false });
-    return () => {
-      svgElement.removeEventListener("wheel", handleWheelEvent);
-    };
-  }, []); // Empty dependency—listener attached once
-
-  const [componentNameWidths, setComponentNameWidths] = useState<{
-    [id: string]: number;
-  }>({});
-  const [connectorNameWidths, setConnectorNameWidths] = useState<{
-    [id: string]: number;
-  }>({});
-
-  const componentNameRefs = useRef<{ [id: string]: SVGTextElement | null }>({});
-  const connectorNameRefs = useRef<{ [id: string]: SVGTextElement | null }>({});
-  const clickTimeout = useRef<number | null>(null);
-
-  const [connectorConnectionCount, setConnectorConnectionCount] = useState<{
-    [id: string]: number;
-  }>({});
-
-  var connectionPoints: { [id: string]: { x: number; y: number } } = {};
-
-  const componentSize = { width: 100, height: 60 };
-  const connectorHeight = 20;
-  //pin padding changeed
-  const padding = 20;
-  const connectorNamePadding = 25;
-  const connectorSpacing = 30; //change to add spacing between greenbox
+    return () => svgElement.removeEventListener("wheel", handleWheelEvent);
+  }, []);
 
   useLayoutEffect(() => {
-    // Calculate maxY based on current data
-    var maxY =
-      padding +
-      componentSize.height +
-      spaceForWires(data) +
-      componentSize.height +
-      padding;
+    const svg = svgRef.current;
+    if (!svg) return;
+    const handleTouchMoveNative = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length > 0) {
+        const t = e.touches[0];
+        handleMouseMoveLocal({ clientX: t.clientX, clientY: t.clientY } as unknown as React.MouseEvent<SVGSVGElement>);
+      }
+    };
+    svg.addEventListener("touchmove", handleTouchMoveNative, { passive: false });
+    return () => svg.removeEventListener("touchmove", handleTouchMoveNative);
+  }, []);
 
+  useLayoutEffect(() => {
+    var maxY = padding + componentSize.height + spaceForWires(data) + componentSize.height + padding;
     let newWidths: { [id: string]: number } = {};
     let connWidths: { [id: string]: number } = {};
     let tempMaxX = 0;
 
     (data.components || []).forEach((comp) => {
       const ref = componentNameRefs.current[comp.id];
-      if (ref) {
-        newWidths[comp.id] = ref.getBBox().width;
-      } else {
-        newWidths[comp.id] = 100; // fallback width
-      }
+      newWidths[comp.id] = ref ? ref.getBBox().width : 100;
       tempMaxX += newWidths[comp.id];
-
       (comp.connectors || []).forEach((conn) => {
         const ref = connectorNameRefs.current[conn.id];
-        if (ref) {
-          connWidths[conn.id] = ref.getBBox().width;
-        } else {
-          connWidths[conn.id] = 50; // fallback width
-        }
+        connWidths[conn.id] = ref ? ref.getBBox().width : 50;
       });
     });
+
     setComponentNameWidths(newWidths);
     setConnectorNameWidths(connWidths);
-    // Connections count
+
     const connCount: { [id: string]: number } = {};
     data.connections?.forEach((conn) => {
-      connCount[conn.from.connectorId] =
-        (connCount[conn.from.connectorId] || 0) + 1;
-      connCount[conn.to.connectorId] =
-        (connCount[conn.to.connectorId] || 0) + 1;
+      connCount[conn.from.connectorId] = (connCount[conn.from.connectorId] || 0) + 1;
+      connCount[conn.to.connectorId] = (connCount[conn.to.connectorId] || 0) + 1;
     });
     setConnectorConnectionCount(connCount);
-    // Set viewBox and fitViewBox AFTER layout measured
-    const newBox = {
-      x: 0,
-      y: 0,
-      w: tempMaxX,
-      h: maxY,
-    };
-    setFitViewBox(newBox);
+    setFitViewBox({ x: 0, y: 0, w: tempMaxX, h: maxY });
   }, [data]);
-
-  useEffect(() => {
-    const handleGlobalClick = (event: MouseEvent) => {
-      // Check if click happened outside the SVG wrapper
-      const svgWrapper = svgWrapperRef.current;
-      if (svgWrapper && !svgWrapper.contains(event.target as Node)) {
-        setSelectedComponentIds([]);
-        setSelectedWires([]);
-        setSelectedConnector(null);
-        setPopupComponent(null);
-        setPopupConnector(null);
-        setPopupWire(null);
-        setPopupClosedManually(false);
-      }
-    };
-
-    document.addEventListener("click", handleGlobalClick);
-    // Cleanup on unmount
-    return () => {
-      document.removeEventListener("click", handleGlobalClick);
-    };
-  }, []);
 
   function checkAndReturnIntersection(
     i: number,
@@ -709,12 +596,16 @@ export default function Schematic({
     const offsetY = (wireIndex - (totalWires - 1) / 2) * spacing;
     return { x: centerX, offsetY };
   }
-  const buttonStyle = {
+  const buttonStyle: React.CSSProperties = {
     padding: "3px 7px",
     borderRadius: "6px",
     border: "1px solid #ccc",
     background: "white",
     cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "all 0.2s ease",
   };
 
   // export function start
@@ -830,10 +721,21 @@ export default function Schematic({
             }}
           >
             <button
-              onClick={() => resetView(svgWrapperRef, fitViewBox, setViewBox)}
+              onClick={handleRotate}
+              title="Rotate view"
               style={buttonStyle}
             >
               <RotateCcw size={18} />
+            </button>
+            <button
+              onClick={() => {
+                setRotation(0);
+                resetView(svgWrapperRef, fitViewBox, setViewBox);
+              }}
+              title="Reset view"
+              style={buttonStyle}
+            >
+              <RefreshCw size={18} />
             </button>
             <button
               onClick={() => zoom("in", viewBox, setViewBox)}
@@ -1042,6 +944,7 @@ export default function Schematic({
           <div id="export" style={{ width: "100%", height: "100%" }}>
 
             <svg
+              ref={svgRef}
               onClick={(e) => {
                 setContextMenu(null)
                 // Only deselect if click is on the SVG itself, not on components
@@ -1060,7 +963,8 @@ export default function Schematic({
                   e.nativeEvent,
                   e.currentTarget as SVGSVGElement,
                   viewBoxRef.current,
-                  setViewBox
+                  setViewBox,
+                  rotation
                 );
               }}
               style={{
@@ -1076,33 +980,25 @@ export default function Schematic({
                 msUserSelect: dragging ? ("none" as any) : ("auto" as any),
                 position: "relative",
                 overflow: "auto",
-                touchAction: "none",
+                touchAction: "none", // also helps prevent browser default behavior
               }}
               viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
               onMouseDown={handleMouseDown}
               onMouseUp={handleMouseUp}
-              onMouseMove={handleMouseMove}
+              onMouseMove={handleMouseMoveLocal}
               onTouchStart={(e) => {
-                e.preventDefault();
                 const t = e.touches[0];
                 handleMouseDown({
                   clientX: t.clientX,
                   clientY: t.clientY,
                 } as unknown as React.MouseEvent<SVGSVGElement>);
               }}
-              onTouchMove={(e) => {
-                e.preventDefault();
-                const t = e.touches[0];
-                handleMouseMove({
-                  clientX: t.clientX,
-                  clientY: t.clientY,
-                } as unknown as React.MouseEvent<SVGSVGElement>);
-              }}
+              // onTouchMove is handled manually via ref to allow preventDefault
               onTouchEnd={(e) => {
-                e.preventDefault();
                 handleMouseUp();
               }}
             >
+              <g transform={`rotate(${rotation} ${viewBox.x + viewBox.w / 2} ${viewBox.y + viewBox.h / 2})`}>
 
               {(data.components || []).map((comp, componentIndex) => (
                 <g key={comp.id}>
@@ -1961,6 +1857,7 @@ export default function Schematic({
                 );
                 return <g key={i}>{wireElement}</g>;
               })}
+              </g>
             </svg>
             {/* 3. THE CONTEXT MENU UI */}
             {contextMenu && (

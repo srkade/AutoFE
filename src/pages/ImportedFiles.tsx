@@ -374,22 +374,33 @@ const ImportedFiles: React.FC = () => {
         <p>Upload CSV / Excel files and track their live status</p>
       </div>
 
-      {/* TOP UPLOAD BAR */}
-      <div className="upload-options" style={{ marginBottom: '16px', padding: '16px', borderRadius: '8px', background: 'white' }}>
-        <h3 style={{ marginBottom: '12px' }}>🎯 Target Model</h3>
-        <select
-          value={targetModelId}
-          onChange={(e) => setTargetModelId(e.target.value)}
-          style={{ width: '100%', maxWidth: '300px', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', marginBottom: '16px' }}
-        >
-          <option value="">No Model (Shared Data)</option>
-          {models.map(m => (
-            <option key={m.id} value={m.id}>{m.name}</option>
-          ))}
-        </select>
-      </div>
+      {/* TOP UPLOAD BAR & CONTROLS */}
+      <div className="top-controls-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '16px' }}>
+        
+        {/* TARGET MODEL SELECTION */}
+        <div className="upload-options" style={{ padding: '16px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+          <h3 style={{ marginBottom: '12px', fontSize: '14px', color: 'var(--text-primary)' }}>🎯 Target Model</h3>
+          <select
+            value={targetModelId}
+            onChange={(e) => setTargetModelId(e.target.value)}
+            style={{ 
+              width: '100%', 
+              maxWidth: '300px', 
+              padding: '10px', 
+              borderRadius: '6px', 
+              border: '1px solid var(--border-color)', 
+              background: 'var(--bg-primary)',
+              color: 'var(--text-primary)'
+            }}
+          >
+            <option value="">No Model (Shared Data)</option>
+            {models.map(m => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+        </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div className="upload-bar">
           <input
             id="file-input"
@@ -469,6 +480,7 @@ const ImportedFiles: React.FC = () => {
         </div>
 
       </div>
+      </div>
 
       {/* FILE TABLE */}
       <div className="file-table-wrapper">
@@ -477,10 +489,10 @@ const ImportedFiles: React.FC = () => {
             <tr>
               <th></th>
               <th>File Name</th>
-              <th>Size</th>
-              <th>Updated At</th>
+              <th className="hide-mobile">Size</th>
+              <th className="hide-mobile">Updated At</th>
               <th>Status</th>
-              <th>DB Table</th>
+              <th className="hide-mobile">DB Table</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -498,9 +510,8 @@ const ImportedFiles: React.FC = () => {
 
                 <td>{upload.fileName}</td>
 
-                <td>{upload.filesize ? formatFileSize(upload.filesize) : '--'}</td>
-
-                <td>{formatTimestamp(upload.timestamp)}</td>
+                <td className="hide-mobile">{upload.filesize ? formatFileSize(upload.filesize) : '--'}</td>
+                <td className="hide-mobile">{formatTimestamp(upload.timestamp)}</td>
 
                 <td>
                   <span className={`status-badge ${upload.status}`}>
@@ -508,7 +519,7 @@ const ImportedFiles: React.FC = () => {
                   </span>
                 </td>
 
-                <td>
+                <td className="hide-mobile">
                   {upload.status === 'success' ? (
                     upload.isTablePresent ? (
                       <span className="table-status present" title="Table exists in database">✅ Present</span>

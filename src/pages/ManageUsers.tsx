@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../Styles/ManageUsers.css";
-import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2, FiShield } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
 import RegisterForm from "./RegistrationForm";
 import { User } from "../components/Schematic/SchematicTypes";
 import { fetchUsers, updateUser, deleteUserById, registerUser, updateUserStatus as apiUpdateUserStatus, updateUserRole } from "../services/api";
+import AssignModelsModal from "../components/AssignModelsModal";
 
 export default function ManageUsersModern() {
   const [users, setUsers] = useState<User[]>([]);
@@ -60,6 +61,7 @@ export default function ManageUsersModern() {
   const [roleFilter, setRoleFilter] = useState<User["role"] | null>(null);
   const [statusFilter, setStatusFilter] = useState<User["status"] | null>(null);
   const [dateFilter, setDateFilter] = useState<"Last 7 days" | "Last 30 days" | "Last year" | null>(null);
+  const [assigningModelsUser, setAssigningModelsUser] = useState<{id: string, name: string} | null>(null);
 
   // Save users to sessionStorage
   useEffect(() => {
@@ -306,165 +308,189 @@ export default function ManageUsersModern() {
 
 
   return (
-    <div className="users-page">
-      <h1 className="title">User Management</h1>
-      <p className="subtitle">
-        Manage all users in one place. Control access, assign roles, and monitor activity.
-      </p>
+    <div className="manage-users-container">
+      <div className="header-section">
+        <div>
+          <h1 className="title">User Management</h1>
+          <p className="subtitle">
+            Manage all users in one place. Control access, assign roles, and monitor activity.
+          </p>
+        </div>
+        <div className="toolbar">
+          <div className="search-bar-wrapper">
+            <FiSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <button className="btn-add" onClick={handleAddUser}>
+            + Add User
+          </button>
+        </div>
+      </div>
 
-      {/* TOOLBAR */}
-      <div className="toolbar">
-        <div className="search-box">
-          <FiSearch />
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="filter-wrapper" ref={filterRef} style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        {/* ROLE FILTER */}
+        <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "role" ? null : "role")} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px solid var(--border-color)', cursor: 'pointer', position: 'relative', color: 'var(--text-primary)' }}>
+          <FiFilter /> Role <IoIosArrowDown />
+          {activeFilter === "role" && (
+            <div className="filter-dropdown" style={{ position: 'absolute', top: '100%', left: 0, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 10, padding: '8px', boxShadow: 'var(--card-shadow)', minWidth: '120px' }}>
+              {["User", "Author"].map(role => (
+                <div key={role} onClick={() => { setRoleFilter(role as User["role"]); setActiveFilter(null); }} style={{ padding: '8px', cursor: 'pointer' }}>
+                  {role}
+                </div>
+              ))}
+              <div onClick={() => { setRoleFilter(null); setActiveFilter(null); }} style={{ padding: '8px', cursor: 'pointer', borderTop: '1px solid #f1f5f9' }}>Clear</div>
+            </div>
+          )}
         </div>
 
-        <div className="filter-wrapper" ref={filterRef}>
-          {/* ROLE FILTER */}
-          <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "role" ? null : "role")}>
-            <FiFilter /> Role <IoIosArrowDown />
-            {activeFilter === "role" && (
-              <div className="filter-dropdown">
-                {["User", "Author"].map(role => (
-                  <div key={role} onClick={() => { setRoleFilter(role as User["role"]); setActiveFilter(null); }}>
-                    {role}
-                  </div>
-                ))}
-                <div onClick={() => { setRoleFilter(null); setActiveFilter(null); }}>Clear</div>
-              </div>
-            )}
-          </div>
-
-          {/* STATUS FILTER */}
-          <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "status" ? null : "status")}>
-            <FiFilter /> Status <IoIosArrowDown />
-            {activeFilter === "status" && (
-              <div className="filter-dropdown">
-                {["Active", "Inactive", "Pending", "Banned", "Suspended"].map(status => (
-                  <div key={status} onClick={() => { setStatusFilter(status as User["status"]); setActiveFilter(null); }}>
-                    {status}
-                  </div>
-                ))}
-                <div onClick={() => { setStatusFilter(null); setActiveFilter(null); }}>Clear</div>
-              </div>
-            )}
-          </div>
-
-          {/* DATE FILTER */}
-          <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "date" ? null : "date")}>
-            <FiCalendar /> Date <IoIosArrowDown />
-            {activeFilter === "date" && (
-              <div className="filter-dropdown">
-                {["Last 7 days", "Last 30 days", "Last year"].map(date => (
-                  <div key={date} onClick={() => { setDateFilter(date as any); setActiveFilter(null); }}>
-                    {date}
-                  </div>
-                ))}
-                <div onClick={() => { setDateFilter(null); setActiveFilter(null); }}>Clear</div>
-              </div>
-            )}
-          </div>
+        {/* STATUS FILTER */}
+        <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "status" ? null : "status")} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px solid var(--border-color)', cursor: 'pointer', position: 'relative', color: 'var(--text-primary)' }}>
+          <FiFilter /> Status <IoIosArrowDown />
+          {activeFilter === "status" && (
+            <div className="filter-dropdown" style={{ position: 'absolute', top: '100%', left: 0, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 10, padding: '8px', minWidth: '120px', boxShadow: 'var(--card-shadow)' }}>
+              {["Active", "Inactive", "Pending", "Banned", "Suspended"].map(status => (
+                <div key={status} onClick={() => { setStatusFilter(status as User["status"]); setActiveFilter(null); }} style={{ padding: '8px', cursor: 'pointer' }}>
+                  {status}
+                </div>
+              ))}
+              <div onClick={() => { setStatusFilter(null); setActiveFilter(null); }} style={{ padding: '8px', cursor: 'pointer', borderTop: '1px solid #f1f5f9' }}>Clear</div>
+            </div>
+          )}
         </div>
 
-        {/* ADD USER BUTTON */}
-        <div className="toolbar-right">
-          <button className="add-btn" onClick={handleAddUser}>+ Add User</button>
+        {/* DATE FILTER */}
+        <div className="filter-chip" onClick={() => setActiveFilter(prev => prev === "date" ? null : "date")} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px solid var(--border-color)', cursor: 'pointer', position: 'relative', color: 'var(--text-primary)' }}>
+          <FiCalendar /> Date <IoIosArrowDown />
+          {activeFilter === "date" && (
+            <div className="filter-dropdown" style={{ position: 'absolute', top: '100%', left: 0, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 10, padding: '8px', minWidth: '150px', boxShadow: 'var(--card-shadow)' }}>
+              {["Last 7 days", "Last 30 days", "Last year"].map(date => (
+                <div key={date} onClick={() => { setDateFilter(date as any); setActiveFilter(null); }} style={{ padding: '8px', cursor: 'pointer' }}>
+                  {date}
+                </div>
+              ))}
+              <div onClick={() => { setDateFilter(null); setActiveFilter(null); }} style={{ padding: '8px', cursor: 'pointer', borderTop: '1px solid #f1f5f9' }}>Clear</div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* USER TABLE */}
-      <table className="user-table">
-        <thead>
-          <tr>
-            <th>First Name</th><th>Last Name</th><th>Email</th><th>Status</th><th>Role</th><th>Joined</th><th>Last Active</th><th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredUsers.map(u => (
-            <tr key={u.id}>
-              <td>{u.firstName}</td>
-              <td>{u.lastName}</td>
-              <td>{u.email}</td>
-              <td>
-                {statusEditingUserId === u.id ? (
-                  <select
-                    value={u.status}
-                    autoFocus
-                    onChange={(e) =>
-                      handleStatusChange(u.id, e.target.value as User["status"])
-                    }
-                    onBlur={() => setStatusEditingUserId(null)}
-                  >
-                    {STATUS_OPTIONS.map(status => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <span
-                    className={`status-chip ${(u.status || "pending").toLowerCase()}`}
-                    style={{ cursor: "pointer" }}
-                    onClick={() => setStatusEditingUserId(u.id)}
-                  >
-                    {u.status}
-                  </span>
-                )}
-              </td>
-              <td>
-                {roleEditingUserId === u.id ? (
-                  <select
-                    value={u.role || "User"}
-                    autoFocus
-                    onChange={(e) =>
-                      handleRoleChange(u.id, e.target.value as User["role"])
-                    }
-                    onBlur={() => setRoleEditingUserId(null)}
-                  >
-                    <option value="User">User</option>
-                    <option value="Author">Author</option>
-                  </select>
-                ) : (
-                  <span
-                    style={{ cursor: "pointer", padding: "4px 8px", borderRadius: "4px", backgroundColor: "#e9ecef" }}
-                    onClick={() => setRoleEditingUserId(u.id)}
-                  >
-                    {u.role || "User"}
-                  </span>
-                )}
-              </td>
-              <td>{u.joined ? new Date(u.joined).toLocaleString() : "-"}</td>
-              <td>{u.lastActive ? new Date(u.lastActive).toLocaleString() : "-"}</td>
-              <td className="actions">
-                <FiEdit2 className="edit-icon" onClick={() => editUser(u)} />
-                <FiTrash2 className="delete-icon" onClick={() => handleDeleteUser(u.id)} />
-              </td>
+      <div className="table-responsive">
+        <table className="user-table">
+          <thead>
+            <tr>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th className="hide-mobile">Email</th>
+              <th>Status</th>
+              <th>Role</th>
+              <th className="hide-mobile">Joined</th>
+              <th className="hide-mobile">Last Active</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredUsers.map(u => (
+              <tr key={u.id}>
+                <td>{u.firstName}</td>
+                <td>{u.lastName}</td>
+                <td className="hide-mobile">{u.email}</td>
+                <td>
+                  {statusEditingUserId === u.id ? (
+                    <select
+                      value={u.status}
+                      autoFocus
+                      onChange={(e) =>
+                        handleStatusChange(u.id, e.target.value as User["status"])
+                      }
+                      onBlur={() => setStatusEditingUserId(null)}
+                      style={{ padding: '4px', borderRadius: '4px' }}
+                    >
+                      {STATUS_OPTIONS.map(status => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span
+                      className={`status-chip ${(u.status || "pending").toLowerCase()}`}
+                      style={{ cursor: "pointer", padding: '4px 8px', borderRadius: '12px', fontSize: '11px' }}
+                      onClick={() => setStatusEditingUserId(u.id)}
+                    >
+                      {u.status}
+                    </span>
+                  )}
+                </td>
+                <td>
+                  {roleEditingUserId === u.id ? (
+                    <select
+                      value={u.role || "User"}
+                      autoFocus
+                      onChange={(e) =>
+                        handleRoleChange(u.id, e.target.value as User["role"])
+                      }
+                      onBlur={() => setRoleEditingUserId(null)}
+                      style={{ padding: '4px', borderRadius: '4px' }}
+                    >
+                      <option value="User">User</option>
+                      <option value="Author">Author</option>
+                    </select>
+                  ) : (
+                    <span
+                      style={{ cursor: "pointer", padding: "4px 8px", borderRadius: "4px", backgroundColor: "var(--bg-primary)", color: "var(--text-primary)", fontSize: '11px', border: "1px solid var(--border-color)" }}
+                      onClick={() => setRoleEditingUserId(u.id)}
+                    >
+                      {u.role || "User"}
+                    </span>
+                  )}
+                </td>
+                <td className="hide-mobile">{u.joined ? new Date(u.joined).toLocaleDateString() : "-"}</td>
+                <td className="hide-mobile">{u.lastActive ? new Date(u.lastActive).toLocaleDateString() : "-"}</td>
+                <td className="actions">
+                  <FiShield className="edit-icon" title="Assign Models" onClick={() => setAssigningModelsUser({id: u.id, name: `${u.firstName} ${u.lastName}`})} style={{ marginRight: '8px', cursor: 'pointer', color: '#10b981' }} />
+                  <FiEdit2 className="edit-icon" title="Edit User" onClick={() => editUser(u)} style={{ marginRight: '8px', cursor: 'pointer', color: '#3b82f6' }} />
+                  <FiTrash2 className="delete-icon" title="Delete User" onClick={() => handleDeleteUser(u.id)} style={{ cursor: 'pointer', color: '#ef4444' }} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* REGISTER / EDIT FORM MODAL */}
       {showRegisterForm && (
-        <div className="form-modal">
-          <RegisterForm
-            userToEdit={editingUser}
-            onSave={handleSaveUser}
-            onBackToLogin={() => {
-              setShowRegisterForm(false);
-              setEditingUser(null);
-            }}
-            showLeftPanel={false}
-            showCloseButton={true}
-            customHeight="650px"
-            isAuthor={true}
-          />
+        <div className="form-modal" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: '12px', padding: '20px', maxWidth: '600px', width: '90%', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--border-color)', boxShadow: 'var(--card-shadow)' }}>
+            <RegisterForm
+              userToEdit={editingUser}
+              onSave={handleSaveUser}
+              onBackToLogin={() => {
+                setShowRegisterForm(false);
+                setEditingUser(null);
+              }}
+              showLeftPanel={false}
+              showCloseButton={true}
+              customHeight="650px"
+              isAuthor={true}
+            />
+          </div>
         </div>
+      )}
+
+      {/* ASSIGN MODELS MODAL */}
+      {assigningModelsUser && (
+        <AssignModelsModal 
+          userId={assigningModelsUser.id}
+          userName={assigningModelsUser.name}
+          onClose={() => setAssigningModelsUser(null)}
+          onSave={() => alert("Model assignments updated successfully.")}
+        />
       )}
     </div>
   );

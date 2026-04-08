@@ -4,11 +4,11 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background: linear-gradient(135deg, #e8f0ff, #d7e3fc);
+  background: var(--welcome-bg);
   /* Now active for consistency */
-  color: #1a237e;
+  color: var(--text-primary);
   font-family: "Segoe UI", Roboto, sans-serif;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .welcome-inner {
@@ -28,12 +28,12 @@
 .welcome-text h1 {
   font-size: 50px;
   margin-bottom: 20px;
-  color: #0d47a1;
+  color: var(--accent-secondary);
   line-height: 1.2;
 }
 
 .welcome-text h1 span {
-  color: #1565c0;
+  color: var(--accent-primary);
 }
 
 .welcome-text p {
@@ -41,7 +41,7 @@
   line-height: 1.8;
   /* Increased for better readability */
   margin-bottom: 30px;
-  color: #2c387e;
+  color: var(--text-secondary);
 }
 
 .features {
@@ -49,7 +49,7 @@
   flex-direction: column;
   gap: 12px;
   font-size: 16px;
-  color: #283593;
+  color: var(--text-secondary);
   margin-bottom: 40px;
 }
 
@@ -103,18 +103,15 @@
 
 .home-image {
   width: 650px;
-  /* Increased size */
   height: 500px;
   object-fit: contain;
-  mix-blend-mode: multiply;
   opacity: 1;
   animation: float 3s ease-in-out infinite;
   filter: drop-shadow(0px 12px 24px rgba(0, 0, 0, 0.15));
   transition: all 0.3s ease;
-  border: 1px solid #e0e0e0;
-  /* Subtle border for depth */
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  background-color: #ffffff;
+  background-color: #ffffff; /* Keep white background for technical drawing clarity */
   /* Ensure white background */
   padding: 8px;
   /* Add slight padding for visual separation */
@@ -124,11 +121,12 @@
 footer {
   text-align: center;
   padding: 20px;
-  background-color: rgba(240, 244, 255, 0.7);
+  background-color: var(--bg-secondary);
+  opacity: 0.8;
   /* Semi-transparent to match gradient */
   font-size: 14px;
-  color: #3949ab;
-  border-top: 1px solid #c5cae9;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-color);
 }
 
 /* Animations */

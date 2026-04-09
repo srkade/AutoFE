@@ -9,12 +9,11 @@
   color: var(--text-secondary);
   height: 100vh;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
-  position: fixed;
-  top: 0;
-  left: 0;
   box-sizing: border-box;
   z-index: 1001;
-  transition: transform 0.3s ease-in-out;
+  transition: width 0.3s ease, padding 0.3s ease;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 /* Panel Hidden State */
@@ -22,8 +21,33 @@
   transform: translateX(-100%);
 }
 
+/* Collapsed State - Show Only Icons */
+.admin-nav.collapsed {
+  width: 70px;
+  padding: 20px 8px;
+}
+
+.admin-nav.collapsed .nav-logo {
+  justify-content: center !important;
+  margin-bottom: 16px !important;
+}
+
+.admin-nav.collapsed .tab-item {
+  justify-content: center !important;
+  padding: 14px 8px !important;
+}
+
+.admin-nav.collapsed .tab-item span:not(.tab-item svg ~ span) {
+  display: none;
+}
+
 .admin-nav.mobile-drawer {
   transform: translateX(-100%);
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 1005;
 }
 
 .admin-nav.mobile-drawer.open {
@@ -148,10 +172,7 @@
 }
 
 .admin-topbar {
-  position: fixed;
-  top: 0;
-  left: 260px;
-  width: calc(100% - 260px);
+  width: 100%;
   height: 60px;
   background-color: var(--header-bg);
   display: flex;
@@ -161,13 +182,19 @@
   z-index: 1000;
   box-sizing: border-box;
   border-bottom: 1px solid var(--border-color);
-  transition: left 0.3s ease, width 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 /* Panel Hidden - Adjust Topbar */
 .admin-container.panel-hidden .admin-topbar {
   left: 0;
   width: 100%;
+}
+
+/* Sidebar collapsed adjustments */
+.admin-nav.collapsed {
+  width: 80px;
+  padding: 20px 8px;
 }
 
 /* Toggle Panel Button */
@@ -199,8 +226,8 @@
 
 .content-panel {
   flex: 1;
-  padding: 80px 24px 24px 260px; /* Fixed sidebar width for Author */
-  height: 100vh;
+  padding: 24px;
+  height: 100%;
   overflow-y: auto;
   box-sizing: border-box;
   transition: all 0.3s ease;
@@ -212,8 +239,13 @@
   padding-left: 24px;
 }
 
+/* Panel Collapsed - Adjust Content Panel - REMOVED FIXED OFFSETS */
+.tab-item:hover .nav-tooltip {
+  opacity: 1 !important;
+}
+
 .sa-content {
-  padding: 0 0 0 300px !important; /* Margin for 300px sa-nav */
+  padding: 0;
   background: #f1f5f9;
 }
 
@@ -238,8 +270,33 @@
   transform: translateX(-100%);
 }
 
+/* Collapsed State for Super Admin */
+.sa-nav.collapsed {
+  width: 80px !important;
+  padding: 20px 8px !important;
+}
+
+.sa-nav.collapsed .nav-logo {
+  justify-content: center !important;
+  margin-bottom: 16px !important;
+}
+
+.sa-nav.collapsed .tab-item {
+  justify-content: center !important;
+  padding: 14px 8px !important;
+}
+
 .admin-container.panel-hidden .sa-content {
   padding-left: 24px !important;
+}
+
+/* Panel Collapsed - Adjust Super Admin Content - REMOVED FIXED OFFSETS */
+.admin-container.panel-hidden .sa-nav {
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
 }
 
 .sa-wrapper {
@@ -403,6 +460,11 @@
   .sa-nav {
     width: 280px;
     transform: translateX(-100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1005;
   }
 
   .sa-nav.open {

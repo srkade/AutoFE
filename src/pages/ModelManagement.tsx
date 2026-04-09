@@ -1,43 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  getModels, 
-  createModel, 
-  updateModel, 
-  deleteModel, 
-  Model, 
+import {
+  getModels,
+  createModel,
+  updateModel,
+  deleteModel,
+  Model,
   getAssignedUserCount,
   getUsersForModel,
   assignUsersToModel,
   fetchUsers
 } from '../services/api';
-import { 
-  FiPlus, 
-  FiEdit2, 
-  FiTrash2, 
-  FiUsers, 
+import {
+  FiPlus,
+  FiEdit2,
+  FiTrash2,
+  FiUsers,
   FiSearch,
   FiX,
-  FiCheck
+  FiCheck,
+  FiPackage
 } from 'react-icons/fi';
-import '../Styles/ManageUsers.css'; // Reuse table styles
+import '../Styles/ModelManagement.css';
 
 const ModelManagement: React.FC = () => {
   const [models, setModels] = useState<Model[]>([]);
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [currentModel, setCurrentModel] = useState<Model | null>(null);
-  
+
   // Form states
   const [formData, setFormData] = useState({ name: '', description: '' });
-  
+
   // Assignment states
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [assignedUserIds, setAssignedUserIds] = useState<string[]>([]);
+  const [userSearch, setUserSearch] = useState('');
 
   useEffect(() => {
     loadData();
@@ -48,15 +50,14 @@ const ModelManagement: React.FC = () => {
     try {
       const modelList = await getModels();
       setModels(modelList);
-      
-      // Load user counts for each model
+
       const counts: Record<string, number> = {};
       for (const m of modelList) {
         counts[m.id] = await getAssignedUserCount(m.id);
       }
       setUserCounts(counts);
     } catch (err) {
-      console.error("Failed to load models", err);
+      console.error('Failed to load models', err);
     } finally {
       setLoading(false);
     }
@@ -75,6 +76,7 @@ const ModelManagement: React.FC = () => {
   };
 
   const handleSaveModel = async () => {
+    if (!formData.name.trim()) return;
     try {
       if (currentModel) {
         await updateModel(currentModel.id, formData.name, formData.description);
@@ -84,23 +86,24 @@ const ModelManagement: React.FC = () => {
       setIsEditModalOpen(false);
       loadData();
     } catch (err) {
-      alert("Failed to save model");
+      alert('Failed to save model');
     }
   };
 
   const handleDeleteModel = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this model? (Soft delete)")) {
+    if (window.confirm('Are you sure you want to delete this model?')) {
       try {
         await deleteModel(id);
         loadData();
       } catch (err) {
-        alert("Failed to delete model");
+        alert('Failed to delete model');
       }
     }
   };
 
   const handleOpenAssign = async (model: Model) => {
     setCurrentModel(model);
+    setUserSearch('');
     try {
       const users = await fetchUsers();
       const assigned = await getUsersForModel(model.id);
@@ -108,12 +111,12 @@ const ModelManagement: React.FC = () => {
       setAssignedUserIds(assigned);
       setIsAssignModalOpen(true);
     } catch (err) {
-      alert("Failed to load user data");
+      alert('Failed to load user data');
     }
   };
 
   const handleToggleUser = (userId: string) => {
-    setAssignedUserIds(prev => 
+    setAssignedUserIds(prev =>
       prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
     );
   };
@@ -125,161 +128,288 @@ const ModelManagement: React.FC = () => {
       setIsAssignModalOpen(false);
       loadData();
     } catch (err) {
-      alert("Failed to save assignments");
+      alert('Failed to save assignments');
     }
   };
 
-  const filteredModels = models.filter(m => 
+  const getInitials = (firstName: string, lastName: string) =>
+    `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || '?';
+
+  const filteredModels = models.filter(m =>
     m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (m.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const filteredUsers = allUsers.filter(u =>
+    `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
+  const totalAssigned = Object.values(userCounts).reduce((a, b) => a + b, 0);
+
   return (
-    <div className="manage-users-container">
-      <div className="header-section">
+    <div className="model-mgmt-page">
+
+      {/* Header */}
+      <div className="model-mgmt-header">
         <div>
-          <h1>Model Management</h1>
-          <p>Create and manage vehicle models and assign user access</p>
+          <h1 className="model-mgmt-title">Model Management</h1>
+          <p className="model-mgmt-subtitle">
+            Create vehicle models and control which users can access their schematics.
+          </p>
         </div>
-        <button className="add-user-btn" onClick={handleOpenCreate}>
-          <FiPlus /> New Model
+        <button className="btn-new-model" onClick={handleOpenCreate}>
+          <FiPlus size={16} /> New Model
         </button>
       </div>
 
-      <div className="filters-bar">
-        <div className="search-box">
-          <FiSearch />
-          <input 
-            type="text" 
-            placeholder="Search models..." 
+      {/* Stats bar */}
+      <div className="model-stats-bar">
+        <div className="model-stat-card">
+          <div className="model-stat-value">{models.length}</div>
+          <div className="model-stat-label">Total Models</div>
+        </div>
+        <div className="model-stat-card">
+          <div className="model-stat-value">{totalAssigned}</div>
+          <div className="model-stat-label">Total Assigned Users</div>
+        </div>
+        <div className="model-stat-card">
+          <div className="model-stat-value">
+            {models.filter(m => (userCounts[m.id] || 0) > 0).length}
+          </div>
+          <div className="model-stat-label">Active Models</div>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="model-mgmt-toolbar">
+        <div className="model-search-box">
+          <FiSearch size={15} />
+          <input
+            type="text"
+            placeholder="Search models..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="users-table-wrapper">
-        <table className="users-table">
+      {/* Table */}
+      <div className="model-table-wrapper">
+        <table className="model-table">
           <thead>
             <tr>
               <th>Model Name</th>
               <th>Description</th>
-              <th>Created At</th>
+              <th>Created</th>
               <th>Assigned Users</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} style={{textAlign: 'center', padding: '20px'}}>Loading models...</td></tr>
-            ) : filteredModels.map(model => (
-              <tr key={model.id}>
-                <td><strong>{model.name}</strong></td>
-                <td>{model.description || <em style={{color: '#999'}}>No description</em>}</td>
-                <td>{model.createdAt ? new Date(model.createdAt).toLocaleDateString() : '--'}</td>
-                <td>
-                  <span className="role-badge author">
-                    <FiUsers size={12} style={{marginRight: '4px'}}/>
-                    {userCounts[model.id] || 0} Users
-                  </span>
+              <tr>
+                <td colSpan={5}>
+                  <div className="model-loading">Loading models...</div>
                 </td>
-                <td style={{ textAlign: 'right' }}>
-                  <div className="action-buttons">
-                    <button className="edit-btn" title="Assign Users" onClick={() => handleOpenAssign(model)}>
-                      <FiUsers />
-                    </button>
-                    <button className="edit-btn" title="Edit Model" onClick={() => handleOpenEdit(model)}>
-                      <FiEdit2 />
-                    </button>
-                    <button className="delete-btn" title="Delete Model" onClick={() => handleDeleteModel(model.id)}>
-                      <FiTrash2 />
-                    </button>
+              </tr>
+            ) : filteredModels.length === 0 ? (
+              <tr>
+                <td colSpan={5}>
+                  <div className="model-empty-state">
+                    <FiPackage size={40} />
+                    <p>
+                      {searchTerm
+                        ? `No models matching "${searchTerm}"`
+                        : 'No models yet. Create your first model.'}
+                    </p>
                   </div>
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredModels.map(model => (
+                <tr key={model.id}>
+                  <td>
+                    <div className="model-name-cell">
+                      <span className="model-name">{model.name}</span>
+                      <span className="model-id-label">#{model.id.slice(0, 8)}</span>
+                    </div>
+                  </td>
+                  <td>
+                    {model.description
+                      ? <span className="model-desc">{model.description}</span>
+                      : <span className="model-desc empty">No description</span>
+                    }
+                  </td>
+                  <td>
+                    {model.createdAt
+                      ? new Date(model.createdAt).toLocaleDateString('en-GB', {
+                          day: '2-digit', month: 'short', year: 'numeric'
+                        })
+                      : '—'}
+                  </td>
+                  <td>
+                    <span className="user-badge">
+                      <FiUsers size={12} />
+                      {userCounts[model.id] ?? 0} Users
+                    </span>
+                  </td>
+                  <td>
+                    <div className="model-actions-cell">
+                      <button
+                        className="model-action-btn assign"
+                        title="Assign Users"
+                        onClick={() => handleOpenAssign(model)}
+                      >
+                        <FiUsers size={15} />
+                      </button>
+                      <button
+                        className="model-action-btn edit"
+                        title="Edit Model"
+                        onClick={() => handleOpenEdit(model)}
+                      >
+                        <FiEdit2 size={15} />
+                      </button>
+                      <button
+                        className="model-action-btn delete"
+                        title="Delete Model"
+                        onClick={() => handleDeleteModel(model.id)}
+                      >
+                        <FiTrash2 size={15} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* CREATE/EDIT MODAL */}
+      {/* ===== CREATE / EDIT MODAL ===== */}
       {isEditModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{maxWidth: '450px'}}>
-            <div className="modal-header">
+        <div className="mm-modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+          <div className="mm-modal" onClick={e => e.stopPropagation()}>
+            <div className="mm-modal-header">
               <h2>{currentModel ? 'Edit Model' : 'Create New Model'}</h2>
-              <button onClick={() => setIsEditModalOpen(false)}><FiX /></button>
+              <button className="mm-modal-close" onClick={() => setIsEditModalOpen(false)}>
+                <FiX size={16} />
+              </button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Model Name</label>
-                <input 
-                  type="text" 
+
+            <div className="mm-modal-body">
+              <div className="mm-form-group">
+                <label>Model Name <span style={{ color: '#ef4444' }}>*</span></label>
+                <input
+                  type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  placeholder="e.g. Tesla Model S 2024"
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g. Toyota Hilux 2024"
+                  autoFocus
                 />
               </div>
-              <div className="form-group">
+              <div className="mm-form-group">
                 <label>Description</label>
-                <textarea 
+                <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  placeholder="Hardware version, region, etc."
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Hardware version, region, notes..."
                   rows={4}
-                  style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)'}}
                 />
               </div>
             </div>
-            <div className="modal-footer">
-              <button className="cancel-btn" onClick={() => setIsEditModalOpen(false)}>Cancel</button>
-              <button className="save-btn" onClick={handleSaveModel}>Save Model</button>
+
+            <div className="mm-modal-footer">
+              <button className="mm-btn-cancel" onClick={() => setIsEditModalOpen(false)}>
+                Cancel
+              </button>
+              <button
+                className="mm-btn-save"
+                onClick={handleSaveModel}
+                disabled={!formData.name.trim()}
+              >
+                {currentModel ? 'Save Changes' : 'Create Model'}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ASSIGN USERS MODAL */}
+      {/* ===== ASSIGN USERS MODAL ===== */}
       {isAssignModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{maxWidth: '500px'}}>
-            <div className="modal-header">
-              <h2>Assign Users to {currentModel?.name}</h2>
-              <button onClick={() => setIsAssignModalOpen(false)}><FiX /></button>
+        <div className="mm-modal-overlay" onClick={() => setIsAssignModalOpen(false)}>
+          <div className="mm-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+            <div className="mm-modal-header">
+              <div>
+                <h2>Assign Users</h2>
+                <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
+                  {currentModel?.name}
+                </p>
+              </div>
+              <button className="mm-modal-close" onClick={() => setIsAssignModalOpen(false)}>
+                <FiX size={16} />
+              </button>
             </div>
-            <div className="modal-body" style={{maxHeight: '400px', overflowY: 'auto'}}>
-              <p style={{marginBottom: '15px', color: '#666'}}>Users selected below will have access to this model's schematics.</p>
-              {allUsers.map(user => (
-                <div 
-                  key={user.id} 
-                  className={`user-selection-item ${assignedUserIds.includes(user.id) ? 'selected' : ''}`}
-                  onClick={() => handleToggleUser(user.id)}
-                  style={{
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    padding: '10px', 
-                    marginBottom: '8px', 
-                    borderRadius: '6px', 
-                    border: '1px solid var(--border-color)',
-                    cursor: 'pointer',
-                    background: assignedUserIds.includes(user.id) ? 'rgba(74, 144, 226, 0.1)' : 'transparent'
-                  }}
-                >
-                  <div style={{flex: 1}}>
-                    <div style={{fontWeight: 'bold'}}>{user.firstName} {user.lastName}</div>
-                    <div style={{fontSize: '12px', color: '#888'}}>{user.email} • {user.role}</div>
-                  </div>
-                  {assignedUserIds.includes(user.id) ? (
-                    <FiCheck color="#4a90e2" />
-                  ) : (
-                    <div style={{width: '18px', height: '18px', borderRadius: '50%', border: '1px solid #ccc'}} />
-                  )}
-                </div>
-              ))}
+
+            <div className="mm-modal-body" style={{ maxHeight: 460 }}>
+              <p className="mm-assign-hint">
+                Selected users will have access to this model's schematics.
+              </p>
+
+              {/* Search inside modal */}
+              <div className="model-search-box" style={{ marginBottom: 14 }}>
+                <FiSearch size={14} />
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={userSearch}
+                  onChange={e => setUserSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="mm-user-list">
+                {filteredUsers.map(user => {
+                  const isSelected = assignedUserIds.includes(user.id);
+                  return (
+                    <div
+                      key={user.id}
+                      className={`mm-user-item ${isSelected ? 'selected' : ''}`}
+                      onClick={() => handleToggleUser(user.id)}
+                    >
+                      <div className="mm-user-avatar">
+                        {getInitials(user.firstName, user.lastName)}
+                      </div>
+                      <div className="mm-user-info">
+                        <div className="mm-user-name">
+                          {user.firstName} {user.lastName}
+                        </div>
+                        <div className="mm-user-meta">
+                          {user.email} · {user.role}
+                        </div>
+                      </div>
+                      <div className={`mm-check-circle ${isSelected ? 'checked' : ''}`}>
+                        {isSelected && <FiCheck size={11} />}
+                      </div>
+                    </div>
+                  );
+                })}
+                {filteredUsers.length === 0 && (
+                  <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '24px 0' }}>
+                    No users found.
+                  </p>
+                )}
+              </div>
+              <div className="mm-assign-count">
+                {assignedUserIds.length} user{assignedUserIds.length !== 1 ? 's' : ''} selected
+              </div>
             </div>
-            <div className="modal-footer">
-              <button className="cancel-btn" onClick={() => setIsAssignModalOpen(false)}>Cancel</button>
-              <button className="save-btn" onClick={handleSaveAssignments}>Save Assignments</button>
+
+            <div className="mm-modal-footer">
+              <button className="mm-btn-cancel" onClick={() => setIsAssignModalOpen(false)}>
+                Cancel
+              </button>
+              <button className="mm-btn-save" onClick={handleSaveAssignments}>
+                Save Assignments
+              </button>
             </div>
           </div>
         </div>

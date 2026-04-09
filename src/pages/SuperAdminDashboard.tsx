@@ -31,6 +31,7 @@ export default function SuperAdminDashboard({
     const [showUserPopup, setShowUserPopup] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isPanelHidden, setIsPanelHidden] = useState(false);
+    const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
     const userIconRef = useRef<HTMLDivElement>(null);
     const popupRef = useRef<HTMLDivElement>(null);
 
@@ -115,6 +116,8 @@ export default function SuperAdminDashboard({
                 setIsMenuOpen={setIsMenuOpen}
                 isPanelHidden={isPanelHidden}
                 onPanelToggle={setIsPanelHidden}
+                isPanelCollapsed={isPanelCollapsed}
+                onPanelCollapse={setIsPanelCollapsed}
             />
             <div className="content-panel sa-content">
                 {/* Mobile Header */}

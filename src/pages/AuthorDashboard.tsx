@@ -13,6 +13,7 @@ export default function AuthorDashboard({ token }: { token: string | null }) {
         email: string;
         role: string;
     } | null>(null);
+    const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
 
     const handleLogout = () => {
     };
@@ -37,6 +38,8 @@ export default function AuthorDashboard({ token }: { token: string | null }) {
                 onChange={setActiveTab}
                 onLogout={handleLogout}
                 user={userInfo}
+                isPanelCollapsed={isPanelCollapsed}
+                onPanelCollapse={setIsPanelCollapsed}
             />
             <div className="content-panel">
                 {renderContent()}

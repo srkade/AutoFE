@@ -11,13 +11,14 @@ interface MainPanelProps {
   traceMode?: boolean;
   traceBreadcrumb?: string;
   onBackClick?: () => void;
-
+  onMobileBack?: () => void;
 }
 
 export default function MainPanel({ selectedItem, activeTab, isMobile, onComponentRightClick,
   traceMode = false,
   traceBreadcrumb = '',
-  onBackClick }: MainPanelProps) {
+  onBackClick,
+  onMobileBack }: MainPanelProps) {
 
   const placeholderMessages: Record<string, string> = {
     Components: "Choose a component from the left panel to view its schematic diagram with interactive controls.",
@@ -82,6 +83,37 @@ export default function MainPanel({ selectedItem, activeTab, isMobile, onCompone
         overflow: "hidden"
       }}
     >
+      {/* MOBILE BACK BUTTON */}
+      {isMobile && !traceMode && onMobileBack && (
+        <div style={{
+          padding: '12px 20px',
+          background: '#fff',
+          borderBottom: '1px solid #e9ecef',
+          display: 'flex',
+          alignItems: 'center',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          zIndex: 10
+        }}>
+          <button
+            onClick={onMobileBack}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#0d6efd',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: 0
+            }}
+          >
+            ← Back to List
+          </button>
+        </div>
+      )}
+
       {/* BLUE TRACE HEADER */}
       {traceMode && (
         <div style={{

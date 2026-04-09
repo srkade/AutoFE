@@ -19,6 +19,8 @@ interface SuperAdminNavigationTabsProps {
   setIsMenuOpen: (isOpen: boolean) => void;
   isPanelHidden?: boolean;
   onPanelToggle?: (hidden: boolean) => void;
+  isPanelCollapsed?: boolean;
+  onPanelCollapse?: (collapsed: boolean) => void;
 }
 
 export default function SuperAdminNavigationTabs({
@@ -32,13 +34,19 @@ export default function SuperAdminNavigationTabs({
   setIsMenuOpen,
   isPanelHidden: parentIsPanelHidden,
   onPanelToggle,
+  isPanelCollapsed: parentIsPanelCollapsed,
+  onPanelCollapse,
 }: SuperAdminNavigationTabsProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
   const [internalPanelHidden, setInternalPanelHidden] = useState(false);
+  const [internalPanelCollapsed, setInternalPanelCollapsed] = useState(false);
 
   // Use parent state if provided, otherwise use internal state
   const isPanelHidden = parentIsPanelHidden !== undefined ? parentIsPanelHidden : internalPanelHidden;
   const setIsPanelHidden = onPanelToggle ? onPanelToggle : setInternalPanelHidden;
+  
+  const isPanelCollapsed = parentIsPanelCollapsed !== undefined ? parentIsPanelCollapsed : internalPanelCollapsed;
+  const setIsPanelCollapsed = onPanelCollapse ? onPanelCollapse : setInternalPanelCollapsed;
 
   useEffect(() => {
     const handleResize = () => {
@@ -47,7 +55,10 @@ export default function SuperAdminNavigationTabs({
       if (!mobile) {
         setIsMenuOpen(false);
         // Reset panel hidden state when switching to mobile
-        if (mobile) setIsPanelHidden(false);
+        if (mobile) {
+          setIsPanelHidden(false);
+          setIsPanelCollapsed(false);
+        }
       }
     };
     window.addEventListener("resize", handleResize);
@@ -65,18 +76,18 @@ export default function SuperAdminNavigationTabs({
 
   return (
     <>
-      <div className={`admin-nav sa-nav ${isMobile ? 'mobile-drawer' : ''} ${isMenuOpen ? 'open' : ''}`}>
+      <div className={`admin-nav sa-nav ${isMobile ? 'mobile-drawer' : ''} ${isMenuOpen ? 'open' : ''} ${!isMobile && isPanelCollapsed ? 'collapsed' : ''}`}>
         {isMobile && (
           <button className="close-drawer" onClick={() => setIsMenuOpen(false)}>
             <FiX size={24} />
           </button>
         )}
 
-        <div style={{ padding: "20px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ padding: isPanelCollapsed ? "20px 8px" : "20px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
           {/* Logo */}
-          <div className="nav-logo">
-            <img className="logo-crisp" src={logo} alt="Logo" style={{ width: 60, height: 60, borderRadius: "8px", objectFit: "contain" }} />
-            <h1 style={{ marginLeft: 12, fontSize: 22, color: "#f1f5f9", fontWeight: "700" }}>CRAZYBEES</h1>
+          <div className="nav-logo" style={{ justifyContent: isPanelCollapsed ? "center" : "center", marginBottom: isPanelCollapsed ? "16px" : "32px" }}>
+            <img className="logo-crisp" src={logo} alt="Logo" style={{ width: isPanelCollapsed ? 40 : 60, height: isPanelCollapsed ? 40 : 60, borderRadius: "8px", objectFit: "contain" }} />
+            {!isPanelCollapsed && <h1 style={{ marginLeft: 12, fontSize: 22, color: "#f1f5f9", fontWeight: "700" }}>CRAZYBEES</h1>}
           </div>
 
           {/* MODEL SELECTOR FOR SUPER ADMIN */}
@@ -101,7 +112,8 @@ export default function SuperAdminNavigationTabs({
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    padding: "14px 16px",
+                    justifyContent: isPanelCollapsed ? "center" : "flex-start",
+                    padding: isPanelCollapsed ? "14px 8px" : "14px 16px",
                     borderRadius: "8px",
                     cursor: "pointer",
                     background: active === tab.id ? "#3b82f6" : "transparent",
@@ -109,15 +121,16 @@ export default function SuperAdminNavigationTabs({
                     fontWeight: active === tab.id ? "600" : "500",
                     transition: "all 0.2s ease",
                     border: active === tab.id ? "none" : "1px solid transparent",
-                    margin: "2px 0"
+                    margin: "2px 0",
+                    position: "relative"
                   }}
                   onClick={() => {
                     onChange(tab.id);
                     if (isMobile) {
                       setIsMenuOpen(false);
                     } else {
-                      // Auto-hide panel on desktop when switching tabs
-                      setIsPanelHidden(true);
+                      // Collapse panel instead of hiding
+                      setIsPanelCollapsed(!isPanelCollapsed);
                     }
                   }}
                   onMouseEnter={(e) => {
@@ -132,27 +145,58 @@ export default function SuperAdminNavigationTabs({
                       (e.currentTarget as HTMLElement).style.color = "#cbd5e1";
                     }
                   }}
+                  title={isPanelCollapsed ? tab.label : ""}
                 >
-                  <Icon size={20} style={{ marginRight: "12px" }} />
-                  <span style={{ fontSize: "15px" }}>{tab.label}</span>
+                  <Icon size={20} style={{ marginRight: isPanelCollapsed ? "0" : "12px" }} />
+                  {!isPanelCollapsed && <span style={{ fontSize: "15px" }}>{tab.label}</span>}
+                  
+                  {/* Tooltip on hover when collapsed */}
+                  {isPanelCollapsed && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: "100%",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "#1e293b",
+                        color: "#f1f5f9",
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        fontSize: "13px",
+                        whiteSpace: "nowrap",
+                        opacity: 0,
+                        pointerEvents: "none",
+                        transition: "opacity 0.2s ease",
+                        marginLeft: "8px",
+                        boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
+                        zIndex: 1003
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+                    >
+                      {tab.label}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
 
           {/* Super Admin Badge */}
-          <div style={{
-            textAlign: "center",
-            padding: "16px 0",
-            fontSize: "14px",
-            color: "#3b82f6",
-            fontWeight: "600",
-            borderTop: "1px solid #334155",
-            background: "transparent",
-            marginTop: "auto"
-          }}>
-            SUPER ADMIN
-          </div>
+          {!isPanelCollapsed && (
+            <div style={{
+              textAlign: "center",
+              padding: "16px 0",
+              fontSize: "14px",
+              color: "#3b82f6",
+              fontWeight: "600",
+              borderTop: "1px solid #334155",
+              background: "transparent",
+              marginTop: "auto"
+            }}>
+              SUPER ADMIN
+            </div>
+          )}
 
         </div>
       </div>
@@ -161,13 +205,13 @@ export default function SuperAdminNavigationTabs({
       {!isMobile && (
         <button 
           className="toggle-panel-btn"
-          onClick={() => setIsPanelHidden(!isPanelHidden)}
-          aria-label={isPanelHidden ? "Show Navigation" : "Hide Navigation"}
-          title={isPanelHidden ? "Show Navigation" : "Hide Navigation"}
+          onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}
+          aria-label={isPanelCollapsed ? "Expand Navigation" : "Collapse Navigation"}
+          title={isPanelCollapsed ? "Expand Navigation" : "Collapse Navigation"}
           style={{
             position: 'fixed',
             top: '20px',
-            left: isPanelHidden ? '60px' : '310px',
+            left: isPanelCollapsed ? '80px' : '310px',
             zIndex: 1002,
             transition: 'left 0.3s ease',
             background: 'none',

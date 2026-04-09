@@ -30,7 +30,7 @@ export type DashboardItem = {
   schematicData: SchematicData;
 };
 import AuthorDashboard from "./pages/AuthorDashboard";
-import AuthorNavigationTabs from "./pages/AuthorNavigationTabs";
+import AuthorNavigationTabs, { AuthorTopbar } from "./pages/AuthorNavigationTabs";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import ManageUsers from "./pages/ManageUsers";
 import ImportFiles from "./pages/ImportedFiles";
@@ -117,6 +117,10 @@ function AppContent() {
   };
 
 
+  const [isAuthorPanelCollapsed, setIsAuthorPanelCollapsed] = useState(false);
+  const [isAuthorMenuOpen, setIsAuthorMenuOpen] = useState(false);
+
+  // User Dashboard State
   const [activeTab, setActiveTab] = useState("components");
   const [authorTab, setAuthorTab] = useState("manage-users");
   const [schematicTab, setSchematicTab] = useState("components");
@@ -670,17 +674,19 @@ function AppContent() {
             />
           ) : (
             <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-              <LeftPanel
-                activeTab={activeTab}
-                data={filteredItems}
-                traceMode={trace.isTraceMode}
-                onItemSelect={handleItemSelection}
-                selectedItem={selectedItem}
-                selectedCodes={selectedCodes}
-                setSelectedCodes={setSelectedCodes}
-                onViewSchematic={handleViewSchematic}
-                isMobile={isMobile}
-              />
+              <div style={{ display: isMobile && (selectedItem || mergedSchematic) ? 'none' : 'flex', flexShrink: 0, height: '100%', width: isMobile ? '100%' : 'auto' }}>
+                <LeftPanel
+                  activeTab={activeTab}
+                  data={filteredItems}
+                  traceMode={trace.isTraceMode}
+                  onItemSelect={handleItemSelection}
+                  selectedItem={selectedItem}
+                  selectedCodes={selectedCodes}
+                  setSelectedCodes={setSelectedCodes}
+                  onViewSchematic={handleViewSchematic}
+                  isMobile={isMobile}
+                />
+              </div>
 
               {/* Render single item schematic only if no merged schematic is present */}
               {/* {!isMobile && selectedItem?.schematicData && !mergedSchematic && (
@@ -688,7 +694,8 @@ function AppContent() {
               )} */}
 
 
-              <MainPanel
+              <div style={{ display: isMobile && !(selectedItem || mergedSchematic) ? 'none' : 'flex', flex: 1, flexDirection: 'column', minWidth: 0 }}>
+                <MainPanel
                 selectedItem={
                   mergedSchematic
                     ? {
@@ -716,14 +723,20 @@ function AppContent() {
                   setMergedSchematic(prevState.mergedSchematic);
                   setSelectedCodes([]);
                 }}
+                onMobileBack={() => {
+                  setSelectedItem(null);
+                  setMergedSchematic(null);
+                  setSelectedCodes([]);
+                }}
               />
+              </div>
             </div>
           )}
         </div>
       )}
-      {/* Author DASHBOARD */}
+            {/* Author DASHBOARD */}
       {page === "dashboard" && role === "author" && token && (
-        <div style={{ height: "100vh", display: "flex", flexDirection: "row" }}>
+        <div style={{ height: "100vh", display: "flex", flexDirection: "row", overflow: "hidden" }}>
 
           <AuthorNavigationTabs
             active={authorTab}
@@ -736,121 +749,145 @@ function AppContent() {
               if (id) sessionStorage.setItem("selectedModelId", id);
               else sessionStorage.removeItem("selectedModelId");
             }}
+            isPanelCollapsed={isAuthorPanelCollapsed}
+            onPanelCollapse={setIsAuthorPanelCollapsed}
+            isMenuOpen={isAuthorMenuOpen}
+            setIsMenuOpen={setIsAuthorMenuOpen}
           />
 
           {/* TAB CONTENT */}
-          <div style={{ flex: 1, paddingLeft: "260px", paddingTop: "60px", height: "100vh", overflow: "auto" }}>
-            {authorTab === "manage-users" && (
-              <ManageUsers />
-            )}
-            {authorTab === "manage-models" && (
-              <ModelManagement />
-            )}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+            <AuthorTopbar
+              onLogout={handleLogout}
+              user={currentUser}
+              selectedModelId={selectedModelId}
+              onModelChange={(id) => {
+                setSelectedModelId(id);
+                if (id) sessionStorage.setItem("selectedModelId", id);
+                else sessionStorage.removeItem("selectedModelId");
+              }}
+              isPanelCollapsed={isAuthorPanelCollapsed}
+              onPanelCollapse={setIsAuthorPanelCollapsed}
+              setIsMenuOpen={setIsAuthorMenuOpen}
+            />
+            
+            <div className="content-panel">
+              {authorTab === "manage-users" && (
+                <ManageUsers />
+              )}
+              {authorTab === "manage-models" && (
+                <ModelManagement />
+              )}
 
-            {authorTab === "import-files" && (
-              <ImportFiles />
-            )}
-            {authorTab === "import-images" && (
-              <ImageManagement />
-            )}
+              {authorTab === "import-files" && (
+                <ImportFiles />
+              )}
+              {authorTab === "import-images" && (
+                <ImageManagement />
+              )}
 
-            {authorTab === "view-schematic" && (
-              <div
-                style={{
-                  height: "100%",
-                  background: "#f8f9fa",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <NavigationTabs
-                  activeTab={schematicTab}
-                  onTabChange={(tabId) => {
-                    // Exit trace mode when changing tabs
-                    if (trace.isTraceMode) {
-                      trace.exitTrace();
-                    }
-                    setSchematicTab(tabId);
-                    setSelectedItem(null);
-                    setShowWelcome(false);
-                    setMergedSchematic(null);
-                    setSelectedCodes([]);
+              {authorTab === "view-schematic" && (
+                <div
+                  style={{
+                    height: "100%",
+                    background: "#f8f9fa",
+                    display: "flex",
+                    flexDirection: "column",
                   }}
-                  onLogout={handleLogout}
-                  user={currentUser}
-                  hideLogout={true}
-                  hideLogo={true}
-                  hideSearch={true}
-                  hideModelSelector={true}
-                  selectedModelId={selectedModelId}
-                  onModelChange={(id) => {
-                    setSelectedModelId(id);
-                    if (id) sessionStorage.setItem("selectedModelId", id);
-                    else sessionStorage.removeItem("selectedModelId");
-                    setSelectedItem(null);
-                    setMergedSchematic(null);
-                    setSelectedCodes([]);
-                  }}
-                />
-
-                {showWelcome ? (
-                  <WelcomePage
-                    onStart={() => {
+                >
+                  <NavigationTabs
+                    activeTab={schematicTab}
+                    onTabChange={(tabId) => {
+                      // Exit trace mode when changing tabs
+                      if (trace.isTraceMode) {
+                        trace.exitTrace();
+                      }
+                      setSchematicTab(tabId);
+                      setSelectedItem(null);
                       setShowWelcome(false);
-                      setSchematicTab("components");
+                      setMergedSchematic(null);
+                      setSelectedCodes([]);
+                    }}
+                    onLogout={handleLogout}
+                    user={currentUser}
+                    hideLogout={true}
+                    hideLogo={true}
+                    hideSearch={true}
+                    hideModelSelector={true}
+                    selectedModelId={selectedModelId}
+                    onModelChange={(id) => {
+                      setSelectedModelId(id);
+                      if (id) sessionStorage.setItem("selectedModelId", id);
+                      else sessionStorage.removeItem("selectedModelId");
+                      setSelectedItem(null);
+                      setMergedSchematic(null);
+                      setSelectedCodes([]);
                     }}
                   />
-                ) : (
-                  <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-                    <LeftPanel
-                      activeTab={schematicTab}
-                      data={filteredItems}
-                      traceMode={trace.isTraceMode}
-                      onItemSelect={handleItemSelection}
-                      selectedItem={selectedItem}
-                      selectedCodes={selectedCodes}
-                      setSelectedCodes={setSelectedCodes}
-                      onViewSchematic={handleViewSchematic}
-                      isMobile={isMobile}
-                    />
 
-                    {/* Render single item schematic only if no merged schematic is present */}
-                    {/* {!isMobile && selectedItem?.schematicData && !mergedSchematic && (
-                      <Schematic key={selectedItem.code} data={selectedItem.schematicData} activeTab={schematicTab} />
-                    )} */}
-
-                    <MainPanel
-                      selectedItem={
-                        mergedSchematic
-                          ? {
-                            code: "MERGED",
-                            name: "Merged Schematic",
-                            type: "Merged",
-                            status: "Active",
-                            voltage: "12V",
-                            description: "Merged API schematic view",
-                            schematicData: mergedSchematic,
-                          }
-                          : selectedItem
-                      }
-                      activeTab={schematicTab}
-                      isMultipleComponents={!!mergedSchematic}
-                      isMobile={isMobile}
-                      onComponentRightClick={handleComponentRightClick}
-                      traceMode={trace.isTraceMode}
-                      traceBreadcrumb={trace.getBreadcrumb()}
-                      onBackClick={() => {
-                        const prevState = trace.exitTrace();
-                        setActiveTab(prevState.tab);
-                        setSelectedItem(prevState.selectedItem);
-                        setMergedSchematic(prevState.mergedSchematic);
-                        setSelectedCodes([]);
+                  {showWelcome ? (
+                    <WelcomePage
+                      onStart={() => {
+                        setShowWelcome(false);
+                        setSchematicTab("components");
                       }}
                     />
-                  </div>
-                )}
-              </div>
-            )}
+                  ) : (
+                    <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+                      <div style={{ display: isMobile && (selectedItem || mergedSchematic) ? 'none' : 'flex', flexShrink: 0, height: '100%', width: isMobile ? '100%' : 'auto' }}>
+                        <LeftPanel
+                          activeTab={schematicTab}
+                          data={filteredItems}
+                          traceMode={trace.isTraceMode}
+                          onItemSelect={handleItemSelection}
+                          selectedItem={selectedItem}
+                          selectedCodes={selectedCodes}
+                          setSelectedCodes={setSelectedCodes}
+                          onViewSchematic={handleViewSchematic}
+                          isMobile={isMobile}
+                        />
+                      </div>
+
+                      <div style={{ display: isMobile && !(selectedItem || mergedSchematic) ? 'none' : 'flex', flex: 1, flexDirection: 'column', minWidth: 0 }}>
+                        <MainPanel
+                        selectedItem={
+                          mergedSchematic
+                            ? {
+                              code: "MERGED",
+                              name: "Merged Schematic",
+                              type: "Merged",
+                              status: "Active",
+                              voltage: "12V",
+                              description: "Merged API schematic view",
+                              schematicData: mergedSchematic,
+                            }
+                            : selectedItem
+                        }
+                        activeTab={schematicTab}
+                        isMultipleComponents={!!mergedSchematic}
+                        isMobile={isMobile}
+                        onComponentRightClick={handleComponentRightClick}
+                        traceMode={trace.isTraceMode}
+                        traceBreadcrumb={trace.getBreadcrumb()}
+                        onBackClick={() => {
+                          const prevState = trace.exitTrace();
+                          setActiveTab(prevState.tab);
+                          setSelectedItem(prevState.selectedItem);
+                          setMergedSchematic(prevState.mergedSchematic);
+                          setSelectedCodes([]);
+                        }}
+                        onMobileBack={() => {
+                          setSelectedItem(null);
+                          setMergedSchematic(null);
+                          setSelectedCodes([]);
+                        }}
+                      />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

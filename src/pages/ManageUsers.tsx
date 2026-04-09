@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../Styles/ManageUsers.css";
-import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2, FiShield } from "react-icons/fi";
+
+  import { FiSearch, FiFilter, FiCalendar, FiEdit2, FiTrash2, FiShield } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
 import RegisterForm from "./RegistrationForm";
 import { User } from "../components/Schematic/SchematicTypes";
@@ -409,7 +410,16 @@ export default function ManageUsersModern() {
                         handleStatusChange(u.id, e.target.value as User["status"])
                       }
                       onBlur={() => setStatusEditingUserId(null)}
-                      style={{ padding: '4px', borderRadius: '4px' }}
+                      className="status-select"
+                      style={{ 
+                        padding: '6px 20px', 
+                        borderRadius: '16px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        minWidth: '95px',
+                        textAlign: 'center',
+                        cursor: 'pointer'
+                      }}
                     >
                       {STATUS_OPTIONS.map(status => (
                         <option key={status} value={status}>
@@ -420,7 +430,7 @@ export default function ManageUsersModern() {
                   ) : (
                     <span
                       className={`status-chip ${(u.status || "pending").toLowerCase()}`}
-                      style={{ cursor: "pointer", padding: '4px 8px', borderRadius: '12px', fontSize: '11px' }}
+                      style={{ cursor: "pointer" }}
                       onClick={() => setStatusEditingUserId(u.id)}
                     >
                       {u.status}
@@ -436,14 +446,27 @@ export default function ManageUsersModern() {
                         handleRoleChange(u.id, e.target.value as User["role"])
                       }
                       onBlur={() => setRoleEditingUserId(null)}
-                      style={{ padding: '4px', borderRadius: '4px' }}
+                      className="role-select"
+                      style={{ 
+                        padding: '6px 20px', 
+                        borderRadius: '16px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        minWidth: '95px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        backgroundColor: "var(--bg-primary)",
+                        color: "var(--text-primary)",
+                        border: "1px solid var(--border-color)"
+                      }}
                     >
                       <option value="User">User</option>
                       <option value="Author">Author</option>
                     </select>
                   ) : (
                     <span
-                      style={{ cursor: "pointer", padding: "4px 8px", borderRadius: "4px", backgroundColor: "var(--bg-primary)", color: "var(--text-primary)", fontSize: '11px', border: "1px solid var(--border-color)" }}
+                      className="role-chip"
+                      style={{ cursor: "pointer" }}
                       onClick={() => setRoleEditingUserId(u.id)}
                     >
                       {u.role || "User"}
@@ -453,9 +476,10 @@ export default function ManageUsersModern() {
                 <td className="hide-mobile">{u.joined ? new Date(u.joined).toLocaleDateString() : "-"}</td>
                 <td className="hide-mobile">{u.lastActive ? new Date(u.lastActive).toLocaleDateString() : "-"}</td>
                 <td className="actions">
-                  <FiShield className="edit-icon" title="Assign Models" onClick={() => setAssigningModelsUser({id: u.id, name: `${u.firstName} ${u.lastName}`})} style={{ marginRight: '8px', cursor: 'pointer', color: '#10b981' }} />
-                  <FiEdit2 className="edit-icon" title="Edit User" onClick={() => editUser(u)} style={{ marginRight: '8px', cursor: 'pointer', color: '#3b82f6' }} />
-                  <FiTrash2 className="delete-icon" title="Delete User" onClick={() => handleDeleteUser(u.id)} style={{ cursor: 'pointer', color: '#ef4444' }} />
+                  <div className="actions-cell">
+                    <FiEdit2 className="edit-icon" onClick={() => editUser(u)} title="Edit user" />
+                    <FiTrash2 className="delete-icon" onClick={() => handleDeleteUser(u.id)} title="Delete user" />
+                  </div>
                 </td>
               </tr>
             ))}
@@ -481,16 +505,6 @@ export default function ManageUsersModern() {
             />
           </div>
         </div>
-      )}
-
-      {/* ASSIGN MODELS MODAL */}
-      {assigningModelsUser && (
-        <AssignModelsModal 
-          userId={assigningModelsUser.id}
-          userName={assigningModelsUser.name}
-          onClose={() => setAssigningModelsUser(null)}
-          onSave={() => alert("Model assignments updated successfully.")}
-        />
       )}
     </div>
   );

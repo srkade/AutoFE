@@ -493,7 +493,7 @@ function AppContent() {
     } catch (error) {
       console.error("❌ TRACE ERROR: API fetch failed", error);
     }
-  }, [dashboardItems, activeTab, selectedItem, mergedSchematic, trace]);
+  }, [dashboardItems, activeTab, selectedItem, mergedSchematic, trace, selectedModelId]);
 
   const handleItemSelection = useCallback(async (item: DashboardItem) => {
     try {
@@ -542,7 +542,7 @@ function AppContent() {
     } catch (err) {
       console.error("Failed to selection item:", err);
     }
-  }, [role, schematicTab, activeTab]);
+  }, [role, schematicTab, activeTab, selectedModelId]);
 
   const filteredItems = dashboardItems.filter((item) => {
     const filterBase = role === "author" ? schematicTab : activeTab;

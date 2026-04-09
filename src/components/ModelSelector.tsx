@@ -25,11 +25,9 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModelId, onModelC
       setModels(data);
       if (onModelsLoaded) onModelsLoaded(data.length);
       
-      // If no model selected, default to first model if exists
+      // AUTO-SELECT FIRST MODEL IF NONE SELECTED
       if (!selectedModelId && data.length > 0) {
-        // Find existing model matching 'Default' or just pick first
-        const defaultModel = data.find(m => m.name.toLowerCase() === 'default') || data[0];
-        // onModelChange(defaultModel.id); // Delay this to avoid infinite loops if not careful
+        onModelChange(data[0].id);
       }
     } catch (err) {
       console.error("Failed to fetch models:", err);
@@ -51,6 +49,16 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModelId, onModelC
     }
   };
 
+  // IF SINGLE MODEL, JUST SHOW NAME
+  if (models.length === 1 && !isAuthor) {
+    return (
+      <div className="model-selector-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Model:</span>
+        <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--accent-primary)' }}>{models[0].name}</span>
+      </div>
+    );
+  }
+
   return (
     <div className="model-selector-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
       <label htmlFor="model-select" style={{ fontSize: '14px', fontWeight: 'bold' }}>Model:</label>
@@ -63,10 +71,11 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModelId, onModelC
           borderRadius: '4px',
           border: '1px solid #ccc',
           fontSize: '14px',
-          background: 'white'
+          background: 'white',
+          color: '#333'
         }}
       >
-        <option value="">Select Model</option>
+        {!selectedModelId && <option value="">Select Model</option>}
         {models.map(m => (
           <option key={m.id} value={m.id}>{m.name}</option>
         ))}

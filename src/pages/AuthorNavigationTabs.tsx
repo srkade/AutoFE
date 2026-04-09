@@ -44,13 +44,17 @@ export default function AuthorNavigationTabs({
   const [internalPanelHidden, setInternalPanelHidden] = useState(false);
   const [internalPanelCollapsed, setInternalPanelCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+  const [modelCount, setModelCount] = useState<number | null>(null);
+  const userIconRef = useRef<HTMLDivElement>(null);
+  const { theme, setTheme } = useTheme();
+  const [showPopup, setShowPopup] = useState(false);
 
   // Use parent state if provided, otherwise use internal state
   const isMenuOpen = parentIsMenuOpen !== undefined ? parentIsMenuOpen : internalMenuOpen;
   const setIsMenuOpen = parentSetIsMenuOpen ? parentSetIsMenuOpen : setInternalMenuOpen;
   const isPanelHidden = parentIsPanelHidden !== undefined ? parentIsPanelHidden : internalPanelHidden;
   const setIsPanelHidden = onPanelToggle ? onPanelToggle : setInternalPanelHidden;
-  
+
   const isPanelCollapsed = parentIsPanelCollapsed !== undefined ? parentIsPanelCollapsed : internalPanelCollapsed;
   const setIsPanelCollapsed = onPanelCollapse ? onPanelCollapse : setInternalPanelCollapsed;
 
@@ -124,7 +128,7 @@ export default function AuthorNavigationTabs({
               >
                 <Icon size={18} style={{ marginRight: isPanelCollapsed ? "0" : "10px" }} />
                 {!isPanelCollapsed && <span>{t.label}</span>}
-                
+
                 {isPanelCollapsed && (
                   <div
                     style={{
@@ -155,9 +159,57 @@ export default function AuthorNavigationTabs({
           })}
         </div>
       </div>
-      
+
+
       {isMobile && isMenuOpen && (
         <div className="drawer-overlay" onClick={() => setIsMenuOpen(false)} />
+      )}
+
+      {/* No Access Overlay for regular users with 0 models */}
+      {modelCount === 0 && user?.role !== 'author' && user?.role !== 'admin' && (
+        <div style={{
+          position: "fixed",
+          top: "80px", // Below topbar
+          left: isPanelHidden ? "0" : "280px",
+          right: 0,
+          bottom: 0,
+          background: "var(--bg-primary)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "40px",
+          textAlign: "center",
+          transition: "left 0.3s ease"
+        }}>
+          <div style={{
+            padding: "40px",
+            background: "var(--bg-secondary)",
+            borderRadius: "16px",
+            boxShadow: "var(--card-shadow)",
+            maxWidth: "600px",
+            border: "1px solid var(--border-color)"
+          }}>
+            <div style={{
+              width: "80px",
+              height: "80px",
+              borderRadius: "50%",
+              background: "#fee2e2",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 24px",
+              color: "#ef4444"
+            }}>
+              <FiX size={40} />
+            </div>
+            <h2 style={{ fontSize: "24px", color: "var(--text-primary)", marginBottom: "16px", fontWeight: "700" }}>Access Restricted</h2>
+            <p style={{ fontSize: "16px", color: "var(--text-secondary)", lineHeight: "1.6", marginBottom: "0" }}>
+              You don't have access of model. Please contact with your respective admin for assistance.
+            </p>
+          </div>
+        </div>
       )}
     </>
   );
@@ -205,8 +257,8 @@ export function AuthorTopbar({
   return (
     <div className="admin-topbar">
       {!isMobile && (
-        <button 
-          className="toggle-panel-btn" 
+        <button
+          className="toggle-panel-btn"
           onClick={() => onPanelCollapse && onPanelCollapse(!isPanelCollapsed)}
           aria-label={isPanelCollapsed ? "Expand Navigation" : "Collapse Navigation"}
           title={isPanelCollapsed ? "Expand Navigation" : "Collapse Navigation"}
@@ -215,10 +267,10 @@ export function AuthorTopbar({
           <FiMenu size={20} />
         </button>
       )}
-      
+
       {isMobile && (
-        <button 
-          className="hamburger-btn" 
+        <button
+          className="hamburger-btn"
           onClick={() => setIsMenuOpen && setIsMenuOpen(true)}
           aria-label="Toggle Menu"
         >

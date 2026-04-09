@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import NavigationTabs from "./panels/NavigationTabs";
+import { FiX } from "react-icons/fi";
 import LeftPanel from "./panels/LeftPanel";
 import MainPanel from "./panels/MainPanel";
 import Schematic from "./components/Schematic/Schematic";
@@ -56,6 +57,7 @@ function AppContent() {
     email: string;
     role: "superadmin" | "author" | "user";
   } | null>(null);
+  const [modelCount, setModelCount] = useState<number | null>(null);
 
 
 
@@ -623,9 +625,47 @@ function AppContent() {
               setMergedSchematic(null);
               setSelectedCodes([]);
             }}
+            onModelsLoaded={setModelCount}
           />
 
-          {showWelcome ? (
+          {modelCount === 0 && role === "user" ? (
+            <div style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "var(--bg-primary)",
+              padding: "40px",
+              textAlign: "center"
+            }}>
+              <div style={{
+                padding: "60px 40px",
+                background: "var(--bg-secondary)",
+                borderRadius: "16px",
+                boxShadow: "var(--card-shadow)",
+                maxWidth: "600px",
+                border: "1px solid var(--border-color)"
+              }}>
+                <div style={{ 
+                  width: "80px", 
+                  height: "80px", 
+                  borderRadius: "50%", 
+                  background: "#fee2e2", 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center",
+                  margin: "0 auto 24px",
+                  color: "#ef4444"
+                }}>
+                  <FiX size={40} />
+                </div>
+                <h2 style={{ fontSize: "24px", color: "var(--text-primary)", marginBottom: "16px", fontWeight: "700" }}>Access Restricted</h2>
+                <p style={{ fontSize: "16px", color: "var(--text-secondary)", lineHeight: "1.6", marginBottom: "0" }}>
+                  You don't have access of models. Please contact with your respective admin for assistance.
+                </p>
+              </div>
+            </div>
+          ) : showWelcome ? (
             <WelcomePage
               onStart={() => {
                 setShowWelcome(false);

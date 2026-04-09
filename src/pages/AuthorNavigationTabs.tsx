@@ -17,6 +17,8 @@ interface AuthorNavigationTabsProps {
   } | null;
   selectedModelId?: string | null;
   onModelChange?: (modelId: string | null) => void;
+  isMenuOpen?: boolean;
+  setIsMenuOpen?: (isOpen: boolean) => void;
   isPanelHidden?: boolean;
   onPanelToggle?: (hidden: boolean) => void;
   isPanelCollapsed?: boolean;
@@ -30,20 +32,22 @@ export default function AuthorNavigationTabs({
   user,
   selectedModelId,
   onModelChange,
+  isMenuOpen: parentIsMenuOpen,
+  setIsMenuOpen: parentSetIsMenuOpen,
   isPanelHidden: parentIsPanelHidden,
   onPanelToggle,
   isPanelCollapsed: parentIsPanelCollapsed,
   onPanelCollapse,
 }: AuthorNavigationTabsProps) {
-  const { theme, setTheme, logo } = useTheme();
-  const [showPopup, setShowPopup] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { logo } = useTheme();
+  const [internalMenuOpen, setInternalMenuOpen] = useState(false);
   const [internalPanelHidden, setInternalPanelHidden] = useState(false);
   const [internalPanelCollapsed, setInternalPanelCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
-  const userIconRef = useRef<HTMLDivElement>(null);
 
   // Use parent state if provided, otherwise use internal state
+  const isMenuOpen = parentIsMenuOpen !== undefined ? parentIsMenuOpen : internalMenuOpen;
+  const setIsMenuOpen = parentSetIsMenuOpen ? parentSetIsMenuOpen : setInternalMenuOpen;
   const isPanelHidden = parentIsPanelHidden !== undefined ? parentIsPanelHidden : internalPanelHidden;
   const setIsPanelHidden = onPanelToggle ? onPanelToggle : setInternalPanelHidden;
   
@@ -56,7 +60,6 @@ export default function AuthorNavigationTabs({
       setIsMobile(mobile);
       if (!mobile) {
         setIsMenuOpen(false);
-        // Reset panel states when switching to mobile
         if (mobile) {
           setIsPanelHidden(false);
           setIsPanelCollapsed(false);
@@ -74,24 +77,6 @@ export default function AuthorNavigationTabs({
     { id: "import-images", label: "Asset Management", icon: FiImage },
     { id: "view-schematic", label: "View Schematic", icon: FiCpu },
   ];
-
-  useEffect(() => {
-  }, [user]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (showPopup && userIconRef.current && !userIconRef.current.contains(target)) {
-        setShowPopup(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showPopup]);
-
 
   return (
     <>
@@ -133,9 +118,6 @@ export default function AuthorNavigationTabs({
                   onChange(t.id);
                   if (isMobile) {
                     setIsMenuOpen(false);
-                  } else {
-                    // Collapse panel instead of hiding
-                    setIsPanelCollapsed(!isPanelCollapsed);
                   }
                 }}
                 title={isPanelCollapsed ? t.label : ""}
@@ -143,7 +125,6 @@ export default function AuthorNavigationTabs({
                 <Icon size={18} style={{ marginRight: isPanelCollapsed ? "0" : "10px" }} />
                 {!isPanelCollapsed && <span>{t.label}</span>}
                 
-                {/* Tooltip on hover when collapsed */}
                 {isPanelCollapsed && (
                   <div
                     style={{
@@ -164,8 +145,7 @@ export default function AuthorNavigationTabs({
                       boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
                       zIndex: 1003
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+                    className="nav-tooltip"
                   >
                     {t.label}
                   </div>
@@ -176,204 +156,159 @@ export default function AuthorNavigationTabs({
         </div>
       </div>
       
-      <div className="admin-topbar">
-        {/* Toggle Panel Button - Always visible on desktop */}
-        {!isMobile && (
-          <button 
-            className="toggle-panel-btn" 
-            onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}
-            aria-label={isPanelCollapsed ? "Expand Navigation" : "Collapse Navigation"}
-            title={isPanelCollapsed ? "Expand Navigation" : "Collapse Navigation"}
-            style={{
-              marginRight: isPanelCollapsed ? "8px" : "12px"
-            }}
-          >
-            <FiMenu size={20} />
-          </button>
-        )}
-        
-        {isMobile && (
-          <button 
-            className="hamburger-btn" 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle Menu"
-          >
-            <FiMenu size={24} />
-          </button>
-        )}
-
-        <div className="topbar-logo-mobile">
-          <img className="logo-crisp" src={logo} alt="Logo" style={{ width: 32, height: 32 }} />
-        </div>
-
-        {/* Search Bar in Topbar */}
-        <div style={{ flex: "1", maxWidth: "500px", margin: isMobile ? "0 10px" : "0 20px", display: 'flex', alignItems: 'center' }}>
-          <SearchBar />
-          {onModelChange && (
-            <div style={{ marginLeft: '20px' }}>
-              <ModelSelector
-                selectedModelId={selectedModelId || null}
-                onModelChange={onModelChange}
-                isAuthor={true}
-              />
-            </div>
-          )}
-        </div>
-
-        <div
-          ref={userIconRef}
-          style={{
-            marginLeft: "auto",
-            display: "flex",
-            alignItems: "center",
-            position: "relative",
-            cursor: "pointer"
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowPopup(prev => !prev);
-          }}
-        >
-          <div style={{
-            width: "36px",
-            height: "36px",
-            borderRadius: "50%",
-            background: "var(--accent-primary)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "13px",
-            fontWeight: "600",
-            color: "var(--text-on-accent)",
-            transition: "all 0.2s ease",
-            boxShadow: showPopup ? "0 0 0 2px var(--accent-primary)" : "none",
-          }}>
-            {user?.name ? user.name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) : "A"}
-          </div>
-
-          {showPopup && (
-            <div 
-              className="user-popup-new"
-              style={{
-                position: "absolute",
-                top: "calc(100% + 12px)",
-                right: 0,
-                background: "var(--bg-secondary)",
-                border: "1px solid var(--border-color)",
-                borderRadius: "10px",
-                width: "260px",
-                padding: "16px",
-                boxShadow: "var(--card-shadow)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0",
-                zIndex: 1002,
-                color: "var(--text-primary)"
-              }}
-            >
-              <div style={{ marginBottom: "12px" }}>
-                <div style={{ fontSize: "14px", fontWeight: "700", color: "var(--text-primary)", marginBottom: "2px" }}>
-                  {user?.name || "Author Profile"}
-                </div>
-                <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-                  {user?.email || ""}
-                </div>
-              </div>
-
-              <div style={{ 
-                padding: "8px 12px", 
-                background: "var(--bg-primary)", 
-                borderRadius: "6px", 
-                marginBottom: "16px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center"
-              }}>
-                <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase" }}>Role</span>
-                <span style={{ 
-                  fontSize: "11px", 
-                  padding: "2px 8px", 
-                  borderRadius: "12px", 
-                  background: "var(--accent-primary)", 
-                  color: "var(--text-on-accent)",
-                  fontWeight: "700"
-                }}>
-                  {user?.role?.toUpperCase() || "AUTHOR"}
-                </span>
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <div style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase", marginBottom: "8px" }}>Theme</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px" }}>
-                  {[
-                    { id: 'light', icon: FiSun, label: 'Light' },
-                    { id: 'dark', icon: FiMoon, label: 'Dark' },
-                    { id: 'blue', icon: FiDroplet, label: 'Blue' },
-                    { id: 'corporate', icon: FiBriefcase, label: 'Corporate' },
-                    { id: 'high-contrast', icon: FiEye, label: 'High Contrast' }
-                  ].map((t) => {
-                    const TIcon = t.icon;
-                    const isSelected = theme === t.id;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTheme(t.id as any);
-                          setShowPopup(false);
-                        }}
-                        style={{
-                          padding: "8px",
-                          background: isSelected ? "#3b82f6" : "#f1f5f9",
-                          color: isSelected ? "white" : "#475569",
-                          border: "none",
-                          borderRadius: "6px",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          transition: "all 0.2s ease",
-                          boxShadow: isSelected ? "0 2px 4px rgba(59, 130, 246, 0.3)" : "none"
-                        }}
-                        title={t.label}
-                      >
-                        <TIcon size={16} />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <button 
-                onClick={onLogout} 
-                className="popup-logout-btn"
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  background: "#ef4444",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                  fontSize: "13px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  transition: "background 0.2s ease"
-                }}
-              >
-                <FiLogOut size={16} /> Sign Out
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-      
       {isMobile && isMenuOpen && (
         <div className="drawer-overlay" onClick={() => setIsMenuOpen(false)} />
       )}
     </>
+  );
+}
+
+export function AuthorTopbar({
+  onLogout,
+  user,
+  selectedModelId,
+  onModelChange,
+  isPanelCollapsed,
+  onPanelCollapse,
+  setIsMenuOpen
+}: {
+  onLogout: () => void;
+  user: any;
+  selectedModelId?: string | null;
+  onModelChange?: (modelId: string | null) => void;
+  isPanelCollapsed?: boolean;
+  onPanelCollapse?: (collapsed: boolean) => void;
+  setIsMenuOpen?: (open: boolean) => void;
+}) {
+  const { theme, setTheme, logo } = useTheme();
+  const [showPopup, setShowPopup] = useState(false);
+  const userIconRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 1024);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showPopup && userIconRef.current && !userIconRef.current.contains(target)) {
+        setShowPopup(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showPopup]);
+
+  return (
+    <div className="admin-topbar">
+      {!isMobile && (
+        <button 
+          className="toggle-panel-btn" 
+          onClick={() => onPanelCollapse && onPanelCollapse(!isPanelCollapsed)}
+          aria-label={isPanelCollapsed ? "Expand Navigation" : "Collapse Navigation"}
+          title={isPanelCollapsed ? "Expand Navigation" : "Collapse Navigation"}
+          style={{ marginRight: isPanelCollapsed ? "8px" : "12px" }}
+        >
+          <FiMenu size={20} />
+        </button>
+      )}
+      
+      {isMobile && (
+        <button 
+          className="hamburger-btn" 
+          onClick={() => setIsMenuOpen && setIsMenuOpen(true)}
+          aria-label="Toggle Menu"
+        >
+          <FiMenu size={24} />
+        </button>
+      )}
+
+      <div className="topbar-logo-mobile">
+        <img className="logo-crisp" src={logo} alt="Logo" style={{ width: 32, height: 32 }} />
+      </div>
+
+      <div style={{ flex: "1", maxWidth: "500px", margin: isMobile ? "0 10px" : "0 20px", display: 'flex', alignItems: 'center' }}>
+        <SearchBar />
+        {onModelChange && (
+          <div style={{ marginLeft: '20px' }}>
+            <ModelSelector
+              selectedModelId={selectedModelId || null}
+              onModelChange={onModelChange}
+              isAuthor={true}
+            />
+          </div>
+        )}
+      </div>
+
+      <div
+        ref={userIconRef}
+        style={{ marginLeft: "auto", display: "flex", alignItems: "center", position: "relative", cursor: "pointer" }}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowPopup(prev => !prev);
+        }}
+      >
+        <div style={{
+          width: "36px", height: "36px", borderRadius: "50%", background: "var(--accent-primary)",
+          display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "600",
+          color: "var(--text-on-accent)", boxSizing: "border-box", transition: "all 0.2s ease",
+          boxShadow: showPopup ? "0 0 0 2px var(--accent-primary)" : "none",
+        }}>
+          {user?.name ? user.name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) : "A"}
+        </div>
+
+        {showPopup && (
+          <div className="user-popup-new" style={{
+            position: "absolute", top: "calc(100% + 12px)", right: 0, background: "var(--bg-secondary)",
+            border: "1px solid var(--border-color)", borderRadius: "10px", width: "260px", padding: "16px",
+            boxShadow: "var(--card-shadow)", display: "flex", flexDirection: "column", zIndex: 1002, color: "var(--text-primary)"
+          }}>
+            <div style={{ marginBottom: "12px" }}>
+              <div style={{ fontSize: "14px", fontWeight: "700", color: "var(--text-primary)", marginBottom: "2px" }}>
+                {user?.name || "Author Profile"}
+              </div>
+              <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{user?.email || ""}</div>
+            </div>
+
+            <div style={{ padding: "8px 12px", background: "var(--bg-primary)", borderRadius: "6px", marginBottom: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase" }}>Role</span>
+              <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "12px", background: "var(--accent-primary)", color: "var(--text-on-accent)", fontWeight: "700" }}>
+                {user?.role?.toUpperCase() || "AUTHOR"}
+              </span>
+            </div>
+
+            <div style={{ marginBottom: "16px" }}>
+              <div style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase", marginBottom: "8px" }}>Theme</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px" }}>
+                {[
+                  { id: 'light', icon: FiSun, label: 'Light' },
+                  { id: 'dark', icon: FiMoon, label: 'Dark' },
+                  { id: 'blue', icon: FiDroplet, label: 'Blue' },
+                  { id: 'corporate', icon: FiBriefcase, label: 'Corporate' },
+                  { id: 'high-contrast', icon: FiEye, label: 'High Contrast' }
+                ].map((t) => {
+                  const TIcon = t.icon;
+                  const isSelected = theme === t.id;
+                  return (
+                    <button key={t.id} onClick={(e) => { e.stopPropagation(); setTheme(t.id as any); setShowPopup(false); }}
+                      style={{ padding: "8px", background: isSelected ? "#3b82f6" : "#f1f5f9", color: isSelected ? "white" : "#475569", border: "none", borderRadius: "6px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s ease", boxShadow: isSelected ? "0 2px 4px rgba(59, 130, 246, 0.3)" : "none" }}
+                      title={t.label}>
+                      <TIcon size={16} />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <button onClick={onLogout} className="popup-logout-btn" style={{ width: "100%", padding: "10px", background: "#ef4444", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "background 0.2s ease" }}>
+              <FiLogOut size={16} /> Sign Out
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

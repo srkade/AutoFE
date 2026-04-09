@@ -9,13 +9,11 @@
   color: var(--text-secondary);
   height: 100vh;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
-  position: fixed;
-  top: 0;
-  left: 0;
   box-sizing: border-box;
   z-index: 1001;
-  transition: width 0.3s ease, transform 0.3s ease-in-out, padding 0.3s ease;
+  transition: width 0.3s ease, padding 0.3s ease;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 /* Panel Hidden State */
@@ -45,6 +43,11 @@
 
 .admin-nav.mobile-drawer {
   transform: translateX(-100%);
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 1005;
 }
 
 .admin-nav.mobile-drawer.open {
@@ -169,10 +172,7 @@
 }
 
 .admin-topbar {
-  position: fixed;
-  top: 0;
-  left: 260px;
-  width: calc(100% - 260px);
+  width: 100%;
   height: 60px;
   background-color: var(--header-bg);
   display: flex;
@@ -182,7 +182,7 @@
   z-index: 1000;
   box-sizing: border-box;
   border-bottom: 1px solid var(--border-color);
-  transition: left 0.3s ease, width 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 /* Panel Hidden - Adjust Topbar */
@@ -191,11 +191,10 @@
   width: 100%;
 }
 
-/* Panel Collapsed - Adjust Topbar */
-.admin-nav.collapsed ~ .admin-topbar,
-.admin-container .admin-nav.collapsed ~ .admin-topbar {
-  left: 70px;
-  width: calc(100% - 70px);
+/* Sidebar collapsed adjustments */
+.admin-nav.collapsed {
+  width: 80px;
+  padding: 20px 8px;
 }
 
 /* Toggle Panel Button */
@@ -227,8 +226,8 @@
 
 .content-panel {
   flex: 1;
-  padding: 80px 24px 24px 260px; /* Fixed sidebar width for Author */
-  height: 100vh;
+  padding: 24px;
+  height: 100%;
   overflow-y: auto;
   box-sizing: border-box;
   transition: all 0.3s ease;
@@ -240,14 +239,13 @@
   padding-left: 24px;
 }
 
-/* Panel Collapsed - Adjust Content Panel */
-.admin-container .admin-nav.collapsed ~ .content-panel,
-.admin-nav.collapsed ~ .content-panel {
-  padding-left: 70px !important;
+/* Panel Collapsed - Adjust Content Panel - REMOVED FIXED OFFSETS */
+.tab-item:hover .nav-tooltip {
+  opacity: 1 !important;
 }
 
 .sa-content {
-  padding: 0 0 0 300px !important; /* Margin for 300px sa-nav */
+  padding: 0;
   background: #f1f5f9;
 }
 
@@ -274,7 +272,7 @@
 
 /* Collapsed State for Super Admin */
 .sa-nav.collapsed {
-  width: 70px !important;
+  width: 80px !important;
   padding: 20px 8px !important;
 }
 
@@ -292,10 +290,13 @@
   padding-left: 24px !important;
 }
 
-/* Panel Collapsed - Adjust Super Admin Content */
-.sa-nav.collapsed ~ .sa-content,
-.admin-container .sa-nav.collapsed ~ .sa-content {
-  padding-left: 70px !important;
+/* Panel Collapsed - Adjust Super Admin Content - REMOVED FIXED OFFSETS */
+.admin-container.panel-hidden .sa-nav {
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
 }
 
 .sa-wrapper {
@@ -459,6 +460,11 @@
   .sa-nav {
     width: 280px;
     transform: translateX(-100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1005;
   }
 
   .sa-nav.open {

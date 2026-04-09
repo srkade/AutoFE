@@ -88,7 +88,7 @@ export default function ImageManagement() {
     try {
       // Fetch components from serviceconnector table
       const componentResponse = await fetch(
-        `${DIRECTORY_API}/api/schematics/components`,
+        `${DIRECTORY_API}/schematics/components`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
@@ -103,7 +103,7 @@ export default function ImageManagement() {
 
       // Fetch connectors from serviceconnector table
       const connectorResponse = await fetch(
-        `${DIRECTORY_API}/api/schematics/connectors`,
+        `${DIRECTORY_API}/schematics/connectors`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
@@ -132,7 +132,7 @@ export default function ImageManagement() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/assets/images`, {
+      const response = await fetch(`${API_BASE_URL}/assets/images`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
         },
@@ -232,7 +232,7 @@ export default function ImageManagement() {
     formData.append("entityType", bulkUploadType);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/assets/bulk-upload`, {
+      const response = await fetch(`${API_BASE_URL}/assets/bulk-upload`, {
         method: "POST",
         body: formData,
         headers: {
@@ -292,7 +292,7 @@ export default function ImageManagement() {
     formData.append("entityType", specificType);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/assets/upload`, {
+      const response = await fetch(`${API_BASE_URL}/assets/upload`, {
         method: "POST",
         body: formData,
         headers: {
@@ -411,7 +411,7 @@ export default function ImageManagement() {
     const idsToDelete = Array.from(selectedForDelete);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/assets/delete-bulk`, {
+      const response = await fetch(`${API_BASE_URL}/assets/delete-bulk`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -448,7 +448,7 @@ export default function ImageManagement() {
     setSuccessMessage(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/assets/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/assets/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,

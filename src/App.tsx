@@ -596,7 +596,7 @@ function AppContent() {
         <div
           style={{
             height: "100vh",
-            background: "#f8f9fa",
+            background: "var(--bg-primary, #f6f8fc)",
             display: "flex",
             flexDirection: "column",
           }}
@@ -790,7 +790,7 @@ function AppContent() {
                 <div
                   style={{
                     height: "100%",
-                    background: "#f8f9fa",
+                    background: "var(--bg-primary, #f6f8fc)",
                     display: "flex",
                     flexDirection: "column",
                   }}

@@ -1,7 +1,7 @@
 import React from "react";
 import Schematic from "../components/Schematic/Schematic";
 import { DashboardItem } from "../App";
-import "../Styles/MainPanel.css"
+
 
 interface MainPanelProps {
   selectedItem: DashboardItem | null;
@@ -33,7 +33,7 @@ export default function MainPanel({ selectedItem, activeTab, isMobile, onCompone
         className="main-panel empty"
         style={{
           flex: 1,
-          background: "#f8f9fa",
+          background: "var(--bg-primary, #f6f8fc)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -77,7 +77,7 @@ export default function MainPanel({ selectedItem, activeTab, isMobile, onCompone
       className={`main-panel-wrapper ${selectedItem ? "has-selection" : ""}`}
       style={{
         flex: 1,
-        background: "#f8f9fa",
+        background: "var(--bg-primary, #f6f8fc)",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden"

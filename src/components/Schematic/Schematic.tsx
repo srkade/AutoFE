@@ -691,7 +691,7 @@ export default function Schematic({
         flexDirection: "column",
         width: "100%",
         height: isFullscreen ? "100vh" : "100%",
-        background: "#fafafa",
+        background: "var(--bg-primary, #f6f8fc)",
         overflow: "hidden",
         minHeight: isFullscreen ? undefined : "100%", // ensure min height stays fixed
         maxHeight: isFullscreen ? undefined : "100%", // prevent growing heights
@@ -973,7 +973,7 @@ export default function Schematic({
                 height: "100%",
                 cursor: dragging ? "grabbing" : "grab",
                 display: "block",
-                backgroundColor: "#e5e5e5",
+                backgroundColor: "var(--bg-primary, #f6f8fc)",
                 userSelect: dragging ? "none" : "auto", // Disable text selection while dragging
                 WebkitUserSelect: dragging ? "none" : "auto", // For Safari
                 MozUserSelect: dragging ? "none" : "auto", // For Firefox

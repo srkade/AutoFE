@@ -132,6 +132,137 @@ export default function Schematic({
   const [connectorNameWidths, setConnectorNameWidths] = useState<{ [id: string]: number }>({});
   const [connectorConnectionCount, setConnectorConnectionCount] = useState<{ [id: string]: number }>({});
 
+  const smartMasterIds = useMemo(() => {
+    const seeds = new Set(data.masterComponents || []);
+    const rowAssignment: { [id: string]: number } = {};
+    const adj: { [id: string]: string[] } = {};
+
+    (data.components || []).forEach((c) => {
+      adj[c.id] = [];
+    });
+    (data.connections || []).forEach((conn) => {
+      const f = conn.from?.componentId;
+      const t = conn.to?.componentId;
+      if (f && t && f !== t) {
+        adj[f].push(t);
+        adj[t].push(f);
+      }
+    });
+
+    const queue: string[] = [];
+    seeds.forEach((id) => {
+      rowAssignment[id] = 0;
+      queue.push(id);
+    });
+
+    // BFS from master components
+    while (queue.length > 0) {
+      const curr = queue.shift()!;
+      (adj[curr] || []).forEach((neighbor) => {
+        if (rowAssignment[neighbor] === undefined) {
+          rowAssignment[neighbor] = 1 - rowAssignment[curr];
+          queue.push(neighbor);
+        }
+      });
+    }
+
+    // Handle remaining islands
+    (data.components || []).forEach((c) => {
+      if (rowAssignment[c.id] === undefined) {
+        rowAssignment[c.id] = 1; // Default to regular row
+        queue.push(c.id);
+        while (queue.length > 0) {
+          const curr = queue.shift()!;
+          (adj[curr] || []).forEach((neighbor) => {
+            if (rowAssignment[neighbor] === undefined) {
+              rowAssignment[neighbor] = 1 - rowAssignment[curr];
+              queue.push(neighbor);
+            }
+          });
+        }
+      }
+    });
+
+    return new Set((data.components || []).filter((c) => rowAssignment[c.id] === 0).map((c) => c.id));
+  }, [data]);
+
+  // Barycenter heuristic: reorder components within each row to minimise wire crossings.
+  // Components whose connections land mostly on the LEFT will be placed on the LEFT, etc.
+  // This is the standard O(n log n) approach used in layered graph drawing.
+  const sortedComponentIds = useMemo(() => {
+    const masterComps = (data.components || []).filter(c => smartMasterIds.has(c.id));
+    const regularComps = (data.components || []).filter(c => !smartMasterIds.has(c.id));
+
+    if (masterComps.length === 0 || regularComps.length === 0) {
+      return {
+        master: masterComps.map(c => c.id),
+        regular: regularComps.map(c => c.id),
+      };
+    }
+
+    // Step 1 — initial regular positions (original data order)
+    const regularPos: { [id: string]: number } = {};
+    regularComps.forEach((c, i) => { regularPos[c.id] = i; });
+
+    // Step 2 — sort master row by barycenter of regular-row neighbours
+    const masterBary: { [id: string]: number } = {};
+    masterComps.forEach((mc, i) => {
+      const targets = (data.connections || [])
+        .filter(w =>
+          (w.from.componentId === mc.id && regularPos[w.to.componentId] !== undefined) ||
+          (w.to.componentId === mc.id && regularPos[w.from.componentId] !== undefined))
+        .map(w => regularPos[w.from.componentId === mc.id ? w.to.componentId : w.from.componentId] ?? 0);
+      masterBary[mc.id] = targets.length > 0 ? targets.reduce((a, b) => a + b, 0) / targets.length : i;
+    });
+    const sortedMaster = [...masterComps].sort((a, b) => masterBary[a.id] - masterBary[b.id]).map(c => c.id);
+
+    // Step 3 — update master positions, then sort regular row by barycenter of master-row neighbours
+    const masterPos: { [id: string]: number } = {};
+    sortedMaster.forEach((id, i) => { masterPos[id] = i; });
+
+    const regularBary: { [id: string]: number } = {};
+    regularComps.forEach((rc, i) => {
+      const targets = (data.connections || [])
+        .filter(w =>
+          (w.from.componentId === rc.id && masterPos[w.to.componentId] !== undefined) ||
+          (w.to.componentId === rc.id && masterPos[w.from.componentId] !== undefined))
+        .map(w => masterPos[w.from.componentId === rc.id ? w.to.componentId : w.from.componentId] ?? 0);
+      regularBary[rc.id] = targets.length > 0 ? targets.reduce((a, b) => a + b, 0) / targets.length : i;
+    });
+    const sortedRegular = [...regularComps].sort((a, b) => regularBary[a.id] - regularBary[b.id]).map(c => c.id);
+
+    return { master: sortedMaster, regular: sortedRegular };
+  }, [data, smartMasterIds]);
+
+  // Channel routing heuristic: sort cross-row wires to eliminate track crossings
+  const crossRowTracks = useMemo(() => {
+    const tracks: { [index: number]: number } = {};
+    if (!data.connections) return tracks;
+    
+    const wireSpans = data.connections.map((wire, i) => {
+      const fromComp = (data.components || []).find(c => c.id === wire.from.componentId);
+      const toComp = (data.components || []).find(c => c.id === wire.to.componentId);
+      const fx = fromComp ? getXForComponent(fromComp) : 0;
+      const tx = toComp ? getXForComponent(toComp) : 0;
+      return { index: i, fx, tx };
+    });
+
+    const rightGoing = wireSpans.filter(w => w.fx <= w.tx);
+    const leftGoing = wireSpans.filter(w => w.fx > w.tx);
+
+    // Right-going wires: Largest fromX gets Top track
+    rightGoing.sort((a, b) => b.fx - a.fx);
+    
+    // Left-going wires: Smallest fromX gets Top track (among bottom tracks)
+    leftGoing.sort((a, b) => a.fx - b.fx);
+
+    let trackNo = 1;
+    rightGoing.forEach(w => tracks[w.index] = trackNo++);
+    leftGoing.forEach(w => tracks[w.index] = trackNo++);
+
+    return tracks;
+  }, [data, smartMasterIds, sortedComponentIds, componentNameWidths]);
+
   // Temporary storage for connection points during wire rendering
   let connectionPoints: { [id: string]: { x: number; y: number } } = {};
 
@@ -345,11 +476,20 @@ export default function Schematic({
     let newWidths: { [id: string]: number } = {};
     let connWidths: { [id: string]: number } = {};
     let tempMaxX = 0;
+    let masterRowX = padding;
+    let regularRowX = padding;
 
     (data.components || []).forEach((comp) => {
       const ref = componentNameRefs.current[comp.id];
       newWidths[comp.id] = ref ? ref.getBBox().width : 100;
-      tempMaxX += newWidths[comp.id];
+      
+      const isMaster = smartMasterIds.has(comp.id);
+      // We'll calculate a rough max width here. 
+      // Since we can't easily call getWidthForComponent here due to state update timing,
+      // and getXForComponent will be used for actual rendering, 
+      // we just need a safe tempMaxX for fitViewBox.
+      // But actually, we want the viewbox to be accurate.
+      
       (comp.connectors || []).forEach((conn) => {
         const ref = connectorNameRefs.current[conn.id];
         connWidths[conn.id] = ref ? ref.getBBox().width : 50;
@@ -365,6 +505,22 @@ export default function Schematic({
       connCount[conn.to.connectorId] = (connCount[conn.to.connectorId] || 0) + 1;
     });
     setConnectorConnectionCount(connCount);
+
+    // Calculate tempMaxX based on row alignment
+    // This is a bit of a placeholder until the next render when widths are fully applied,
+    // but it's better than summing everything.
+    let maxX = 0;
+    let mX = padding;
+    let rX = padding;
+    (data.components || []).forEach(comp => {
+        const isMaster = smartMasterIds.has(comp.id);
+        // Approximation of width for viewbox
+        const w = (newWidths[comp.id] || 100) + padding; 
+        if (isMaster) mX += w + padding;
+        else rX += w + padding;
+    });
+    tempMaxX = Math.max(mX, rX, 800);
+
     setFitViewBox({ x: 0, y: 0, w: tempMaxX, h: maxY });
   }, [data]);
 
@@ -440,6 +596,24 @@ export default function Schematic({
     }
   }
   function getWidthForComponent(component: ComponentType): number {
+    const isMaster = smartMasterIds.has(component.id);
+    const masterComps = (data.components || []).filter(c => smartMasterIds.has(c.id));
+    const regularComps = (data.components || []).filter(c => !smartMasterIds.has(c.id));
+
+    // --- Equal-width layout: 2 master + 1 regular → single regular spans the full master row width ---
+    if (masterComps.length === 2 && regularComps.length === 1 && !isMaster) {
+      let totalMaster = padding;
+      masterComps.forEach(mc => {
+        totalMaster += getNaturalWidthForComponent(mc) + padding;
+      });
+      // Return total master row width minus one padding (for symmetry)
+      return Math.max(totalMaster - padding, 100);
+    }
+
+    return getNaturalWidthForComponent(component);
+  }
+
+  function getNaturalWidthForComponent(component: ComponentType): number {
     const defaultWidth = componentNameWidths[component.id] + padding;
 
     // --- Calculate total extra width for all fuses on this component ---
@@ -468,7 +642,7 @@ export default function Schematic({
         (component.connectors || []).forEach((conn) => {
           connectorWidth += getWidthForConnector(conn, component) + connectorSpacing;
         });
-        width = Math.max(width, connectorWidth, width); // take the largest of fuse width, connectors, default
+        width = Math.max(width, connectorWidth, width);
       }
     }
 
@@ -476,10 +650,15 @@ export default function Schematic({
   }
 
   function getXForComponent(component: ComponentType): number {
-    const index = (data.components || []).findIndex((c) => c.id === component.id);
+    const isMaster = smartMasterIds.has(component.id);
+    // Use the barycenter-sorted order for X position to minimise wire crossings
+    const sortedIds = isMaster ? sortedComponentIds.master : sortedComponentIds.regular;
+    const index = sortedIds.indexOf(component.id);
+
     let x = padding;
     for (let i = 0; i < index; i++) {
-      const compBefore = data.components?.[i];
+      const compId = sortedIds[i];
+      const compBefore = (data.components || []).find(c => c.id === compId);
       if (compBefore) {
         x += getWidthForComponent(compBefore) + padding;
       }
@@ -488,7 +667,7 @@ export default function Schematic({
   }
 
   function getYForComponent(component: ComponentType): number {
-    let isMasterComponent = (data.masterComponents || []).includes(component.id);
+    let isMasterComponent = smartMasterIds.has(component.id);
     const y = isMasterComponent
       ? padding
       : padding +
@@ -543,14 +722,14 @@ export default function Schematic({
     connector: ConnectorType,
     component: ComponentType
   ): number {
-    let isMasterComponent = (data.masterComponents || []).includes(component.id);
+    let isMasterComponent = smartMasterIds.has(component.id);
     return isMasterComponent
       ? getYForComponent(component) + componentSize.height
       : getYForComponent(component) - 20;
   }
 
   function getSpliceCenterY(component: ComponentType): number {
-    const isMasterComponent = (data.masterComponents || []).includes(component.id);
+    const isMasterComponent = smartMasterIds.has(component.id);
     const baseY = getYForComponent(component);
     const offset = connectorHeight / 2 + 2;
 
@@ -1375,7 +1554,26 @@ export default function Schematic({
                 </g>
               ))}
 
-              {(data.connections ?? []).map((wire, i) => {
+              {/* Pre-compute a single shared intermediate Y for ALL cross-row wires.
+               *  This creates a clean single-bus topology: all wires travel vertically
+               *  from their connectors to a shared horizontal band, then turn to
+               *  reach the destination. Much more readable than per-wire staggering. */}
+              {(() => {
+                // Find a representative master component and regular component to compute row Y levels
+                const masterComp = (data.components || []).find(c => smartMasterIds.has(c.id));
+                const regularComp = (data.components || []).find(c => !smartMasterIds.has(c.id));
+                // masterBusY: just below the master row connectors (bottom of connector box)
+                const masterBusY = masterComp
+                  ? getYForComponent(masterComp) + componentSize.height + connectorHeight
+                  : padding + componentSize.height + connectorHeight;
+                // regularBusY: just above the regular row connectors (top of connector box)
+                const regularBusY = regularComp
+                  ? getYForComponent(regularComp) - connectorHeight
+                  : masterBusY + 80;
+                // Shared horizontal bus: midpoint of the gap between rows
+                const sharedCrossRowY = Math.round((masterBusY + regularBusY) / 2);
+
+                return (data.connections ?? []).map((wire, i) => {
                 const fromConn = wire.from;
                 const toConn = wire.to;
 
@@ -1425,17 +1623,17 @@ export default function Schematic({
 
                 if (!from || !to) return null;
 
-                let isFromMasterComponent = (data.masterComponents || []).includes(
+                let isFromMasterComponent = smartMasterIds.has(
                   fromComponent!.id
                 );
-                let isToMasterComponent = (data.masterComponents || []).includes(
+                let isToMasterComponent = smartMasterIds.has(
                   toComponent!.id
                 );
 
                 let fromKey =
                   fromComponent?.componentType?.toLowerCase() === "splice"
                     ? `splice-${fromComponent.id}-${i}`
-                    : connectionPointKey(wire.from);
+                    : `${connectionPointKey(wire.from)}-${i}`;
 
                 var fromStoredConnectionPoint = connectionPoints[fromKey];
 
@@ -1443,17 +1641,18 @@ export default function Schematic({
                 var fromX = fromStoredConnectionPoint?.x;
                 if (fromX == undefined) {
 
-                  // FIX FOR SPLICE: always center wire on the splice dot
+                  // FIX FOR SPLICE: fan wires out from the splice dot so vertical lines don't overlap
                   if (fromComponent?.componentType?.toLowerCase() === "splice") {
                     fromX =
                       getXForComponent(fromComponent) +
-                      getWidthForComponent(fromComponent) / 2;
+                      getWidthForComponent(fromComponent) / 2 +
+                      (i * 6) - 15;
                   } else {
                     const fromConnectorX = getXForConnector(from, fromComponent!);
                     const fromConnectorWidth = getWidthForConnector(from, fromComponent!);
                     const fromConnectorCount = calculateCavityCountForConnector(from, data);
 
-                    const connPoints = getConnectionPointsForConnector(from, data);
+                    const connPoints = getConnectionPointsForConnector(from, data, smartMasterIds);
                     const pointIndex = connPoints.findIndex(
                       (p) => p.wire === wire && p.side === "from"
                     );
@@ -1466,7 +1665,7 @@ export default function Schematic({
 
                     fromX =
                       fromComponent?.shape === "circle"
-                        ? fromConnectorX + fromConnectorWidth / 2
+                        ? fromConnectorX + (fromConnectorWidth / 2) + ((pointIndex - (fromConnectorCount - 1) / 2) * 5)
                         : fromConnectorX + fromConnectorOffset;
                   }
                 }
@@ -1496,24 +1695,25 @@ export default function Schematic({
                 var toKey =
                   toComponent?.componentType?.toLowerCase() === "splice"
                     ? `splice-${toComponent.id}-${i}`
-                    : connectionPointKey(wire.to);
+                    : `${connectionPointKey(wire.to)}-${i}`;
 
                 var toStoredConnectionPoint = connectionPoints[toKey];
 
                 var toX = toStoredConnectionPoint?.x;
                 if (toX == undefined) {
 
-                  //  FIX FOR SPLICE (multiple connections): always center
+                  // FIX FOR SPLICE: fan wires out from the splice dot
                   if (toComponent?.componentType?.toLowerCase() === "splice") {
                     toX =
                       getXForComponent(toComponent) +
-                      getWidthForComponent(toComponent) / 2;
+                      getWidthForComponent(toComponent) / 2 +
+                      (i * 6) - 15;
                   } else {
                     const toConnectorX = getXForConnector(to, toComponent!);
                     const toConnectorWidth = getWidthForConnector(to, toComponent!);
                     const toConnectorCount = calculateCavityCountForConnector(to, data);
 
-                    const connPointsTo = getConnectionPointsForConnector(to, data);
+                    const connPointsTo = getConnectionPointsForConnector(to, data, smartMasterIds);
                     const pointIndexTo = connPointsTo.findIndex(
                       (p) => p.wire === wire && p.side === "to"
                     );
@@ -1526,7 +1726,7 @@ export default function Schematic({
 
                     toX =
                       toComponent?.shape === "circle"
-                        ? toConnectorX + toConnectorWidth / 2
+                        ? toConnectorX + (toConnectorWidth / 2) + ((pointIndexTo - (toConnectorCount - 1) / 2) * 5)
                         : toConnectorX + toConnectorOffset;
                   }
                 }
@@ -1582,22 +1782,25 @@ export default function Schematic({
                   connectionPoints[toKey] = { x: toX, y: toY };
                 }
 
-                let intermediateY;
+                let intermediateY: number;
                 if (isFromMasterComponent && isToMasterComponent) {
-                  // Force wire to go below both master components
-                  intermediateY = Math.max(fromY, toY) + 40;
+                  // Both in master row: route below both master components with distinct vertical tiers
+                  // using the wire index so multiple same-row wires don't overlap horizontally.
+                  intermediateY = Math.max(fromY, toY) + 40 + (i * 10);
+                } else if (!isFromMasterComponent && !isToMasterComponent) {
+                  // Both in regular row: route above both regular components with distinct vertical tiers
+                  intermediateY = Math.min(fromY, toY) - 40 - (i * 10);
                 } else {
-                  // Default behavior
-                  const offset = getConnectionOffset(
-                    i,
-                    data.connections?.length ?? 0,
-                    fromY,
-                    toY,
-                    20
-                  );
-                  let min = Math.min(fromY, toY);
-                  intermediateY = min + offset;
+                  // Cross-row wire: each wire gets its own evenly-spaced horizontal band.
+                  // Sorted perfectly by the channel routing heuristic (crossRowTracks) 
+                  // to eliminate horizontal/vertical track line crossings.
+                  const availableGap = regularBusY - masterBusY;
+                  const totalWires = data.connections?.length ?? 1;
+                  const slotHeight = availableGap / (totalWires + 1);
+                  const optimalTrackIndex = crossRowTracks[i] || (i + 1);
+                  intermediateY = Math.round(masterBusY + slotHeight * optimalTrackIndex);
                 }
+
 
                 // Calculate the positions where the tridents should be
                 const fromTridentY = fromY < toY ? intermediateY : fromY - 10; // lift if needed
@@ -1762,19 +1965,31 @@ export default function Schematic({
                       }}
                       style={{ cursor: "pointer" }}
                     >
-                      <polyline
-                        key={i}
-                        points={`${safe(fromX, 0)},${safe(fromY, 0)} ${safe(fromX, 0)},${safe(intermediateY, 0)} ${safe(toX, 0)},${safe(intermediateY, 0)} ${safe(toX, 0)},${safe(toY, 0)}`}
-                        fill="none"
-                        stroke={
-                          selectedWires.includes(i.toString())
-                            ? "#3390FF"
-                            : wire.color
-                        }
-                        strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
-                        markerEnd="url(#arrowhead)"
-                        pointerEvents="stroke" // important
-                      />
+                      {Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5 ? (
+                        // Straight vertical line when endpoints share same X
+                        <line
+                          x1={safe(fromX, 0)}
+                          y1={safe(fromY, 0)}
+                          x2={safe(toX, 0)}
+                          y2={safe(toY, 0)}
+                          fill="none"
+                          stroke={selectedWires.includes(i.toString()) ? "#3390FF" : wire.color}
+                          strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
+                          markerEnd="url(#arrowhead)"
+                          pointerEvents="stroke"
+                        />
+                      ) : (
+                        // Z-shape routing when X positions differ
+                        <polyline
+                          key={i}
+                          points={`${safe(fromX, 0)},${safe(fromY, 0)} ${safe(fromX, 0)},${safe(intermediateY, 0)} ${safe(toX, 0)},${safe(intermediateY, 0)} ${safe(toX, 0)},${safe(toY, 0)}`}
+                          fill="none"
+                          stroke={selectedWires.includes(i.toString()) ? "#3390FF" : wire.color}
+                          strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
+                          markerEnd="url(#arrowhead)"
+                          pointerEvents="stroke"
+                        />
+                      )}
                     </g>
                     {/* <circle cx={toX} cy={toY} r={5} fill={wire.color}></circle> */}
                     {toComponent?.componentType?.toLowerCase() !== "splice" && (
@@ -1831,6 +2046,7 @@ export default function Schematic({
                         )}
                       </>
                     )}
+                    {/* Cavity labels near connectors */}
                     <text
                       x={safe(fromX + 10, 0)}
                       y={safe(fromLabelY, 0)}
@@ -1853,10 +2069,61 @@ export default function Schematic({
                     >
                       {wire.to.cavity}
                     </text>
+                    {/* Wire identity label: circuit number centered on the wire */}
+                    {wire.wireDetails?.circuitNumber && (
+                      <g>
+                        {(() => {
+                          const isStraight = Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5;
+                          // Both straight and Z-shape: center label on the wire
+                          const labelX = isStraight
+                            ? safe(fromX, 0)                           // center on vertical line
+                            : safe((fromX + toX) / 2, 0);              // center of horizontal segment
+                          const labelY = isStraight
+                            ? safe((fromY + toY) / 2, 0)               // vertical midpoint
+                            : safe(intermediateY, 0);                   // horizontal segment level
+                          
+                          const labelText = wire.wireDetails.circuitNumber || "";
+                          const labelWidth = Math.max(40, labelText.length * 6 + 12);
+
+                          return (
+                            <>
+                              <rect
+                                x={labelX - labelWidth / 2}
+                                y={labelY - 7}
+                                width={labelWidth}
+                                height={14}
+                                rx={3}
+                                fill="white"
+                                stroke={wire.color}
+                                strokeWidth={1}
+                                opacity={0.92}
+                              />
+                              <text
+                                x={labelX}
+                                y={labelY + 1}
+                                textAnchor="middle"
+                                fontSize="9"
+                                alignmentBaseline="middle"
+                                fill={
+                                  ["white", "#fff", "#ffffff", "yellow", "#ffff00"].includes(wire.color?.toLowerCase() ?? "")
+                                    ? "#333"
+                                    : wire.color
+                                }
+                                fontWeight="bold"
+                              >
+                                {labelText}
+                              </text>
+                            </>
+                          );
+                        })()}
+                      </g>
+                    )}
                   </g>
                 );
                 return <g key={i}>{wireElement}</g>;
-              })}
+                });
+              })()}
+
               </g>
             </svg>
             {/* 3. THE CONTEXT MENU UI */}

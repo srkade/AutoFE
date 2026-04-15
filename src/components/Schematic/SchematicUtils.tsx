@@ -99,7 +99,7 @@ export function calculateCavityCountForConnector(conn: ConnectorType, data: Sche
  * Returns an array of objects representing each attachment point on a connector.
  * If a wire starts and ends on the same connector, it will appear twice in this list.
  */
-export function getConnectionPointsForConnector(conn: ConnectorType, data: SchematicData): Array<{ wire: ConnectionType; side: "from" | "to" }> {
+export function getConnectionPointsForConnector(conn: ConnectorType, data: SchematicData, masterIds?: Set<string>): Array<{ wire: ConnectionType; side: "from" | "to" }> {
     const points: Array<{ wire: ConnectionType; side: "from" | "to" }> = [];
     (data.connections ?? []).forEach((wire) => {
         if (wire.from.connectorId === conn.id) {
@@ -109,6 +109,42 @@ export function getConnectionPointsForConnector(conn: ConnectorType, data: Schem
             points.push({ wire, side: "to" });
         }
     });
+
+    // Sort points to minimize wire crossing by aligning pin order with destination X-coordinate order
+    points.sort((a, b) => {
+        const getTargetIndices = (p: { wire: ConnectionType; side: "from" | "to" }) => {
+            const targetCompId = p.side === "from" ? p.wire.to.componentId : p.wire.from.componentId;
+            const targetConnId = p.side === "from" ? p.wire.to.connectorId : p.wire.from.connectorId;
+            
+            const isMaster = masterIds 
+              ? masterIds.has(targetCompId)
+              : (data.masterComponents || []).includes(targetCompId);
+
+            const sameRowComponents = (data.components || []).filter(c => {
+                const cIsMaster = masterIds ? masterIds.has(c.id) : (data.masterComponents || []).includes(c.id);
+                return cIsMaster === isMaster;
+            });
+
+            const compIdx = sameRowComponents.findIndex(c => c.id === targetCompId);
+            const comp = sameRowComponents[compIdx];
+            const connIdx = comp ? (comp.connectors || []).findIndex(c => c.id === targetConnId) : 0;
+            
+            // Return a tuple of indices to sort by
+            return { compIdx: compIdx >= 0 ? compIdx : 9999, connIdx: connIdx >= 0 ? connIdx : 9999 };
+        };
+
+        const targetA = getTargetIndices(a);
+        const targetB = getTargetIndices(b);
+
+        if (targetA.compIdx !== targetB.compIdx) return targetA.compIdx - targetB.compIdx;
+        if (targetA.connIdx !== targetB.connIdx) return targetA.connIdx - targetB.connIdx;
+        
+        // As a final tie-breaker, both ends MUST sort these wires in the IDENTICAL order.
+        // We use an intrinsic property of the wire ('wire.from.cavity') rather than property of the target.
+        // This ensures identical sequences and prevents lines from crossing.
+        return (a.wire.from.cavity || "").localeCompare(b.wire.from.cavity || "", undefined, { numeric: true });
+    });
+
     return points;
 }
 

@@ -234,6 +234,65 @@ export default function Schematic({
     return { master: sortedMaster, regular: sortedRegular };
   }, [data, smartMasterIds]);
 
+  // Barycenter sorting for connectors within each component
+  // This ensures bottom connectors are ordered based on where their wires connect on the top row
+  const sortedConnectorsMap = useMemo(() => {
+    const connectorMap = new Map<string, string[]>();
+    
+    (data.components || []).forEach(component => {
+      const connectors = component.connectors || [];
+      if (connectors.length <= 1) {
+        // No sorting needed for 0 or 1 connector
+        connectorMap.set(component.id, connectors.map(c => c.id));
+        return;
+      }
+
+      // Determine if this component is master (top) or regular (bottom)
+      const isMaster = smartMasterIds.has(component.id);
+      
+      // Get the opposite row components
+      const oppositeComps = (data.components || []).filter(c => 
+        isMaster ? !smartMasterIds.has(c.id) : smartMasterIds.has(c.id)
+      );
+      
+      // Create position map for opposite row
+      const oppositePos: { [id: string]: number } = {};
+      oppositeComps.forEach((c, i) => { oppositePos[c.id] = i; });
+
+      // Calculate barycenter for each connector
+      const connectorBary: { [connId: string]: number } = {};
+      connectors.forEach((conn, originalIndex) => {
+        // Find all connections involving this connector
+        const connectedTargets = (data.connections || [])
+          .filter(w => 
+            (w.from.componentId === component.id && w.from.connectorId === conn.id) ||
+            (w.to.componentId === component.id && w.to.connectorId === conn.id)
+          )
+          .map(w => {
+            // Get the opposite component ID
+            const oppositeCompId = w.from.componentId === component.id 
+              ? w.to.componentId 
+              : w.from.componentId;
+            return oppositePos[oppositeCompId] ?? 0;
+          });
+
+        // Barycenter = average position of connected components
+        connectorBary[conn.id] = connectedTargets.length > 0
+          ? connectedTargets.reduce((sum, pos) => sum + pos, 0) / connectedTargets.length
+          : originalIndex; // fallback to original position if no connections
+      });
+
+      // Sort connectors by barycenter value
+      const sortedConnIds = [...connectors]
+        .sort((a, b) => connectorBary[a.id] - connectorBary[b.id])
+        .map(c => c.id);
+
+      connectorMap.set(component.id, sortedConnIds);
+    });
+
+    return connectorMap;
+  }, [data, smartMasterIds]);
+
   // Channel routing heuristic: sort cross-row wires to eliminate track crossings
   const crossRowTracks = useMemo(() => {
     const tracks: { [index: number]: number } = {};
@@ -639,7 +698,8 @@ export default function Schematic({
       const connectionCount = componentConnections.length;
       if (connectionCount > 1) {
         let connectorWidth = connectorSpacing;
-        (component.connectors || []).forEach((conn) => {
+        // Use sorted connectors for width calculation
+        getSortedConnectors(component).forEach((conn) => {
           connectorWidth += getWidthForConnector(conn, component) + connectorSpacing;
         });
         width = Math.max(width, connectorWidth, width);
@@ -694,13 +754,15 @@ export default function Schematic({
   ): number {
     let x = getXForComponent(component);
     if (component.shape === "rectangle") {
-      let connectorCount = component.connectors?.length || 0;
-      let index = (component.connectors || []).findIndex((c) => c.id === connector.id);
+      // Use sorted connectors for positioning
+      const sortedConns = getSortedConnectors(component);
+      let connectorCount = sortedConns.length;
+      let index = sortedConns.findIndex((c) => c.id === connector.id);
       var connWidth = 0;
       if (connectorCount > 1) {
         connWidth += connectorSpacing;
         for (var i = 0; i < index; i++) {
-          let conn = component.connectors?.[i];
+          let conn = sortedConns[i];
           if (conn) {
             connWidth += getWidthForConnector(conn, component);
             connWidth += connectorSpacing;
@@ -736,6 +798,22 @@ export default function Schematic({
     return isMasterComponent
       ? baseY + componentSize.height + offset
       : baseY - offset;
+  }
+
+  // Get sorted connectors for a component based on barycenter ordering
+  function getSortedConnectors(component: ComponentType): ConnectorType[] {
+    const sortedConnIds = sortedConnectorsMap.get(component.id);
+    if (!sortedConnIds) {
+      return component.connectors || [];
+    }
+    
+    // Return connectors in the sorted order
+    const connMap = new Map<string, ConnectorType>();
+    (component.connectors || []).forEach(conn => connMap.set(conn.id, conn));
+    
+    return sortedConnIds
+      .map(id => connMap.get(id))
+      .filter((conn): conn is ConnectorType => conn !== undefined);
   }
   function getWidthForConnector(conn: ConnectorType, comp: ComponentType): number {
     let connections = getConnectionsForConnector(conn, data);
@@ -1495,7 +1573,7 @@ export default function Schematic({
                   >
                     {comp.label + ` (${comp.id})`}
                   </text>
-                  {(comp.connectors || []).map((conn) => (
+                  {getSortedConnectors(comp).map((conn) => (
                     <g key={conn.id}>
                       {/* render connector box only if component is not a splice */}
                       {comp.componentType?.toLowerCase() !== "splice" && (

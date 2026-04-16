@@ -1,28 +1,23 @@
-import axios from "axios";
+import api from "./api";
 import { incrementUploadSuccess, incrementUploadFailure } from "./api";
-import { API_BASE_URL } from "../config";
-
-const api = axios.create({
-  baseURL: `${API_BASE_URL}/uploads`,
-});
 
 export const getAllUploads = () =>
-  api.get("").then(res => res.data);  // Fixed: empty string instead of space
+  api.get("/uploads").then(res => res.data);
 
 export const getUploadsByUser = () =>
-  api.get("/uploadedByPerUser").then(res => res.data);
+  api.get("/uploads/uploadedByPerUser").then(res => res.data);
 
 export const createUploadEntry = (data: any) =>
-  api.post("", data).then(res => res.data);
+  api.post("/uploads", data).then(res => res.data);
 
 export const updateUploadEntry = (id: string, data: any) =>
-  api.put(`/${id}`, data).then(res => res.data);
+  api.put(`/uploads/${id}`, data).then(res => res.data);
 
-export const deleteUploadById = async (id: string) => {
-  await axios.delete(`${API_BASE_URL}/uploads/${id}`);
-};
+export const deleteUploadById = (id: string) =>
+  api.delete(`/uploads/${id}`).then(res => res.data);
+
 export const fetchUploadFile = async (id: string) => {
-  const res = await api.get(`/${id}/view`, {
+  const res = await api.get(`/uploads/${id}/view`, {
     responseType: "blob",
   });
   return res.data;

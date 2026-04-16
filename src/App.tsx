@@ -760,6 +760,7 @@ function AppContent() {
             <AuthorTopbar
               onLogout={handleLogout}
               user={currentUser}
+              token={token}
               selectedModelId={selectedModelId}
               onModelChange={(id) => {
                 setSelectedModelId(id);

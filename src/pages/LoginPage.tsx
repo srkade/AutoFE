@@ -28,7 +28,7 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick, setToken, o
     if (username === "superadmin@example.com" && password === "SuperAdmin123!") {
       // Hardcoded super admin credentials
       const superAdminResponse = {
-        token: "hardcoded-superadmin-token",
+        token: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdXBlcmFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIn0.hardcoded-signature",
         user: {
           firstName: "Super",
           lastName: "Admin",

@@ -6,6 +6,7 @@ import DatabaseManagement from "./DatabaseManagement";
 import UserAnalytics from "./UserAnalytics";
 import SystemMonitoring from "./SystemMonitoring";
 import SuperAdminHomePage from "./SuperAdminHomePage";
+import CompanyManagement from "./CompanyManagement";
 import SearchBar from "../components/SearchBar";
 import { FiLogOut, FiMenu } from "react-icons/fi";
 import "../Styles/AuthorNavigationTabs.css";
@@ -63,6 +64,7 @@ export default function SuperAdminDashboard({
             case "database-management": title = "Database Management"; break;
             case "user-analytics": title = "User Analytics"; break;
             case "system-monitoring": title = "System Monitoring"; break;
+            case "company-management": title = "Company Management"; break;
             default: title = " Super Admin Dashboard";
         }
     }, [activeTab]);
@@ -247,7 +249,12 @@ export default function SuperAdminDashboard({
                                     <SystemMonitoring />
                                 </div>
                             )}
-                            {!["home", "system-settings", "security-logs", "database-management", "user-analytics", "system-monitoring"].includes(activeTab) && (
+                            {activeTab === "company-management" && (
+                                <div key="company-management" style={{ height: '100%' }}>
+                                    <CompanyManagement token={token} />
+                                </div>
+                            )}
+                            {!["home", "system-settings", "security-logs", "database-management", "user-analytics", "system-monitoring", "company-management"].includes(activeTab) && (
                                 <div key="invalid-tab" style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
                                     <h3>Please select a valid tab</h3>
                                     <p>Select an option from the navigation menu to view content</p>

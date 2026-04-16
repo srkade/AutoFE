@@ -36,6 +36,27 @@ export default function RegisterForm({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPasswordHint, setShowPasswordHint] = useState(false);
+
+  // Password validation helper
+  const validatePassword = (pwd: string) => {
+    if (!pwd) return { valid: false, message: "" };
+    const hasLower = /[a-z]/.test(pwd);
+    const hasUpper = /[A-Z]/.test(pwd);
+    const hasNumber = /\d/.test(pwd);
+    const hasLength = pwd.length >= 8;
+    
+    const valid = hasLower && hasUpper && hasNumber && hasLength;
+    const messages = [];
+    if (!hasLength) messages.push("at least 8 characters");
+    if (!hasUpper) messages.push("one uppercase letter");
+    if (!hasLower) messages.push("one lowercase letter");
+    if (!hasNumber) messages.push("one number");
+    
+    return { valid, message: messages.join(", ") };
+  };
+
+  const passwordValidation = validatePassword(password);
 
   // ---------------- TERMS MODAL CONTENT ----------------
   const TermsModal = () => (
@@ -133,6 +154,15 @@ export default function RegisterForm({
       return;
     }
 
+    // Password validation for new users (must match backend requirements)
+    if (!userToEdit) {
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+      if (!passwordRegex.test(password)) {
+        alert("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.");
+        return;
+      }
+    }
+
     // ---------------- Payload ----------------
     const payload: any = {
       firstName,
@@ -194,6 +224,19 @@ export default function RegisterForm({
 
       if (err.response?.status === 409) {
         alert("Email already exists. Please use a different email.");
+      } else if (err.response?.status === 400) {
+        // Handle validation errors from backend
+        const errorData = err.response?.data;
+        console.error("Validation errors:", errorData);
+        
+        // Spring Validation errors typically come in a specific format
+        if (errorData?.message) {
+          alert(`Validation Error: ${errorData.message}`);
+        } else if (errorData?.error) {
+          alert(`Error: ${errorData.error}`);
+        } else {
+          alert("Invalid data. Please check all fields and try again.\n\nRequirements:\n- Password: 8+ characters, uppercase, lowercase, number\n- Role: Must be 'Author' or 'User'\n- All fields are required");
+        }
       } else if (err.response?.status === 403 && err.response?.data?.error) {
         // Show backend pending approval message
         alert(err.response.data.error);
@@ -369,14 +412,23 @@ export default function RegisterForm({
             {/* PASSWORD (only in create mode) */}
             {!userToEdit && (
               <>
-                <input
-                  type="password"
-                  placeholder="Password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={inputStyle}
-                />
+                <div>
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => setShowPasswordHint(true)}
+                    onBlur={() => setShowPasswordHint(false)}
+                    style={inputStyle}
+                  />
+                  {showPasswordHint && password.length > 0 && (
+                    <div style={{ fontSize: '12px', marginTop: '4px', color: passwordValidation.valid ? '#28a745' : '#dc3545' }}>
+                      {passwordValidation.valid ? '✓ Password is valid' : `✗ Must have: ${passwordValidation.message}`}
+                    </div>
+                  )}
+                </div>
 
                 <input
                   type="password"

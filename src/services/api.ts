@@ -10,7 +10,9 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem("token");
-    if (token) {
+    const isLoginRequest = config.url?.includes("/auth/login");
+    
+    if (token && !isLoginRequest) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -26,6 +28,7 @@ api.interceptors.request.use(
 
 export interface Model {
   id: string;
+  companyId?: string;
   name: string;
   description?: string;
   createdAt?: string;

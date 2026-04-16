@@ -7,9 +7,10 @@ interface TableEditorModalProps {
   tableName: string;
   onClose: () => void;
   onSave?: () => void;
+  modelId?: string;
 }
 
-const TableEditorModal: React.FC<TableEditorModalProps> = ({ tableName, onClose, onSave }) => {
+const TableEditorModal: React.FC<TableEditorModalProps> = ({ tableName, onClose, onSave, modelId }) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -18,7 +19,7 @@ const TableEditorModal: React.FC<TableEditorModalProps> = ({ tableName, onClose,
   useEffect(() => {
     const loadData = async () => {
       try {
-        const result: any = await fetchTableData(tableName);
+        const result: any = await fetchTableData(tableName, modelId);
         setData(result.data || []);
         setHeaders(result.headers || []);
       } catch (err) {
@@ -28,7 +29,7 @@ const TableEditorModal: React.FC<TableEditorModalProps> = ({ tableName, onClose,
       }
     };
     loadData();
-  }, [tableName]);
+  }, [tableName, modelId]);
 
   const handleCellChange = (rowIndex: number, header: string, value: string) => {
     const newData = [...data];
@@ -48,7 +49,13 @@ const TableEditorModal: React.FC<TableEditorModalProps> = ({ tableName, onClose,
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateTableData(tableName, data);
+      // Filter out model_id from data before sending (backend adds it automatically)
+      const filteredData = data.map(row => {
+        const { model_id, ...rest } = row;
+        return rest;
+      });
+      
+      await updateTableData(tableName, filteredData, modelId);
       alert("Table updated successfully!");
       if (onSave) onSave();
       onClose();

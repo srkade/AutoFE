@@ -89,12 +89,14 @@ export default function Schematic({
   activeTab,
   dtcCode,
   onComponentRightClick,
+  onSpliceRightClick,
 }: {
   data: SchematicData;
   scale?: number;
   activeTab?: string;
   dtcCode?: string;
-  onComponentRightClick?: (component: ComponentType, pos: { x: number; y: number }) => void; // <-- ADDED
+  onComponentRightClick?: (component: ComponentType, pos: { x: number; y: number }) => void;
+  onSpliceRightClick?: (splice: ComponentType) => void;
 }) {
   const svgWrapperRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -112,12 +114,12 @@ export default function Schematic({
   const [rotation, setRotation] = useState(0); // 0, 90, 180, 270
   const [viewBox, setViewBox] = useState({ x: 0, y: 0, w: 800, h: 600 });
   const [fitViewBox, setFitViewBox] = useState(viewBox);
-  
+
   const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>([]);
   const [selectedWires, setSelectedWires] = useState<string[]>([]);
   const [selectedConnector, setSelectedConnector] = useState<ConnectorType | null>(null);
   const [selectedDTC, setSelectedDTC] = useState<any>(null);
-  
+
   const [popupComponent, setPopupComponent] = useState<ComponentType | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [popupWire, setPopupWire] = useState<WirePopupType | null>(null);
@@ -238,7 +240,7 @@ export default function Schematic({
   const crossRowTracks = useMemo(() => {
     const tracks: { [index: number]: number } = {};
     if (!data.connections) return tracks;
-    
+
     const wireSpans = data.connections.map((wire, i) => {
       const fromComp = (data.components || []).find(c => c.id === wire.from.componentId);
       const toComp = (data.components || []).find(c => c.id === wire.to.componentId);
@@ -252,7 +254,7 @@ export default function Schematic({
 
     // Right-going wires: Largest fromX gets Top track
     rightGoing.sort((a, b) => b.fx - a.fx);
-    
+
     // Left-going wires: Smallest fromX gets Top track (among bottom tracks)
     leftGoing.sort((a, b) => a.fx - b.fx);
 
@@ -482,14 +484,14 @@ export default function Schematic({
     (data.components || []).forEach((comp) => {
       const ref = componentNameRefs.current[comp.id];
       newWidths[comp.id] = ref ? ref.getBBox().width : 100;
-      
+
       const isMaster = smartMasterIds.has(comp.id);
       // We'll calculate a rough max width here. 
       // Since we can't easily call getWidthForComponent here due to state update timing,
       // and getXForComponent will be used for actual rendering, 
       // we just need a safe tempMaxX for fitViewBox.
       // But actually, we want the viewbox to be accurate.
-      
+
       (comp.connectors || []).forEach((conn) => {
         const ref = connectorNameRefs.current[conn.id];
         connWidths[conn.id] = ref ? ref.getBBox().width : 50;
@@ -513,11 +515,11 @@ export default function Schematic({
     let mX = padding;
     let rX = padding;
     (data.components || []).forEach(comp => {
-        const isMaster = smartMasterIds.has(comp.id);
-        // Approximation of width for viewbox
-        const w = (newWidths[comp.id] || 100) + padding; 
-        if (isMaster) mX += w + padding;
-        else rX += w + padding;
+      const isMaster = smartMasterIds.has(comp.id);
+      // Approximation of width for viewbox
+      const w = (newWidths[comp.id] || 100) + padding;
+      if (isMaster) mX += w + padding;
+      else rX += w + padding;
     });
     tempMaxX = Math.max(mX, rX, 800);
 
@@ -870,7 +872,7 @@ export default function Schematic({
         flexDirection: "column",
         width: "100%",
         height: isFullscreen ? "100vh" : "100%",
-        background: "var(--bg-primary, #f6f8fc)",
+        background: "#fafafa",
         overflow: "hidden",
         minHeight: isFullscreen ? undefined : "100%", // ensure min height stays fixed
         maxHeight: isFullscreen ? undefined : "100%", // prevent growing heights
@@ -1179,73 +1181,772 @@ export default function Schematic({
             >
               <g transform={`rotate(${rotation} ${viewBox.x + viewBox.w / 2} ${viewBox.y + viewBox.h / 2})`}>
 
-              {(data.components || []).map((comp, componentIndex) => (
-                <g key={comp.id}>
-                  {(comp.componentType?.toLowerCase() === "splice" ||
-                    comp.label?.toLowerCase() === "splice")
-                    ? (
-                      <g
-                        onClick={(e) => {
-                          const spliceConnections = (data.connections || []).filter(
-                            (wire) =>
-                              wire.from?.componentId === comp.id ||
-                              wire.to?.componentId === comp.id
-                          );
-                          handleSpliceClick(e, comp, spliceConnections);
-                        }}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <circle
-                          cx={safe(
-                            getXForComponent(comp) + getWidthForComponent(comp) / 2,
-                            padding
-                          )}
-                          cy={safe(getSpliceCenterY(comp), padding)}
-                          r={componentSize.height / 8} // adjust radius as needed
-                          fill={
-                            comp.isHighlighted
-                              ? "#fca5a5"                     // duplicate = red-300
-                              : popupSplice?.spliceId === comp.id
-                              ? "#ede9fe"                     // selected splice = purple-100
-                              : "white"
-                          }
-                          stroke={
-                            comp.isHighlighted
-                              ? "#dc2626"                     // duplicate = strong red border
-                              : popupSplice?.spliceId === comp.id
-                              ? "#2563eb"                    // selected splice = purple
-                              : "black"
-                          }
-                          strokeWidth={
-                            comp.isHighlighted ? 3 : popupSplice?.spliceId === comp.id ? 2 : 1
-                          }
-                        />
-                        <circle
-                          cx={safe(
-                            getXForComponent(comp) + getWidthForComponent(comp) / 2,
-                            padding
-                          )}
-                          cy={safe(getSpliceCenterY(comp), padding)}
-                          r={componentSize.height / 10}
-                          fill={
-                            comp.isHighlighted
-                              ? "yellow"                     // duplicate = red-300
-                              : popupSplice?.spliceId === comp.id
-                              // ? "#8b5cf6"     
-                              ? "#2563eb"              // selected = purple dot
-                              : "black"
-                          }
-                        />
-                      </g>
-                    ) : (
-                      comp.shape === "rectangle" && (
+                {(data.components || []).map((comp, componentIndex) => (
+                  <g key={comp.id}>
+                    {(comp.componentType?.toLowerCase() === "splice" ||
+                      comp.label?.toLowerCase() === "splice")
+                      ? (
                         <g
                           onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedWires([]);
+                            const spliceConnections = (data.connections || []).filter(
+                              (wire) =>
+                                wire.from?.componentId === comp.id ||
+                                wire.to?.componentId === comp.id
+                            );
+                            handleSpliceClick(e, comp, spliceConnections);
+                          }}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            if (onSpliceRightClick) {
+                              onSpliceRightClick(comp);
+                            }
+                          }}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <circle
+                            cx={safe(
+                              getXForComponent(comp) + getWidthForComponent(comp) / 2,
+                              padding
+                            )}
+                            cy={safe(getSpliceCenterY(comp), padding)}
+                            r={componentSize.height / 8} // adjust radius as needed
+                            fill={
+                              comp.isHighlighted
+                                ? "yellow"                      // highlighted/expanded = yellow
+                                : popupSplice?.spliceId === comp.id
+                                  ? "#ede9fe"                     // selected splice = purple-100
+                                  : "white"
+                            }
+                            stroke={
+                              comp.isHighlighted
+                                ? "#ca8a04"                     // expanded = gold border
+                                : popupSplice?.spliceId === comp.id
+                                  ? "#2563eb"                    // selected splice = purple
+                                  : "black"
+                            }
+                            strokeWidth={
+                              comp.isHighlighted ? 3 : popupSplice?.spliceId === comp.id ? 2 : 1
+                            }
+                          />
+                          <circle
+                            cx={safe(
+                              getXForComponent(comp) + getWidthForComponent(comp) / 2,
+                              padding
+                            )}
+                            cy={safe(getSpliceCenterY(comp), padding)}
+                            r={componentSize.height / 10}
+                            fill={
+                              comp.isHighlighted
+                                ? "yellow"                     // duplicate = red-300
+                                : popupSplice?.spliceId === comp.id
+                                  // ? "#8b5cf6"     
+                                  ? "#2563eb"              // selected = purple dot
+                                  : "black"
+                            }
+                          />
+                        </g>
+                      ) : (
+                        comp.shape === "rectangle" && (
+                          <g
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedWires([]);
 
-                            // Select this component
-                            setSelectedComponentIds([comp.id]);
+                              // Select this component
+                              setSelectedComponentIds([comp.id]);
+
+                              // Close other popups and clear connector selection
+                              setPopupComponent(null);
+                              setPopupWire(null);
+                              setPopupConnector(null);
+                              setSelectedConnector(null); // Clear connector highlight
+                              setSelectedDTC(null);
+                              setPopupSplice(null);
+
+                              // Show popup only if it wasn't manually closed
+                              if (!popupClosedManually) {
+                                setPopupComponent(comp);
+                                setPopupPosition({
+                                  x:
+                                    getXForComponent(comp) +
+                                    getWidthForComponent(comp) +
+                                    900,
+                                  y:
+                                    getYForComponent(comp) +
+                                    componentSize.height +
+                                    100,
+                                });
+                              }
+                            }}
+                          >
+                            <rect
+                              x={safe(getXForComponent(comp), padding)}
+                              y={safe(getYForComponent(comp), padding)}
+                              width={safe(getWidthForComponent(comp), 100)}
+                              height={componentSize.height}
+
+                              //  Dynamic fill
+                              fill={
+                                selectedComponentIds.includes(comp.id)
+                                  ? "#93c5fd"                     // selected = blue-300
+                                  : comp.isHighlighted
+                                    ? "yellow"                     // duplicate = yellow
+                                    : "lightblue"
+                              }
+
+                              //  Dynamic stroke
+                              stroke={
+                                comp.isHighlighted
+                                  ? "#dc2626"                     // duplicate = strong red border
+                                  : selectedComponentIds.includes(comp.id)
+                                    ? "#2563eb"                     // selected = strong blue
+                                    : "black"
+                              }
+
+                              strokeWidth={
+                                comp.isHighlighted ? 3 : 1
+                              }
+
+                              strokeDasharray={
+                                componentIndex !== 0 ? "6,4" : undefined
+                              }
+
+                              style={{
+                                cursor: "pointer",
+                              }}
+
+                              onContextMenu={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const pos = { x: e.clientX, y: e.clientY };
+
+                                setSelectedWires([]);
+                                setPopupComponent(null);
+                                setPopupWire(null);
+                                setPopupConnector(null);
+                                setSelectedConnector(null);
+                                setSelectedDTC(null);
+                                setPopupSplice(null);
+
+                                setContextMenu({ x: e.clientX, y: e.clientY, component: comp });
+                                if (onComponentRightClick) onComponentRightClick(comp, pos);
+                              }}
+
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedComponentIds([comp.id]);
+                                setSelectedWires([]);
+
+                                setPopupComponent(null);
+                                setPopupWire(null);
+                                setPopupConnector(null);
+                                setSelectedConnector(null);
+                                setSelectedDTC(null);
+                                setPopupSplice(null);
+
+                                setPopupComponent(comp);
+                              }}
+                            />
+                            {selectedComponentIds.includes(comp.id) && (
+                              <rect
+                                x={safe(getXForComponent(comp), padding)}
+                                y={safe(
+                                  getYForComponent(comp) <
+                                    fitViewBox.y + fitViewBox.h / 2
+                                    ? getYForComponent(comp) - 60
+                                    : getYForComponent(comp) + 60,
+                                  padding
+                                )}
+                                width={safe(getWidthForComponent(comp), 100)}
+                                height={componentSize.height}
+                                fill="#3390FF"
+                                opacity={0.3}
+                                pointerEvents="none" // so the click still passes through to the base rect
+                              />
+                            )}
+
+                            {comp.category?.toLowerCase() === "sensor" && (
+                              <Sensor
+                                x={safe(getXForComponent(comp) + 20, 50)} // left of rectangle
+                                y={safe(getYForComponent(comp) + 15, 50)} // top of rectangle
+                                width={safe(getWidthForComponent(comp) / 20, 5)} // match rectangle width
+                                height={componentSize.height / 2} // match rectangle height
+                                stroke="black"
+                                strokeWidth={1}
+                              />
+                            )}
+
+                            {comp.category?.toLowerCase() === "switch" && (
+                              <ElectricalSwitch
+                                x={safe(getXForComponent(comp), padding)}
+                                y={safe(getYForComponent(comp), padding)}
+                                sizeMultiplier={0.5}
+                                stroke="black"
+                                strokeWidth={1}
+                              />
+                            )}
+
+                            {comp.category?.toLowerCase() === "transistor" && (
+                              <Transistor
+                                x={safe(
+                                  getXForComponent(comp) +
+                                  getWidthForComponent(comp) / 12,
+                                  padding
+                                )} // horizontal centering
+                                y={safe(getYForComponent(comp) + componentSize.height / 2, padding)} // vertical centering
+                                sizeMultiplier={0.3} // make smaller so it fits neatly inside
+                                stroke="black"
+                                strokeWidth={5}
+                              />
+                            )}
+                            {comp.category?.toLowerCase() === "transformer" && (
+                              <Transformer
+                                x={safe(
+                                  getXForComponent(comp) +
+                                  getWidthForComponent(comp) / 16,
+                                  padding
+                                )} // horizontal centering
+                                y={safe(getYForComponent(comp) + componentSize.height / 6, padding)} // vertical centering
+                                sizeMultiplier={0.2} // scale it down to fit
+                                stroke="black"
+                                strokeWidth={1}
+                                fill="black"
+                              />
+                            )}
+                            {comp.category?.toLowerCase() === "motor" && (
+                              <MotorSymbol
+                                cx={safe(
+                                  getXForComponent(comp) +
+                                  getWidthForComponent(comp) / 5,
+                                  padding
+                                )} // center of rectangle
+                                cy={safe(getYForComponent(comp) + componentSize.height / 2, padding)} // center of rectangle
+                                size={safe(
+                                  Math.min(
+                                    getWidthForComponent(comp),
+                                    componentSize.height
+                                  ) * 0.5,
+                                  20
+                                )} // scale to fit rectangle
+                                color="black"
+                                fill="#B0E0E6"
+                              />
+                            )}
+                            {comp.category?.toLowerCase() === "lamp" && (
+                              <LampSymbol
+                                cx={safe(
+                                  getXForComponent(comp) +
+                                  getWidthForComponent(comp) / 5,
+                                  padding
+                                )}
+                                cy={safe(getYForComponent(comp) + componentSize.height / 2, padding)}
+                                size={safe(
+                                  Math.min(
+                                    getWidthForComponent(comp),
+                                    componentSize.height
+                                  ) * 0.5,
+                                  20
+                                )}
+                                color="black"
+                              />
+                            )}
+                            {comp.category?.toLowerCase() === "ground" && (
+                              <GroundSymbol
+                                x={safe(getXForComponent(comp), padding)} // adjust horizontal position
+                                y={safe(getYForComponent(comp) + 15, padding)} // adjust vertical position
+                                width={safe(getWidthForComponent(comp) / 2, 50)} // adjust width scaling
+                                height={safe(componentSize.height / 2, 30)} // adjust height scaling
+                                stroke="black"
+                                strokeWidth={3}
+                              />
+                            )}
+                            {comp.category?.toLowerCase() === "resistor" && (
+                              <ResistorSymbol
+                                x={safe(getXForComponent(comp) - 50, padding)}
+                                y={safe(getYForComponent(comp) + 13, padding)}
+                                width={safe(getWidthForComponent(comp), 100)}
+                                height={40}
+                              />
+                            )}
+                            {comp.category?.toLowerCase() === "battery" && (
+                              <Battery
+                                x={safe(getXForComponent(comp) + 10, padding)}
+                                y={safe(getYForComponent(comp) + 10, padding)}
+                                width={30}
+                                height={40}
+                                leadLength={5}
+                                centralLineRatio={3}
+                              />
+                            )}
+                          </g>
+                        )
+                      )}
+                    <text
+                      vectorEffect="non-scaling-stroke"
+                      ref={(el) => {
+                        componentNameRefs.current[comp.id] = el;
+                      }}
+                      x={safe(getXForComponentTitle(comp), padding)}
+                      // y={getYForComponent(comp) + componentSize.height / 2}
+                      y={safe(
+                        getYForComponent(comp) +
+                        (getYForComponent(comp) + componentSize.height / 2 <
+                          fitViewBox.y + fitViewBox.h / 2
+                          ? (comp.componentType?.toLowerCase() === "splice" ? componentSize.height - 10 : -componentSize.height / 2) // above component
+                          : componentSize.height +
+                          (comp.componentType?.toLowerCase() === "splice" ? -30 : 30)),
+                        padding
+                      )}
+                      textAnchor="middle"
+                      fontSize="20"
+                      fill="black"
+                    >
+                      {comp.label + ` (${comp.id})`}
+                    </text>
+                    {(comp.connectors || []).map((conn) => (
+                      <g key={conn.id}>
+                        {/* render connector box only if component is not a splice */}
+                        {comp.componentType?.toLowerCase() !== "splice" && (
+                          <g>
+                            <rect
+                              x={safe(getXForConnector(conn, comp), padding)}
+                              y={safe(getYForConnector(conn, comp), padding)}
+                              width={safe(getWidthForConnector(conn, comp), 50)}
+                              height={connectorHeight}
+                              fill={
+                                selectedConnector?.id === conn.id
+                                  ? "#3390FF"
+                                  : "lightgreen"
+                              }
+                              stroke="black"
+                              strokeDasharray={
+                                componentIndex !== 0 ? "6,4" : undefined
+                              }
+                              onClick={(e) => handleConnectorClick(e, conn, comp)}
+                              style={{ cursor: "pointer" }}
+                            />
+                            {selectedConnector?.id === conn.id && (
+                              <rect
+                                x={safe(getXForConnector(conn, comp), padding)}
+                                y={safe(getYForConnector(conn, comp), padding)}
+                                width={safe(getWidthForConnector(conn, comp), 50)}
+                                height={connectorHeight}
+                                fill="#3390FF"
+                                opacity={0.3}
+                                pointerEvents="none" // so the click still passes through to the base rect
+                              />
+                            )}
+                          </g>
+                        )}
+
+                        <text
+                          ref={(el) => {
+                            connectorNameRefs.current[conn.id] = el;
+                          }}
+                          x={safe(
+                            getXForConnector(conn, comp) -
+                            (comp.componentType?.toLowerCase() === "splice" ? -10 : 1),
+                            padding
+                          )} // reduce gap if splice
+                          y={safe(getYForConnector(conn, comp) + 13, padding)}
+                          textAnchor="end" //change to move text at the left
+                          dominantBaseline="middle" //change to take text left at middle
+                          fontSize="10"
+                          fill="black"
+                          fontWeight="bold"
+                        >
+                          {conn.label}
+                        </text>
+                      </g>
+                    ))}
+                  </g>
+                ))}
+
+                {/* Pre-compute a single shared intermediate Y for ALL cross-row wires.
+               *  This creates a clean single-bus topology: all wires travel vertically
+               *  from their connectors to a shared horizontal band, then turn to
+               *  reach the destination. Much more readable than per-wire staggering. */}
+                {(() => {
+                  // Find a representative master component and regular component to compute row Y levels
+                  const masterComp = (data.components || []).find(c => smartMasterIds.has(c.id));
+                  const regularComp = (data.components || []).find(c => !smartMasterIds.has(c.id));
+                  // masterBusY: just below the master row connectors (bottom of connector box)
+                  const masterBusY = masterComp
+                    ? getYForComponent(masterComp) + componentSize.height + connectorHeight
+                    : padding + componentSize.height + connectorHeight;
+                  // regularBusY: just above the regular row connectors (top of connector box)
+                  const regularBusY = regularComp
+                    ? getYForComponent(regularComp) - connectorHeight
+                    : masterBusY + 80;
+                  // Shared horizontal bus: midpoint of the gap between rows
+                  const sharedCrossRowY = Math.round((masterBusY + regularBusY) / 2);
+
+                  return (data.connections ?? []).map((wire, i) => {
+                    const fromConn = wire.from;
+                    const toConn = wire.to;
+
+                    const fromData = getComponentConnectorTupleFromConnectionPoint(
+                      fromConn,
+                      data
+                    );
+                    const fromComponent = fromData[0];
+                    var from = fromData[1];
+
+                    const toData = getComponentConnectorTupleFromConnectionPoint(
+                      toConn,
+                      data
+                    );
+                    const toComponent = toData[0];
+                    var to = toData[1];
+
+                    if (fromComponent?.componentType?.toLowerCase() === "splice" && !from) {
+                      const centerX =
+                        getXForComponent(fromComponent) + getWidthForComponent(fromComponent) / 2;
+
+                      const centerY =
+                        getSpliceCenterY(fromComponent);
+
+                      from = {
+                        id: `splice-from-${fromComponent.id}-${i}`,
+                        label: "",
+                        x: centerX,
+                        y: centerY
+                      } as any;
+                    }
+
+                    if (toComponent?.componentType?.toLowerCase() === "splice" && !to) {
+                      const centerX =
+                        getXForComponent(toComponent) + getWidthForComponent(toComponent) / 2;
+
+                      const centerY =
+                        getSpliceCenterY(toComponent);
+
+                      to = {
+                        id: `splice-to-${toComponent.id}-${i}`,
+                        label: "",
+                        x: centerX,
+                        y: centerY
+                      } as any;
+                    }
+
+                    if (!from || !to) return null;
+
+                    let isFromMasterComponent = smartMasterIds.has(
+                      fromComponent!.id
+                    );
+                    let isToMasterComponent = smartMasterIds.has(
+                      toComponent!.id
+                    );
+
+                    let fromKey =
+                      fromComponent?.componentType?.toLowerCase() === "splice"
+                        ? `splice-${fromComponent.id}-${i}`
+                        : `${connectionPointKey(wire.from)}-${i}`;
+
+                    var fromStoredConnectionPoint = connectionPoints[fromKey];
+
+
+                    var fromX = fromStoredConnectionPoint?.x;
+                    if (fromX == undefined) {
+
+                      // FIX FOR SPLICE: fan wires out from the splice dot so vertical lines don't overlap
+                      if (fromComponent?.componentType?.toLowerCase() === "splice") {
+                        fromX =
+                          getXForComponent(fromComponent) +
+                          getWidthForComponent(fromComponent) / 2 +
+                          (i * 6) - 15;
+                      } else {
+                        const fromConnectorX = getXForConnector(from, fromComponent!);
+                        const fromConnectorWidth = getWidthForConnector(from, fromComponent!);
+                        const fromConnectorCount = calculateCavityCountForConnector(from, data);
+
+                        const connPoints = getConnectionPointsForConnector(from, data, smartMasterIds);
+                        const pointIndex = connPoints.findIndex(
+                          (p) => p.wire === wire && p.side === "from"
+                        );
+
+                        const fromConnectorOffset =
+                          fromConnectorCount === 1
+                            ? fromConnectorWidth / 2
+                            : (fromConnectorWidth / (fromConnectorCount + 1)) *
+                            (pointIndex + 1);
+
+                        fromX =
+                          fromComponent?.shape === "circle"
+                            ? fromConnectorX + (fromConnectorWidth / 2) + ((pointIndex - (fromConnectorCount - 1) / 2) * 5)
+                            : fromConnectorX + fromConnectorOffset;
+                      }
+                    }
+
+                    var fromY = fromStoredConnectionPoint?.y;
+                    if (fromY == undefined) {
+                      if (fromComponent?.componentType?.toLowerCase() === "splice") {
+                        // Align wire to splice dot Y-position
+                        fromY =
+                          getSpliceCenterY(fromComponent);
+                      } else {
+                        fromY = isFromMasterComponent
+                          ? getYForConnector(from, fromComponent!) + 20
+                          : getYForConnector(from, fromComponent!);
+                      }
+                    }
+
+
+                    fromKey =
+                      fromComponent?.componentType?.toLowerCase() === "splice"
+                        ? `splice-${fromComponent.id}-${i}`
+                        : connectionPointKey(wire.from);
+
+                    connectionPoints[fromKey] = { x: fromX, y: fromY };
+
+
+                    var toKey =
+                      toComponent?.componentType?.toLowerCase() === "splice"
+                        ? `splice-${toComponent.id}-${i}`
+                        : `${connectionPointKey(wire.to)}-${i}`;
+
+                    var toStoredConnectionPoint = connectionPoints[toKey];
+
+                    var toX = toStoredConnectionPoint?.x;
+                    if (toX == undefined) {
+
+                      // FIX FOR SPLICE: fan wires out from the splice dot
+                      if (toComponent?.componentType?.toLowerCase() === "splice") {
+                        toX =
+                          getXForComponent(toComponent) +
+                          getWidthForComponent(toComponent) / 2 +
+                          (i * 6) - 15;
+                      } else {
+                        const toConnectorX = getXForConnector(to, toComponent!);
+                        const toConnectorWidth = getWidthForConnector(to, toComponent!);
+                        const toConnectorCount = calculateCavityCountForConnector(to, data);
+
+                        const connPointsTo = getConnectionPointsForConnector(to, data, smartMasterIds);
+                        const pointIndexTo = connPointsTo.findIndex(
+                          (p) => p.wire === wire && p.side === "to"
+                        );
+
+                        const toConnectorOffset =
+                          toConnectorCount === 1
+                            ? toConnectorWidth / 2
+                            : (toConnectorWidth / (toConnectorCount + 1)) *
+                            (pointIndexTo + 1);
+
+                        toX =
+                          toComponent?.shape === "circle"
+                            ? toConnectorX + (toConnectorWidth / 2) + ((pointIndexTo - (toConnectorCount - 1) / 2) * 5)
+                            : toConnectorX + toConnectorOffset;
+                      }
+                    }
+
+                    var toY = toStoredConnectionPoint?.y;
+                    if (toY == undefined) {
+                      if (toComponent?.componentType?.toLowerCase() === "splice") {
+                        toY = getSpliceCenterY(toComponent);
+                      } else {
+                        toY = isToMasterComponent
+                          ? getYForConnector(to, toComponent!) + 20
+                          : getYForConnector(to, toComponent!);
+                      }
+                    }
+
+                    toKey =
+                      toComponent?.componentType?.toLowerCase() === "splice"
+                        ? `splice-${toComponent.id}-${i}`
+                        : connectionPointKey(wire.to);
+
+                    connectionPoints[toKey] = { x: toX, y: toY };
+
+                    const spliceRadius = componentSize.height / 8; // matches rendered splice radius
+
+                    if (fromComponent?.componentType?.toLowerCase() === "splice") {
+                      const cx =
+                        getXForComponent(fromComponent) +
+                        getWidthForComponent(fromComponent) / 2;
+                      const cy = getSpliceCenterY(fromComponent);
+                      // if from is master (top row), attach at bottom center; else attach at top center
+                      if (isFromMasterComponent) {
+                        fromX = cx;
+                        fromY = cy + spliceRadius;
+                      } else {
+                        fromX = cx;
+                        fromY = cy - spliceRadius;
+                      }
+                      connectionPoints[fromKey] = { x: fromX, y: fromY };
+                    }
+                    // If 'to' is a splice, place the endpoint at the circle's center edge
+                    if (toComponent?.componentType?.toLowerCase() === "splice") {
+                      const cx = getXForComponent(toComponent) + getWidthForComponent(toComponent) / 2;
+                      const cy = getSpliceCenterY(toComponent);
+                      if (isToMasterComponent) {
+                        // splice at top — connect at bottom center
+                        toX = cx;
+                        toY = cy + spliceRadius;
+                      } else {
+                        // splice at bottom — connect at top center
+                        toX = cx;
+                        toY = cy - spliceRadius;
+                      }
+                      connectionPoints[toKey] = { x: toX, y: toY };
+                    }
+
+                    let intermediateY: number;
+                    if (isFromMasterComponent && isToMasterComponent) {
+                      // Both in master row: route below both master components with distinct vertical tiers
+                      // using the wire index so multiple same-row wires don't overlap horizontally.
+                      intermediateY = Math.max(fromY, toY) + 40 + (i * 10);
+                    } else if (!isFromMasterComponent && !isToMasterComponent) {
+                      // Both in regular row: route above both regular components with distinct vertical tiers
+                      intermediateY = Math.min(fromY, toY) - 40 - (i * 10);
+                    } else {
+                      // Cross-row wire: each wire gets its own evenly-spaced horizontal band.
+                      // Sorted perfectly by the channel routing heuristic (crossRowTracks) 
+                      // to eliminate horizontal/vertical track line crossings.
+                      const availableGap = regularBusY - masterBusY;
+                      const totalWires = data.connections?.length ?? 1;
+                      const slotHeight = availableGap / (totalWires + 1);
+                      const optimalTrackIndex = crossRowTracks[i] || (i + 1);
+                      intermediateY = Math.round(masterBusY + slotHeight * optimalTrackIndex);
+                    }
+
+
+                    // Calculate the positions where the tridents should be
+                    const fromTridentY = fromY < toY ? intermediateY : fromY - 10; // lift if needed
+                    const toTridentY = fromY < toY ? toY : intermediateY + 10;
+
+                    let isFromTop = isFromMasterComponent;
+                    let isToTop = isToMasterComponent;
+
+                    let fromLabelY = isFromTop ? fromY - 5 : fromY + 15;
+                    let toLabelY = isToTop ? toY - 5 : toY + 15;
+                    const fuseX =
+                      getXForConnector(from, fromComponent!) +
+                      getWidthForConnector(from, fromComponent!) / 2;
+                    const fuseY = getYForConnector(from, fromComponent!) - 10; // small offset above connector
+                    const fromCavity = Number(wire.from.cavity); // get cavity of "from" connector
+                    const toCavity = Number(wire.to.cavity); // get cavity of "to" connector
+
+                    let wireElement;
+                    wireElement = (
+                      <g>
+                        {fromComponent?.componentType?.toLowerCase() !== "splice" && (
+                          <>
+                            {isFromTop ? (
+                              <>
+                                {/* top component → trident points UP */}
+                                <TridentShape
+                                  cx={safe(fromX, 0)}
+                                  cy={safe(fromY - 15, 0)}
+                                  color={wire.color}
+                                  size={10}
+                                />
+                                {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && fromComponent?.label?.toLowerCase().includes("load center"))) &&
+                                  wire.wireDetails?.fuse && (
+                                    <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY - 45, 0)})`}>
+
+                                      {/* LEFT NORMAL TEXT (not flipped) */}
+                                      {wire.wireDetails?.fuse?.code && (
+                                        <text
+                                          x={-10}
+                                          y={4}
+                                          textAnchor="end"
+                                          fontSize="10"
+                                          fill="black"
+                                          fontWeight="bold"
+                                          alignmentBaseline="middle"
+                                        >
+                                          {wire.wireDetails.fuse.code}
+                                        </text>
+                                      )}
+
+                                      {/* FLIPPED SYMBOL ONLY */}
+                                      <g transform="scale(1, -1)">
+                                        <FuseSymbol cx={0} cy={0} size={12} color="black" />
+                                      </g>
+
+                                      {/* RIGHT NORMAL TEXT (not flipped) */}
+                                      {wire.wireDetails?.fuse?.ampere && (
+                                        <text
+                                          x={10}
+                                          y={4}
+                                          textAnchor="start"
+                                          fontSize="10"
+                                          fill="black"
+                                          fontWeight="bold"
+                                          alignmentBaseline="middle"
+                                        >
+                                          {wire.wireDetails.fuse.ampere}
+                                        </text>
+                                      )}
+                                    </g>
+                                  )}
+
+                              </>
+                            ) : (
+                              <>
+                                {/* bottom component → trident points DOWN */}
+                                <g
+                                  transform={`translate(${safe(fromX, 0)}, ${safe(fromY + 15, 0)
+                                    }) scale(1, -1)`}
+                                >
+                                  <TridentShape
+                                    cx={0}
+                                    cy={0}
+                                    color={wire.color}
+                                    size={10}
+                                  />
+                                </g>
+
+                                {/* Fuse Code + Symbol + Amp (Bottom Side, normal orientation) */}
+                                {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && fromComponent?.label?.toLowerCase().includes("load center"))) &&
+                                  wire.wireDetails?.fuse && (
+                                    <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY + 28, 0)})`}>
+
+                                      {/* CODE (left) */}
+                                      {wire.wireDetails?.fuse?.code && (
+                                        <text
+                                          x={-22}
+                                          y={4}
+                                          textAnchor="end"
+                                          fontSize="10"
+                                          fill="black"
+                                          fontWeight="bold"
+                                          alignmentBaseline="middle"
+                                        >
+                                          {wire.wireDetails.fuse.code}
+                                        </text>
+                                      )}
+
+                                      {/* Fuse Icon (center) */}
+                                      <FuseSymbol cx={0} cy={0} size={12} color="black" />
+
+                                      {/* AMP (right) */}
+                                      {wire.wireDetails?.fuse?.ampere && (
+                                        <text
+                                          x={22}
+                                          y={4}
+                                          textAnchor="start"
+                                          fontSize="10"
+                                          fill="black"
+                                          fontWeight="bold"
+                                          alignmentBaseline="middle"
+                                        >
+                                          {wire.wireDetails.fuse.ampere}
+                                        </text>
+                                      )}
+                                    </g>
+                                  )}
+                              </>
+                            )}
+                          </>
+                        )}
+                        <g
+                          key={i}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent deselecting everything else
+                            setSelectedComponentIds([]);
+                            // Select only this wire
+                            setSelectedWires([i.toString()]);
 
                             // Close other popups and clear connector selection
                             setPopupComponent(null);
@@ -1255,874 +1956,181 @@ export default function Schematic({
                             setSelectedDTC(null);
                             setPopupSplice(null);
 
-                            // Show popup only if it wasn't manually closed
-                            if (!popupClosedManually) {
-                              setPopupComponent(comp);
-                              setPopupPosition({
-                                x:
-                                  getXForComponent(comp) +
-                                  getWidthForComponent(comp) +
-                                  900,
-                                y:
-                                  getYForComponent(comp) +
-                                  componentSize.height +
-                                  100,
-                              });
-                            }
+                            // Set popupWire with all details
+                            setPopupWire({
+                              wire,
+                              fromComponent: fromComponent!,
+                              fromConnector: from!,
+                              toComponent: toComponent!,
+                              toConnector: to!,
+                            });
+
+                            // Set popup position
+                            setPopupWirePosition({
+                              x: fromX + 900,
+                              y: intermediateY + 100,
+                            });
                           }}
+                          style={{ cursor: "pointer" }}
                         >
-                          <rect
-                            x={safe(getXForComponent(comp), padding)}
-                            y={safe(getYForComponent(comp), padding)}
-                            width={safe(getWidthForComponent(comp), 100)}
-                            height={componentSize.height}
-
-                            //  Dynamic fill
-                            fill={
-                              selectedComponentIds.includes(comp.id)
-                                ? "#93c5fd"                     // selected = blue-300
-                                : comp.isHighlighted
-                                  ? "yellow"                     // duplicate = yellow
-                                  : "lightblue"
-                            }
-
-                            //  Dynamic stroke
-                            stroke={
-                              comp.isHighlighted
-                                ? "#dc2626"                     // duplicate = strong red border
-                                : selectedComponentIds.includes(comp.id)
-                                  ? "#2563eb"                     // selected = strong blue
-                                  : "black"
-                            }
-
-                            strokeWidth={
-                              comp.isHighlighted ? 3 : 1
-                            }
-
-                            strokeDasharray={
-                              componentIndex !== 0 ? "6,4" : undefined
-                            }
-
-                            style={{
-                              cursor: "pointer",
-                            }}
-
-                            onContextMenu={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              const pos = { x: e.clientX, y: e.clientY };
-
-                              setSelectedWires([]);
-                              setPopupComponent(null);
-                              setPopupWire(null);
-                              setPopupConnector(null);
-                              setSelectedConnector(null);
-                              setSelectedDTC(null);
-                              setPopupSplice(null);
-
-                              setContextMenu({ x: e.clientX, y: e.clientY, component: comp });
-                              if (onComponentRightClick) onComponentRightClick(comp, pos);
-                            }}
-
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedComponentIds([comp.id]);
-                              setSelectedWires([]);
-
-                              setPopupComponent(null);
-                              setPopupWire(null);
-                              setPopupConnector(null);
-                              setSelectedConnector(null);
-                              setSelectedDTC(null);
-                              setPopupSplice(null);
-
-                              setPopupComponent(comp);
-                            }}
-                          />
-                          {selectedComponentIds.includes(comp.id) && (
-                            <rect
-                              x={safe(getXForComponent(comp), padding)}
-                              y={safe(
-                                getYForComponent(comp) <
-                                  fitViewBox.y + fitViewBox.h / 2
-                                  ? getYForComponent(comp) - 60
-                                  : getYForComponent(comp) + 60,
-                                padding
-                              )}
-                              width={safe(getWidthForComponent(comp), 100)}
-                              height={componentSize.height}
-                              fill="#3390FF"
-                              opacity={0.3}
-                              pointerEvents="none" // so the click still passes through to the base rect
+                          {Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5 ? (
+                            // Straight vertical line when endpoints share same X
+                            <line
+                              x1={safe(fromX, 0)}
+                              y1={safe(fromY, 0)}
+                              x2={safe(toX, 0)}
+                              y2={safe(toY, 0)}
+                              fill="none"
+                              stroke={selectedWires.includes(i.toString()) ? "#3390FF" : wire.color}
+                              strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
+                              markerEnd="url(#arrowhead)"
+                              pointerEvents="stroke"
                             />
-                          )}
-
-                          {comp.category?.toLowerCase() === "sensor" && (
-                            <Sensor
-                              x={safe(getXForComponent(comp) + 20, 50)} // left of rectangle
-                              y={safe(getYForComponent(comp) + 15, 50)} // top of rectangle
-                              width={safe(getWidthForComponent(comp) / 20, 5)} // match rectangle width
-                              height={componentSize.height / 2} // match rectangle height
-                              stroke="black"
-                              strokeWidth={1}
-                            />
-                          )}
-
-                          {comp.category?.toLowerCase() === "switch" && (
-                            <ElectricalSwitch
-                              x={safe(getXForComponent(comp), padding)}
-                              y={safe(getYForComponent(comp), padding)}
-                              sizeMultiplier={0.5}
-                              stroke="black"
-                              strokeWidth={1}
-                            />
-                          )}
-
-                          {comp.category?.toLowerCase() === "transistor" && (
-                            <Transistor
-                              x={safe(
-                                getXForComponent(comp) +
-                                getWidthForComponent(comp) / 12,
-                                padding
-                              )} // horizontal centering
-                              y={safe(getYForComponent(comp) + componentSize.height / 2, padding)} // vertical centering
-                              sizeMultiplier={0.3} // make smaller so it fits neatly inside
-                              stroke="black"
-                              strokeWidth={5}
-                            />
-                          )}
-                          {comp.category?.toLowerCase() === "transformer" && (
-                            <Transformer
-                              x={safe(
-                                getXForComponent(comp) +
-                                getWidthForComponent(comp) / 16,
-                                padding
-                              )} // horizontal centering
-                              y={safe(getYForComponent(comp) + componentSize.height / 6, padding)} // vertical centering
-                              sizeMultiplier={0.2} // scale it down to fit
-                              stroke="black"
-                              strokeWidth={1}
-                              fill="black"
-                            />
-                          )}
-                          {comp.category?.toLowerCase() === "motor" && (
-                            <MotorSymbol
-                              cx={safe(
-                                getXForComponent(comp) +
-                                getWidthForComponent(comp) / 5,
-                                padding
-                              )} // center of rectangle
-                              cy={safe(getYForComponent(comp) + componentSize.height / 2, padding)} // center of rectangle
-                              size={safe(
-                                Math.min(
-                                  getWidthForComponent(comp),
-                                  componentSize.height
-                                ) * 0.5,
-                                20
-                              )} // scale to fit rectangle
-                              color="black"
-                              fill="#B0E0E6"
-                            />
-                          )}
-                          {comp.category?.toLowerCase() === "lamp" && (
-                            <LampSymbol
-                              cx={safe(
-                                getXForComponent(comp) +
-                                getWidthForComponent(comp) / 5,
-                                padding
-                              )}
-                              cy={safe(getYForComponent(comp) + componentSize.height / 2, padding)}
-                              size={safe(
-                                Math.min(
-                                  getWidthForComponent(comp),
-                                  componentSize.height
-                                ) * 0.5,
-                                20
-                              )}
-                              color="black"
-                            />
-                          )}
-                          {comp.category?.toLowerCase() === "ground" && (
-                            <GroundSymbol
-                              x={safe(getXForComponent(comp), padding)} // adjust horizontal position
-                              y={safe(getYForComponent(comp) + 15, padding)} // adjust vertical position
-                              width={safe(getWidthForComponent(comp) / 2, 50)} // adjust width scaling
-                              height={safe(componentSize.height / 2, 30)} // adjust height scaling
-                              stroke="black"
-                              strokeWidth={3}
-                            />
-                          )}
-                          {comp.category?.toLowerCase() === "resistor" && (
-                            <ResistorSymbol
-                              x={safe(getXForComponent(comp) - 50, padding)}
-                              y={safe(getYForComponent(comp) + 13, padding)}
-                              width={safe(getWidthForComponent(comp), 100)}
-                              height={40}
-                            />
-                          )}
-                          {comp.category?.toLowerCase() === "battery" && (
-                            <Battery
-                              x={safe(getXForComponent(comp) + 10, padding)}
-                              y={safe(getYForComponent(comp) + 10, padding)}
-                              width={30}
-                              height={40}
-                              leadLength={5}
-                              centralLineRatio={3}
+                          ) : (
+                            // Z-shape routing when X positions differ
+                            <polyline
+                              key={i}
+                              points={`${safe(fromX, 0)},${safe(fromY, 0)} ${safe(fromX, 0)},${safe(intermediateY, 0)} ${safe(toX, 0)},${safe(intermediateY, 0)} ${safe(toX, 0)},${safe(toY, 0)}`}
+                              fill="none"
+                              stroke={selectedWires.includes(i.toString()) ? "#3390FF" : wire.color}
+                              strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
+                              markerEnd="url(#arrowhead)"
+                              pointerEvents="stroke"
                             />
                           )}
                         </g>
-                      )
-                    )}
-                  <text
-                    vectorEffect="non-scaling-stroke"
-                    ref={(el) => {
-                      componentNameRefs.current[comp.id] = el;
-                    }}
-                    x={safe(getXForComponentTitle(comp), padding)}
-                    // y={getYForComponent(comp) + componentSize.height / 2}
-                    y={safe(
-                      getYForComponent(comp) +
-                      (getYForComponent(comp) + componentSize.height / 2 <
-                        fitViewBox.y + fitViewBox.h / 2
-                        ? (comp.componentType?.toLowerCase() === "splice" ? componentSize.height - 10 : -componentSize.height / 2) // above component
-                        : componentSize.height +
-                        (comp.componentType?.toLowerCase() === "splice" ? -30 : 30)),
-                      padding
-                    )}
-                    textAnchor="middle"
-                    fontSize="20"
-                    fill="black"
-                  >
-                    {comp.label + ` (${comp.id})`}
-                  </text>
-                  {(comp.connectors || []).map((conn) => (
-                    <g key={conn.id}>
-                      {/* render connector box only if component is not a splice */}
-                      {comp.componentType?.toLowerCase() !== "splice" && (
-                        <g>
-                          <rect
-                            x={safe(getXForConnector(conn, comp), padding)}
-                            y={safe(getYForConnector(conn, comp), padding)}
-                            width={safe(getWidthForConnector(conn, comp), 50)}
-                            height={connectorHeight}
-                            fill={
-                              selectedConnector?.id === conn.id
-                                ? "#3390FF"
-                                : "lightgreen"
-                            }
-                            stroke="black"
-                            strokeDasharray={
-                              componentIndex !== 0 ? "6,4" : undefined
-                            }
-                            onClick={(e) => handleConnectorClick(e, conn, comp)}
-                            style={{ cursor: "pointer" }}
-                          />
-                          {selectedConnector?.id === conn.id && (
-                            <rect
-                              x={safe(getXForConnector(conn, comp), padding)}
-                              y={safe(getYForConnector(conn, comp), padding)}
-                              width={safe(getWidthForConnector(conn, comp), 50)}
-                              height={connectorHeight}
-                              fill="#3390FF"
-                              opacity={0.3}
-                              pointerEvents="none" // so the click still passes through to the base rect
-                            />
-                          )}
-                        </g>
-                      )}
-
-                      <text
-                        ref={(el) => {
-                          connectorNameRefs.current[conn.id] = el;
-                        }}
-                        x={safe(
-                          getXForConnector(conn, comp) -
-                          (comp.componentType?.toLowerCase() === "splice" ? -10 : 1),
-                          padding
-                        )} // reduce gap if splice
-                        y={safe(getYForConnector(conn, comp) + 13, padding)}
-                        textAnchor="end" //change to move text at the left
-                        dominantBaseline="middle" //change to take text left at middle
-                        fontSize="10"
-                        fill="black"
-                        fontWeight="bold"
-                      >
-                        {conn.label}
-                      </text>
-                    </g>
-                  ))}
-                </g>
-              ))}
-
-              {/* Pre-compute a single shared intermediate Y for ALL cross-row wires.
-               *  This creates a clean single-bus topology: all wires travel vertically
-               *  from their connectors to a shared horizontal band, then turn to
-               *  reach the destination. Much more readable than per-wire staggering. */}
-              {(() => {
-                // Find a representative master component and regular component to compute row Y levels
-                const masterComp = (data.components || []).find(c => smartMasterIds.has(c.id));
-                const regularComp = (data.components || []).find(c => !smartMasterIds.has(c.id));
-                // masterBusY: just below the master row connectors (bottom of connector box)
-                const masterBusY = masterComp
-                  ? getYForComponent(masterComp) + componentSize.height + connectorHeight
-                  : padding + componentSize.height + connectorHeight;
-                // regularBusY: just above the regular row connectors (top of connector box)
-                const regularBusY = regularComp
-                  ? getYForComponent(regularComp) - connectorHeight
-                  : masterBusY + 80;
-                // Shared horizontal bus: midpoint of the gap between rows
-                const sharedCrossRowY = Math.round((masterBusY + regularBusY) / 2);
-
-                return (data.connections ?? []).map((wire, i) => {
-                const fromConn = wire.from;
-                const toConn = wire.to;
-
-                const fromData = getComponentConnectorTupleFromConnectionPoint(
-                  fromConn,
-                  data
-                );
-                const fromComponent = fromData[0];
-                var from = fromData[1];
-
-                const toData = getComponentConnectorTupleFromConnectionPoint(
-                  toConn,
-                  data
-                );
-                const toComponent = toData[0];
-                var to = toData[1];
-
-                if (fromComponent?.componentType?.toLowerCase() === "splice" && !from) {
-                  const centerX =
-                    getXForComponent(fromComponent) + getWidthForComponent(fromComponent) / 2;
-
-                  const centerY =
-                    getSpliceCenterY(fromComponent);
-
-                  from = {
-                    id: `splice-from-${fromComponent.id}-${i}`,
-                    label: "",
-                    x: centerX,
-                    y: centerY
-                  } as any;
-                }
-
-                if (toComponent?.componentType?.toLowerCase() === "splice" && !to) {
-                  const centerX =
-                    getXForComponent(toComponent) + getWidthForComponent(toComponent) / 2;
-
-                  const centerY =
-                    getSpliceCenterY(toComponent);
-
-                  to = {
-                    id: `splice-to-${toComponent.id}-${i}`,
-                    label: "",
-                    x: centerX,
-                    y: centerY
-                  } as any;
-                }
-
-                if (!from || !to) return null;
-
-                let isFromMasterComponent = smartMasterIds.has(
-                  fromComponent!.id
-                );
-                let isToMasterComponent = smartMasterIds.has(
-                  toComponent!.id
-                );
-
-                let fromKey =
-                  fromComponent?.componentType?.toLowerCase() === "splice"
-                    ? `splice-${fromComponent.id}-${i}`
-                    : `${connectionPointKey(wire.from)}-${i}`;
-
-                var fromStoredConnectionPoint = connectionPoints[fromKey];
-
-
-                var fromX = fromStoredConnectionPoint?.x;
-                if (fromX == undefined) {
-
-                  // FIX FOR SPLICE: fan wires out from the splice dot so vertical lines don't overlap
-                  if (fromComponent?.componentType?.toLowerCase() === "splice") {
-                    fromX =
-                      getXForComponent(fromComponent) +
-                      getWidthForComponent(fromComponent) / 2 +
-                      (i * 6) - 15;
-                  } else {
-                    const fromConnectorX = getXForConnector(from, fromComponent!);
-                    const fromConnectorWidth = getWidthForConnector(from, fromComponent!);
-                    const fromConnectorCount = calculateCavityCountForConnector(from, data);
-
-                    const connPoints = getConnectionPointsForConnector(from, data, smartMasterIds);
-                    const pointIndex = connPoints.findIndex(
-                      (p) => p.wire === wire && p.side === "from"
-                    );
-
-                    const fromConnectorOffset =
-                      fromConnectorCount === 1
-                        ? fromConnectorWidth / 2
-                        : (fromConnectorWidth / (fromConnectorCount + 1)) *
-                        (pointIndex + 1);
-
-                    fromX =
-                      fromComponent?.shape === "circle"
-                        ? fromConnectorX + (fromConnectorWidth / 2) + ((pointIndex - (fromConnectorCount - 1) / 2) * 5)
-                        : fromConnectorX + fromConnectorOffset;
-                  }
-                }
-
-                var fromY = fromStoredConnectionPoint?.y;
-                if (fromY == undefined) {
-                  if (fromComponent?.componentType?.toLowerCase() === "splice") {
-                    // Align wire to splice dot Y-position
-                    fromY =
-                      getSpliceCenterY(fromComponent);
-                  } else {
-                    fromY = isFromMasterComponent
-                      ? getYForConnector(from, fromComponent!) + 20
-                      : getYForConnector(from, fromComponent!);
-                  }
-                }
-
-
-                fromKey =
-                  fromComponent?.componentType?.toLowerCase() === "splice"
-                    ? `splice-${fromComponent.id}-${i}`
-                    : connectionPointKey(wire.from);
-
-                connectionPoints[fromKey] = { x: fromX, y: fromY };
-
-
-                var toKey =
-                  toComponent?.componentType?.toLowerCase() === "splice"
-                    ? `splice-${toComponent.id}-${i}`
-                    : `${connectionPointKey(wire.to)}-${i}`;
-
-                var toStoredConnectionPoint = connectionPoints[toKey];
-
-                var toX = toStoredConnectionPoint?.x;
-                if (toX == undefined) {
-
-                  // FIX FOR SPLICE: fan wires out from the splice dot
-                  if (toComponent?.componentType?.toLowerCase() === "splice") {
-                    toX =
-                      getXForComponent(toComponent) +
-                      getWidthForComponent(toComponent) / 2 +
-                      (i * 6) - 15;
-                  } else {
-                    const toConnectorX = getXForConnector(to, toComponent!);
-                    const toConnectorWidth = getWidthForConnector(to, toComponent!);
-                    const toConnectorCount = calculateCavityCountForConnector(to, data);
-
-                    const connPointsTo = getConnectionPointsForConnector(to, data, smartMasterIds);
-                    const pointIndexTo = connPointsTo.findIndex(
-                      (p) => p.wire === wire && p.side === "to"
-                    );
-
-                    const toConnectorOffset =
-                      toConnectorCount === 1
-                        ? toConnectorWidth / 2
-                        : (toConnectorWidth / (toConnectorCount + 1)) *
-                        (pointIndexTo + 1);
-
-                    toX =
-                      toComponent?.shape === "circle"
-                        ? toConnectorX + (toConnectorWidth / 2) + ((pointIndexTo - (toConnectorCount - 1) / 2) * 5)
-                        : toConnectorX + toConnectorOffset;
-                  }
-                }
-
-                var toY = toStoredConnectionPoint?.y;
-                if (toY == undefined) {
-                  if (toComponent?.componentType?.toLowerCase() === "splice") {
-                    toY = getSpliceCenterY(toComponent);
-                  } else {
-                    toY = isToMasterComponent
-                      ? getYForConnector(to, toComponent!) + 20
-                      : getYForConnector(to, toComponent!);
-                  }
-                }
-
-                toKey =
-                  toComponent?.componentType?.toLowerCase() === "splice"
-                    ? `splice-${toComponent.id}-${i}`
-                    : connectionPointKey(wire.to);
-
-                connectionPoints[toKey] = { x: toX, y: toY };
-
-                const spliceRadius = componentSize.height / 8; // matches rendered splice radius
-
-                if (fromComponent?.componentType?.toLowerCase() === "splice") {
-                  const cx =
-                    getXForComponent(fromComponent) +
-                    getWidthForComponent(fromComponent) / 2;
-                  const cy = getSpliceCenterY(fromComponent);
-                  // if from is master (top row), attach at bottom center; else attach at top center
-                  if (isFromMasterComponent) {
-                    fromX = cx;
-                    fromY = cy + spliceRadius;
-                  } else {
-                    fromX = cx;
-                    fromY = cy - spliceRadius;
-                  }
-                  connectionPoints[fromKey] = { x: fromX, y: fromY };
-                }
-                // If 'to' is a splice, place the endpoint at the circle's center edge
-                if (toComponent?.componentType?.toLowerCase() === "splice") {
-                  const cx = getXForComponent(toComponent) + getWidthForComponent(toComponent) / 2;
-                  const cy = getSpliceCenterY(toComponent);
-                  if (isToMasterComponent) {
-                    // splice at top — connect at bottom center
-                    toX = cx;
-                    toY = cy + spliceRadius;
-                  } else {
-                    // splice at bottom — connect at top center
-                    toX = cx;
-                    toY = cy - spliceRadius;
-                  }
-                  connectionPoints[toKey] = { x: toX, y: toY };
-                }
-
-                let intermediateY: number;
-                if (isFromMasterComponent && isToMasterComponent) {
-                  // Both in master row: route below both master components with distinct vertical tiers
-                  // using the wire index so multiple same-row wires don't overlap horizontally.
-                  intermediateY = Math.max(fromY, toY) + 40 + (i * 10);
-                } else if (!isFromMasterComponent && !isToMasterComponent) {
-                  // Both in regular row: route above both regular components with distinct vertical tiers
-                  intermediateY = Math.min(fromY, toY) - 40 - (i * 10);
-                } else {
-                  // Cross-row wire: each wire gets its own evenly-spaced horizontal band.
-                  // Sorted perfectly by the channel routing heuristic (crossRowTracks) 
-                  // to eliminate horizontal/vertical track line crossings.
-                  const availableGap = regularBusY - masterBusY;
-                  const totalWires = data.connections?.length ?? 1;
-                  const slotHeight = availableGap / (totalWires + 1);
-                  const optimalTrackIndex = crossRowTracks[i] || (i + 1);
-                  intermediateY = Math.round(masterBusY + slotHeight * optimalTrackIndex);
-                }
-
-
-                // Calculate the positions where the tridents should be
-                const fromTridentY = fromY < toY ? intermediateY : fromY - 10; // lift if needed
-                const toTridentY = fromY < toY ? toY : intermediateY + 10;
-
-                let isFromTop = isFromMasterComponent;
-                let isToTop = isToMasterComponent;
-
-                let fromLabelY = isFromTop ? fromY - 5 : fromY + 15;
-                let toLabelY = isToTop ? toY - 5 : toY + 15;
-                const fuseX =
-                  getXForConnector(from, fromComponent!) +
-                  getWidthForConnector(from, fromComponent!) / 2;
-                const fuseY = getYForConnector(from, fromComponent!) - 10; // small offset above connector
-                const fromCavity = Number(wire.from.cavity); // get cavity of "from" connector
-                const toCavity = Number(wire.to.cavity); // get cavity of "to" connector
-
-                let wireElement;
-                wireElement = (
-                  <g>
-                    {fromComponent?.componentType?.toLowerCase() !== "splice" && (
-                      <>
-                        {isFromTop ? (
+                        {/* <circle cx={toX} cy={toY} r={5} fill={wire.color}></circle> */}
+                        {toComponent?.componentType?.toLowerCase() !== "splice" && (
                           <>
-                            {/* top component → trident points UP */}
-                            <TridentShape
-                              cx={safe(fromX, 0)}
-                              cy={safe(fromY - 15, 0)}
-                              color={wire.color}
-                              size={10}
-                            />
-                            {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && fromComponent?.label?.toLowerCase().includes("load center"))) &&
-                              wire.wireDetails?.fuse && (
-                                <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY - 45, 0)})`}>
+                            {isToTop ? (
+                              <>
+                                <TridentShape
+                                  cx={safe(toX, 0)}
+                                  cy={safe(toY - 15, 0)}
+                                  color={wire.color}
+                                  size={10}
+                                />
 
-                                  {/* LEFT NORMAL TEXT (not flipped) */}
-                                  {wire.wireDetails?.fuse?.code && (
-                                    <text
-                                      x={-10}
-                                      y={4}
-                                      textAnchor="end"
-                                      fontSize="10"
-                                      fill="black"
-                                      fontWeight="bold"
-                                      alignmentBaseline="middle"
+                                {/* Fuse flipped when trident on top */}
+                                {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && toComponent?.label?.toLowerCase().includes("load center"))) &&
+                                  wire.wireDetails?.fuse && (
+                                    <g
+                                      transform={`translate(${safe(toX, 0)}, ${safe(toY - 10, 0)
+                                        }) scale(1, -1)`}
                                     >
-                                      {wire.wireDetails.fuse.code}
-                                    </text>
+                                      <FuseSymbol
+                                        cx={0}
+                                        cy={30}
+                                        size={14}
+                                        color="black"
+                                      />
+                                    </g>
                                   )}
-
-                                  {/* FLIPPED SYMBOL ONLY */}
-                                  <g transform="scale(1, -1)">
-                                    <FuseSymbol cx={0} cy={0} size={12} color="black" />
-                                  </g>
-
-                                  {/* RIGHT NORMAL TEXT (not flipped) */}
-                                  {wire.wireDetails?.fuse?.ampere && (
-                                    <text
-                                      x={10}
-                                      y={4}
-                                      textAnchor="start"
-                                      fontSize="10"
-                                      fill="black"
-                                      fontWeight="bold"
-                                      alignmentBaseline="middle"
-                                    >
-                                      {wire.wireDetails.fuse.ampere}
-                                    </text>
-                                  )}
-                                </g>
-                              )}
-
-                          </>
-                        ) : (
-                          <>
-                            {/* bottom component → trident points DOWN */}
-                            <g
-                              transform={`translate(${safe(fromX, 0)}, ${safe(fromY + 15, 0)
-                                }) scale(1, -1)`}
-                            >
-                              <TridentShape
-                                cx={0}
-                                cy={0}
-                                color={wire.color}
-                                size={10}
-                              />
-                            </g>
-
-                            {/* Fuse Code + Symbol + Amp (Bottom Side, normal orientation) */}
-                            {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && fromComponent?.label?.toLowerCase().includes("load center"))) &&
-                              wire.wireDetails?.fuse && (
-                                <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY + 28, 0)})`}>
-
-                                  {/* CODE (left) */}
-                                  {wire.wireDetails?.fuse?.code && (
-                                    <text
-                                      x={-22}
-                                      y={4}
-                                      textAnchor="end"
-                                      fontSize="10"
-                                      fill="black"
-                                      fontWeight="bold"
-                                      alignmentBaseline="middle"
-                                    >
-                                      {wire.wireDetails.fuse.code}
-                                    </text>
-                                  )}
-
-                                  {/* Fuse Icon (center) */}
-                                  <FuseSymbol cx={0} cy={0} size={12} color="black" />
-
-                                  {/* AMP (right) */}
-                                  {wire.wireDetails?.fuse?.ampere && (
-                                    <text
-                                      x={22}
-                                      y={4}
-                                      textAnchor="start"
-                                      fontSize="10"
-                                      fill="black"
-                                      fontWeight="bold"
-                                      alignmentBaseline="middle"
-                                    >
-                                      {wire.wireDetails.fuse.ampere}
-                                    </text>
-                                  )}
-                                </g>
-                              )}
-                          </>
-                        )}
-                      </>
-                    )}
-                    <g
-                      key={i}
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent deselecting everything else
-                        setSelectedComponentIds([]);
-                        // Select only this wire
-                        setSelectedWires([i.toString()]);
-
-                        // Close other popups and clear connector selection
-                        setPopupComponent(null);
-                        setPopupWire(null);
-                        setPopupConnector(null);
-                        setSelectedConnector(null); // Clear connector highlight
-                        setSelectedDTC(null);
-                        setPopupSplice(null);
-
-                        // Set popupWire with all details
-                        setPopupWire({
-                          wire,
-                          fromComponent: fromComponent!,
-                          fromConnector: from!,
-                          toComponent: toComponent!,
-                          toConnector: to!,
-                        });
-
-                        // Set popup position
-                        setPopupWirePosition({
-                          x: fromX + 900,
-                          y: intermediateY + 100,
-                        });
-                      }}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5 ? (
-                        // Straight vertical line when endpoints share same X
-                        <line
-                          x1={safe(fromX, 0)}
-                          y1={safe(fromY, 0)}
-                          x2={safe(toX, 0)}
-                          y2={safe(toY, 0)}
-                          fill="none"
-                          stroke={selectedWires.includes(i.toString()) ? "#3390FF" : wire.color}
-                          strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
-                          markerEnd="url(#arrowhead)"
-                          pointerEvents="stroke"
-                        />
-                      ) : (
-                        // Z-shape routing when X positions differ
-                        <polyline
-                          key={i}
-                          points={`${safe(fromX, 0)},${safe(fromY, 0)} ${safe(fromX, 0)},${safe(intermediateY, 0)} ${safe(toX, 0)},${safe(intermediateY, 0)} ${safe(toX, 0)},${safe(toY, 0)}`}
-                          fill="none"
-                          stroke={selectedWires.includes(i.toString()) ? "#3390FF" : wire.color}
-                          strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
-                          markerEnd="url(#arrowhead)"
-                          pointerEvents="stroke"
-                        />
-                      )}
-                    </g>
-                    {/* <circle cx={toX} cy={toY} r={5} fill={wire.color}></circle> */}
-                    {toComponent?.componentType?.toLowerCase() !== "splice" && (
-                      <>
-                        {isToTop ? (
-                          <>
-                            <TridentShape
-                              cx={safe(toX, 0)}
-                              cy={safe(toY - 15, 0)}
-                              color={wire.color}
-                              size={10}
-                            />
-
-                            {/* Fuse flipped when trident on top */}
-                            {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && toComponent?.label?.toLowerCase().includes("load center"))) &&
-                              wire.wireDetails?.fuse && (
+                              </>
+                            ) : (
+                              <>
                                 <g
-                                  transform={`translate(${safe(toX, 0)}, ${safe(toY - 10, 0)
+                                  transform={`translate(${safe(toX, 0)}, ${safe(toY + 15, 0)
                                     }) scale(1, -1)`}
                                 >
-                                  <FuseSymbol
+                                  <TridentShape
                                     cx={0}
-                                    cy={30}
-                                    size={14}
-                                    color="black"
+                                    cy={0}
+                                    color={wire.color}
+                                    size={10}
                                   />
                                 </g>
-                              )}
-                          </>
-                        ) : (
-                          <>
-                            <g
-                              transform={`translate(${safe(toX, 0)}, ${safe(toY + 15, 0)
-                                }) scale(1, -1)`}
-                            >
-                              <TridentShape
-                                cx={0}
-                                cy={0}
-                                color={wire.color}
-                                size={10}
-                              />
-                            </g>
 
-                            {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && toComponent?.label?.toLowerCase().includes("load center"))) &&
-                              wire.wireDetails?.fuse && (
-                                <FuseSymbol
-                                  cx={safe(toX, 0)}
-                                  cy={safe(toY + 35, 0)}
-                                  size={14}
-                                  color="black"
-                                />
-                              )}
+                                {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && toComponent?.label?.toLowerCase().includes("load center"))) &&
+                                  wire.wireDetails?.fuse && (
+                                    <FuseSymbol
+                                      cx={safe(toX, 0)}
+                                      cy={safe(toY + 35, 0)}
+                                      size={14}
+                                      color="black"
+                                    />
+                                  )}
+                              </>
+                            )}
                           </>
                         )}
-                      </>
-                    )}
-                    {/* Cavity labels near connectors */}
-                    <text
-                      x={safe(fromX + 10, 0)}
-                      y={safe(fromLabelY, 0)}
-                      textAnchor="start"
-                      fontSize="10"
-                      alignmentBaseline="middle"
-                      fill="black"
-                      fontWeight="bold"
-                    >
-                      {wire.from.cavity}
-                    </text>
-                    <text
-                      x={safe(toX + 10, 0)}
-                      y={safe(toLabelY, 0)}
-                      textAnchor="start"
-                      fontSize="10"
-                      alignmentBaseline="middle"
-                      fill="black"
-                      fontWeight="bold"
-                    >
-                      {wire.to.cavity}
-                    </text>
-                    {/* Wire identity label: circuit number centered on the wire */}
-                    {wire.wireDetails?.circuitNumber && (
-                      <g>
-                        {(() => {
-                          const isStraight = Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5;
-                          // Both straight and Z-shape: center label on the wire
-                          const labelX = isStraight
-                            ? safe(fromX, 0)                           // center on vertical line
-                            : safe((fromX + toX) / 2, 0);              // center of horizontal segment
-                          const labelY = isStraight
-                            ? safe((fromY + toY) / 2, 0)               // vertical midpoint
-                            : safe(intermediateY, 0);                   // horizontal segment level
-                          
-                          const labelText = wire.wireDetails.circuitNumber || "";
-                          const labelWidth = Math.max(40, labelText.length * 6 + 12);
+                        {/* Cavity labels near connectors */}
+                        <text
+                          x={safe(fromX + 10, 0)}
+                          y={safe(fromLabelY, 0)}
+                          textAnchor="start"
+                          fontSize="10"
+                          alignmentBaseline="middle"
+                          fill="black"
+                          fontWeight="bold"
+                        >
+                          {wire.from.cavity}
+                        </text>
+                        <text
+                          x={safe(toX + 10, 0)}
+                          y={safe(toLabelY, 0)}
+                          textAnchor="start"
+                          fontSize="10"
+                          alignmentBaseline="middle"
+                          fill="black"
+                          fontWeight="bold"
+                        >
+                          {wire.to.cavity}
+                        </text>
+                        {/* Wire identity label: circuit number centered on the wire */}
+                        {wire.wireDetails?.circuitNumber && (
+                          <g>
+                            {(() => {
+                              const isStraight = Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5;
+                              // Both straight and Z-shape: center label on the wire
+                              const labelX = isStraight
+                                ? safe(fromX, 0)                           // center on vertical line
+                                : safe((fromX + toX) / 2, 0);              // center of horizontal segment
+                              const labelY = isStraight
+                                ? safe((fromY + toY) / 2, 0)               // vertical midpoint
+                                : safe(intermediateY, 0);                   // horizontal segment level
 
-                          return (
-                            <>
-                              <rect
-                                x={labelX - labelWidth / 2}
-                                y={labelY - 7}
-                                width={labelWidth}
-                                height={14}
-                                rx={3}
-                                fill="white"
-                                stroke={wire.color}
-                                strokeWidth={1}
-                                opacity={0.92}
-                              />
-                              <text
-                                x={labelX}
-                                y={labelY + 1}
-                                textAnchor="middle"
-                                fontSize="9"
-                                alignmentBaseline="middle"
-                                fill={
-                                  ["white", "#fff", "#ffffff", "yellow", "#ffff00"].includes(wire.color?.toLowerCase() ?? "")
-                                    ? "#333"
-                                    : wire.color
-                                }
-                                fontWeight="bold"
-                              >
-                                {labelText}
-                              </text>
-                            </>
-                          );
-                        })()}
+                              const labelText = wire.wireDetails.circuitNumber || "";
+                              const labelWidth = Math.max(40, labelText.length * 6 + 12);
+
+                              return (
+                                <>
+                                  <rect
+                                    x={labelX - labelWidth / 2}
+                                    y={labelY - 7}
+                                    width={labelWidth}
+                                    height={14}
+                                    rx={3}
+                                    fill="white"
+                                    stroke={wire.color}
+                                    strokeWidth={1}
+                                    opacity={0.92}
+                                  />
+                                  <text
+                                    x={labelX}
+                                    y={labelY + 1}
+                                    textAnchor="middle"
+                                    fontSize="9"
+                                    alignmentBaseline="middle"
+                                    fill={
+                                      ["white", "#fff", "#ffffff", "yellow", "#ffff00"].includes(wire.color?.toLowerCase() ?? "")
+                                        ? "#333"
+                                        : wire.color
+                                    }
+                                    fontWeight="bold"
+                                  >
+                                    {labelText}
+                                  </text>
+                                </>
+                              );
+                            })()}
+                          </g>
+                        )}
                       </g>
-                    )}
-                  </g>
-                );
-                return <g key={i}>{wireElement}</g>;
-                });
-              })()}
+                    );
+                    return <g key={i}>{wireElement}</g>;
+                  });
+                })()}
 
               </g>
             </svg>

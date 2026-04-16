@@ -7,14 +7,16 @@ interface MainPanelProps {
   selectedItem: DashboardItem | null;
   activeTab: string;
   isMultipleComponents?: boolean;
-  isMobile: boolean; onComponentRightClick?: (component: any, position: any) => void;
+  isMobile: boolean; 
+  onComponentRightClick?: (component: any, position: any) => void;
+  onSpliceRightClick?: (splice: any) => void;
   traceMode?: boolean;
   traceBreadcrumb?: string;
   onBackClick?: () => void;
   onMobileBack?: () => void;
 }
 
-export default function MainPanel({ selectedItem, activeTab, isMobile, onComponentRightClick,
+export default function MainPanel({ selectedItem, activeTab, isMobile, onComponentRightClick, onSpliceRightClick,
   traceMode = false,
   traceBreadcrumb = '',
   onBackClick,
@@ -33,7 +35,7 @@ export default function MainPanel({ selectedItem, activeTab, isMobile, onCompone
         className="main-panel empty"
         style={{
           flex: 1,
-          background: "var(--bg-primary, #f6f8fc)",
+          background: "#f8f9fa",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -77,7 +79,7 @@ export default function MainPanel({ selectedItem, activeTab, isMobile, onCompone
       className={`main-panel-wrapper ${selectedItem ? "has-selection" : ""}`}
       style={{
         flex: 1,
-        background: "var(--bg-primary, #f6f8fc)",
+        background: "#f8f9fa",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden"
@@ -156,6 +158,7 @@ export default function MainPanel({ selectedItem, activeTab, isMobile, onCompone
             activeTab={activeTab}
             dtcCode={selectedItem.type === 'DTC' ? selectedItem.code : undefined}
             onComponentRightClick={onComponentRightClick} // NOW IT IS PASSED CORRECTLY
+            onSpliceRightClick={onSpliceRightClick}
           />
         )}
       </div>

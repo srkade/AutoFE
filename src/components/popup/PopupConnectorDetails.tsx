@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PopupConnectorType } from "../Schematic/SchematicTypes";
 
 import { DTC_STEPS_DATA } from "../../utils/DtcStepsData";
@@ -20,6 +20,13 @@ export default function PopupConnectorDetails({
 }: PopupConnectorDetailsProps) {
   const [activeTab, setActiveTab] = useState<"connection" | "dtc">("connection");
 
+  useEffect(() => {
+    if (selectedTab === "DTC") {
+      setActiveTab("dtc");
+    } else {
+      setActiveTab("connection");
+    }
+  }, [selectedTab, popupConnector]);
 
   if (!popupConnector) return null;
 

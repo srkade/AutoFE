@@ -92,10 +92,8 @@ export default function LeftPanel({
       const newSelectedCodes = selectedCodes.filter((c) => c !== code);
       setSelectedCodes(newSelectedCodes);
 
-      // If nothing selected, clear merged view
-      if (newSelectedCodes.length === 0) {
-        onViewSchematic([]);
-      }
+      // Update merged view real-time
+      onViewSchematic(newSelectedCodes);
       return;
     }
 
@@ -109,10 +107,8 @@ export default function LeftPanel({
     const newSelectedCodes = [...selectedCodes, code];
     setSelectedCodes(newSelectedCodes);
 
-    // Auto-merge on desktop
-    if (!isMobile) {
-      onViewSchematic(newSelectedCodes);
-    }
+    // Auto-merge for real-time sync
+    onViewSchematic(newSelectedCodes);
   };
 
   const showCheckbox =

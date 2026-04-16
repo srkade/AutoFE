@@ -148,3 +148,56 @@ export function getConnectionPointsForConnector(conn: ConnectorType, data: Schem
     return points;
 }
 
+
+/**
+ * Merges two SchematicData objects, deduplicating components and connections.
+ */
+export function mergeSchematics(base: SchematicData, extra: SchematicData): SchematicData {
+  // Merge components
+  const mergedComponentsMap = new Map<string, ComponentType>();
+  base.components.forEach(c => mergedComponentsMap.set(c.id, c));
+  
+  extra.components.forEach(c => {
+    if (!mergedComponentsMap.has(c.id)) {
+      mergedComponentsMap.set(c.id, c);
+    } else {
+      // Merge connectors for existing components
+      const existing = mergedComponentsMap.get(c.id)!;
+      const existingConnectorIds = new Set(existing.connectors.map(conn => conn.id));
+      c.connectors.forEach(conn => {
+        if (!existingConnectorIds.has(conn.id)) {
+          existing.connectors.push(conn);
+        }
+      });
+    }
+  });
+
+  // Merge connections
+  const mergedConnectionsMap = new Map<string, ConnectionType>();
+  const getConnectionKey = (c: ConnectionType) => {
+    const wire = c.wireDetails;
+    if (wire) {
+      return `${wire.circuitNumber}|${wire.from.connectorNumber}|${wire.from.cavity}|${wire.to.connectorNumber}|${wire.to.cavity}`;
+    }
+    // Fallback key
+    return `${c.from.componentId}_${c.from.connectorId}_${c.from.cavity}_${c.to.componentId}_${c.to.connectorId}_${c.to.cavity}`;
+  };
+
+  base.connections.forEach(c => mergedConnectionsMap.set(getConnectionKey(c), c));
+  extra.connections.forEach(c => {
+    const key = getConnectionKey(c);
+    if (!mergedConnectionsMap.has(key)) {
+      mergedConnectionsMap.set(key, c);
+    }
+  });
+
+  // Merge master components (unique list)
+  const masterComponents = Array.from(new Set([...base.masterComponents, ...extra.masterComponents]));
+
+  return {
+    name: base.name || extra.name,
+    masterComponents,
+    components: Array.from(mergedComponentsMap.values()),
+    connections: Array.from(mergedConnectionsMap.values()),
+  };
+}

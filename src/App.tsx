@@ -40,6 +40,7 @@ import GlobalSearch from "./components/GlobalSearch";
 import { useGlobalSearch } from "./hooks/useGlobalSearch";
 import { searchService } from "./services/searchService";
 import ModelManagement from "./pages/ModelManagement";
+import { mergeSchematics } from "./components/Schematic/SchematicUtils";
 
 
 function AppContent() {
@@ -128,6 +129,28 @@ function AppContent() {
 
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const [mergedSchematic, setMergedSchematic] = useState<SchematicData | null>(null);
+
+  const handleSpliceExpand = useCallback(async (splice: any) => {
+    try {
+      const extraDataRaw = await getComponentSchematic(splice.id, selectedModelId || undefined);
+      const extraData = normalizeSchematic(extraDataRaw);
+
+      const currentData = mergedSchematic || selectedItem?.schematicData;
+      if (!currentData) return;
+
+      const merged = mergeSchematics(currentData, extraData);
+      
+      // Highlight the splice that was just expanded
+      const expandedComp = merged.components.find(c => c.id === splice.id);
+      if (expandedComp) {
+        expandedComp.isHighlighted = true;
+      }
+
+      setMergedSchematic(merged);
+    } catch (err) {
+      console.error("Failed to expand splice:", err);
+    }
+  }, [mergedSchematic, selectedItem, selectedModelId]);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -571,6 +594,18 @@ function AppContent() {
     }
   });
 
+  const handleModelChange = useCallback((id: string | null) => {
+    setSelectedModelId(id);
+    if (id) sessionStorage.setItem("selectedModelId", id);
+    else sessionStorage.removeItem("selectedModelId");
+
+    // Refresh data for the new model if anything was selected
+    if (selectedCodes.length > 0) {
+      handleViewSchematic(selectedCodes);
+    } else if (selectedItem) {
+      handleItemSelection(selectedItem);
+    }
+  }, [selectedCodes, selectedItem, handleViewSchematic, handleItemSelection]);
 
   return (
     <div>
@@ -596,7 +631,7 @@ function AppContent() {
         <div
           style={{
             height: "100vh",
-            background: "var(--bg-primary, #f6f8fc)",
+            background: "#f8f9fa",
             display: "flex",
             flexDirection: "column",
           }}
@@ -617,14 +652,7 @@ function AppContent() {
             onLogout={handleLogout}
             user={currentUser}
             selectedModelId={selectedModelId}
-            onModelChange={(id) => {
-              setSelectedModelId(id);
-              if (id) sessionStorage.setItem("selectedModelId", id);
-              else sessionStorage.removeItem("selectedModelId");
-              setSelectedItem(null);
-              setMergedSchematic(null);
-              setSelectedCodes([]);
-            }}
+            onModelChange={handleModelChange}
             onModelsLoaded={setModelCount}
           />
 
@@ -646,13 +674,13 @@ function AppContent() {
                 maxWidth: "600px",
                 border: "1px solid var(--border-color)"
               }}>
-                <div style={{ 
-                  width: "80px", 
-                  height: "80px", 
-                  borderRadius: "50%", 
-                  background: "#fee2e2", 
-                  display: "flex", 
-                  alignItems: "center", 
+                <div style={{
+                  width: "80px",
+                  height: "80px",
+                  borderRadius: "50%",
+                  background: "#fee2e2",
+                  display: "flex",
+                  alignItems: "center",
                   justifyContent: "center",
                   margin: "0 auto 24px",
                   color: "#ef4444"
@@ -696,45 +724,46 @@ function AppContent() {
 
               <div style={{ display: isMobile && !(selectedItem || mergedSchematic) ? 'none' : 'flex', flex: 1, flexDirection: 'column', minWidth: 0 }}>
                 <MainPanel
-                selectedItem={
-                  mergedSchematic
-                    ? {
-                      code: "MERGED",
-                      name: "Merged Schematic",
-                      type: "Merged",
-                      status: "Active",
-                      voltage: "12V",
-                      description: "Merged API schematic view",
-                      schematicData: mergedSchematic,
-                    }
-                    : selectedItem
-                }
-                activeTab={activeTab}
-                isMultipleComponents={!!mergedSchematic}
-                isMobile={isMobile}
+                  selectedItem={
+                    mergedSchematic
+                      ? {
+                        code: "MERGED",
+                        name: "Merged Schematic",
+                        type: "Merged",
+                        status: "Active",
+                        voltage: "12V",
+                        description: "Merged API schematic view",
+                        schematicData: mergedSchematic as SchematicData,
+                      }
+                      : selectedItem
+                  }
+                  activeTab={activeTab}
+                  isMultipleComponents={!!mergedSchematic}
+                  isMobile={isMobile}
 
-                onComponentRightClick={handleComponentRightClick}
-                traceMode={trace.isTraceMode}
-                traceBreadcrumb={trace.getBreadcrumb()}
-                onBackClick={() => {
-                  const prevState = trace.exitTrace();
-                  setActiveTab(prevState.tab);
-                  setSelectedItem(prevState.selectedItem);
-                  setMergedSchematic(prevState.mergedSchematic);
-                  setSelectedCodes([]);
-                }}
-                onMobileBack={() => {
-                  setSelectedItem(null);
-                  setMergedSchematic(null);
-                  setSelectedCodes([]);
-                }}
-              />
+                  onComponentRightClick={handleComponentRightClick}
+                  onSpliceRightClick={handleSpliceExpand}
+                  traceMode={trace.isTraceMode}
+                  traceBreadcrumb={trace.getBreadcrumb()}
+                  onBackClick={() => {
+                    const prevState = trace.exitTrace();
+                    setActiveTab(prevState.tab);
+                    setSelectedItem(prevState.selectedItem);
+                    setMergedSchematic(prevState.mergedSchematic);
+                    setSelectedCodes([]);
+                  }}
+                  onMobileBack={() => {
+                    setSelectedItem(null);
+                    setMergedSchematic(null);
+                    setSelectedCodes([]);
+                  }}
+                />
               </div>
             </div>
           )}
         </div>
       )}
-            {/* Author DASHBOARD */}
+      {/* Author DASHBOARD */}
       {page === "dashboard" && role === "author" && token && (
         <div style={{ height: "100vh", display: "flex", flexDirection: "row", overflow: "hidden" }}>
 
@@ -744,11 +773,7 @@ function AppContent() {
             onLogout={handleLogout}
             user={currentUser}
             selectedModelId={selectedModelId}
-            onModelChange={(id) => {
-              setSelectedModelId(id);
-              if (id) sessionStorage.setItem("selectedModelId", id);
-              else sessionStorage.removeItem("selectedModelId");
-            }}
+            onModelChange={handleModelChange}
             isPanelCollapsed={isAuthorPanelCollapsed}
             onPanelCollapse={setIsAuthorPanelCollapsed}
             isMenuOpen={isAuthorMenuOpen}
@@ -761,16 +786,13 @@ function AppContent() {
               onLogout={handleLogout}
               user={currentUser}
               selectedModelId={selectedModelId}
-              onModelChange={(id) => {
-                setSelectedModelId(id);
-                if (id) sessionStorage.setItem("selectedModelId", id);
-                else sessionStorage.removeItem("selectedModelId");
-              }}
+              onModelChange={handleModelChange}
               isPanelCollapsed={isAuthorPanelCollapsed}
               onPanelCollapse={setIsAuthorPanelCollapsed}
               setIsMenuOpen={setIsAuthorMenuOpen}
             />
-            
+
+
             <div className="content-panel">
               {authorTab === "manage-users" && (
                 <ManageUsers />
@@ -850,38 +872,39 @@ function AppContent() {
 
                       <div style={{ display: isMobile && !(selectedItem || mergedSchematic) ? 'none' : 'flex', flex: 1, flexDirection: 'column', minWidth: 0 }}>
                         <MainPanel
-                        selectedItem={
-                          mergedSchematic
-                            ? {
-                              code: "MERGED",
-                              name: "Merged Schematic",
-                              type: "Merged",
-                              status: "Active",
-                              voltage: "12V",
-                              description: "Merged API schematic view",
-                              schematicData: mergedSchematic,
-                            }
-                            : selectedItem
-                        }
-                        activeTab={schematicTab}
-                        isMultipleComponents={!!mergedSchematic}
-                        isMobile={isMobile}
-                        onComponentRightClick={handleComponentRightClick}
-                        traceMode={trace.isTraceMode}
-                        traceBreadcrumb={trace.getBreadcrumb()}
-                        onBackClick={() => {
-                          const prevState = trace.exitTrace();
-                          setActiveTab(prevState.tab);
-                          setSelectedItem(prevState.selectedItem);
-                          setMergedSchematic(prevState.mergedSchematic);
-                          setSelectedCodes([]);
-                        }}
-                        onMobileBack={() => {
-                          setSelectedItem(null);
-                          setMergedSchematic(null);
-                          setSelectedCodes([]);
-                        }}
-                      />
+                          selectedItem={
+                            mergedSchematic
+                              ? {
+                                code: "MERGED",
+                                name: "Merged Schematic",
+                                type: "Merged",
+                                status: "Active",
+                                voltage: "12V",
+                                description: "Merged API schematic view",
+                                schematicData: mergedSchematic as SchematicData,
+                              }
+                              : selectedItem
+                          }
+                          activeTab={schematicTab}
+                          isMultipleComponents={!!mergedSchematic}
+                          isMobile={isMobile}
+                          onComponentRightClick={handleComponentRightClick}
+                          onSpliceRightClick={handleSpliceExpand}
+                          traceMode={trace.isTraceMode}
+                          traceBreadcrumb={trace.getBreadcrumb()}
+                          onBackClick={() => {
+                            const prevState = trace.exitTrace();
+                            setActiveTab(prevState.tab);
+                            setSelectedItem(prevState.selectedItem);
+                            setMergedSchematic(prevState.mergedSchematic);
+                            setSelectedCodes([]);
+                          }}
+                          onMobileBack={() => {
+                            setSelectedItem(null);
+                            setMergedSchematic(null);
+                            setSelectedCodes([]);
+                          }}
+                        />
                       </div>
                     </div>
                   )}
@@ -898,11 +921,7 @@ function AppContent() {
           token={token}
           onLogout={handleLogout}
           selectedModelId={selectedModelId}
-          onModelChange={(id) => {
-            setSelectedModelId(id);
-            if (id) sessionStorage.setItem("selectedModelId", id);
-            else sessionStorage.removeItem("selectedModelId");
-          }}
+          onModelChange={handleModelChange}
         />
       )}
       <GlobalSearch
@@ -919,4 +938,4 @@ function AppContent() {
     </div>
   );
 }
-export default function App() { return ( <AuditLogProvider> <AppContent /> </AuditLogProvider> ); }
+export default function App() { return (<AuditLogProvider> <AppContent /> </AuditLogProvider>); }

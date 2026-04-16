@@ -52,13 +52,12 @@ export default function SuperAdminNavigationTabs({
     const handleResize = () => {
       const mobile = window.innerWidth <= 1024;
       setIsMobile(mobile);
-      if (!mobile) {
-        setIsMenuOpen(false);
+      if (mobile) {
         // Reset panel hidden state when switching to mobile
-        if (mobile) {
-          setIsPanelHidden(false);
-          setIsPanelCollapsed(false);
-        }
+        setIsPanelHidden(false);
+        setIsPanelCollapsed(false);
+      } else {
+        setIsMenuOpen(false);
       }
     };
     window.addEventListener("resize", handleResize);

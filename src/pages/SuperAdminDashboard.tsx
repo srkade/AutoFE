@@ -123,17 +123,7 @@ export default function SuperAdminDashboard({
             />
             <div className="content-panel sa-content">
                 {/* Mobile Header */}
-                <div style={{
-                    display: window.innerWidth <= 1024 ? 'flex' : 'none',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px 16px',
-                    background: '#0f172a',
-                    color: 'white',
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 100
-                }}>
+                <div className="sa-mobile-header">
                     <button 
                         onClick={() => setIsMenuOpen(true)}
                         style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}

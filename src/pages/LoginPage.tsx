@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { loginUser, requestPasswordReset } from "../services/api";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import logo from "../assets/Images/logo.png";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 
 interface LoginPageProps {
@@ -15,6 +16,7 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick, setToken, o
  
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -291,20 +293,46 @@ export default function LoginPage({ onLoginSuccess, onRegisterClick, setToken, o
                 }}
               />
 
-              <input
-                type="password"
-                placeholder="Enter Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  marginBottom: "10px",
-                  borderRadius: "6px",
-                  border: "1px solid #ccc",
-                }}
-              />
+              {/* Password field with show/hide toggle */}
+              <div style={{ position: 'relative', marginBottom: '10px' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    paddingRight: "42px",
+                    borderRadius: "6px",
+                    border: "1px solid #ccc",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(p => !p)}
+                  tabIndex={-1}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    color: '#888',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </button>
+              </div>
 
               {error && <p style={{ color: "red", marginBottom: "10px" }}>{error}</p>}
 

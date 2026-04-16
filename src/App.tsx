@@ -785,6 +785,7 @@ function AppContent() {
             <AuthorTopbar
               onLogout={handleLogout}
               user={currentUser}
+              token={token}
               selectedModelId={selectedModelId}
               onModelChange={handleModelChange}
               isPanelCollapsed={isAuthorPanelCollapsed}

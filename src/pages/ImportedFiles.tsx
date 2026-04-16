@@ -56,6 +56,7 @@ const ImportedFiles: React.FC = () => {
   // --- Table Editor State ---
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTableName, setEditingTableName] = useState<string>('');
+  const [editingModelId, setEditingModelId] = useState<string>('');
 
   type sortField = 'fileName' | 'timestamp' | 'status' | 'filesize';
   const [sortBy, setSortBy] = useState<sortField>('timestamp');
@@ -232,6 +233,7 @@ const ImportedFiles: React.FC = () => {
       return;
     }
     setEditingTableName(tableName);
+    setEditingModelId(targetModelId); // Use the currently selected model
     setIsEditorOpen(true);
   };
 
@@ -612,6 +614,7 @@ const ImportedFiles: React.FC = () => {
       {isEditorOpen && (
         <TableEditorModal
           tableName={editingTableName}
+          modelId={editingModelId}
           onClose={() => setIsEditorOpen(false)}
           onSave={loadBackendUploads}
         />

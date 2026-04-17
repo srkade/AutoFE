@@ -7,20 +7,15 @@ import UserAnalytics from "./UserAnalytics";
 import SystemMonitoring from "./SystemMonitoring";
 import SuperAdminHomePage from "./SuperAdminHomePage";
 import CompanyManagement from "./CompanyManagement";
-import SearchBar from "../components/SearchBar";
 import { FiLogOut, FiMenu } from "react-icons/fi";
 import "../Styles/AuthorNavigationTabs.css";
 
 export default function SuperAdminDashboard({
     token,
-    onLogout,
-    selectedModelId,
-    onModelChange
+    onLogout
 }: {
     token: string | null;
     onLogout: () => void;
-    selectedModelId?: string | null;
-    onModelChange?: (modelId: string | null) => void;
 }) {
     const [activeTab, setActiveTab] = useState("home");
     const [userInfo, setUserInfo] = useState<{
@@ -112,8 +107,6 @@ export default function SuperAdminDashboard({
                 onChange={handleTabChange}
                 onLogout={onLogout}
                 user={userInfo}
-                selectedModelId={selectedModelId}
-                onModelChange={onModelChange}
                 isMenuOpen={isMenuOpen}
                 setIsMenuOpen={setIsMenuOpen}
                 isPanelHidden={isPanelHidden}
@@ -145,11 +138,6 @@ export default function SuperAdminDashboard({
                                 {activeTab === "user-analytics" && "User Analytics"}
                                 {activeTab === "system-monitoring" && "System Monitoring"}
                             </h1>
-                        </div>
-
-                        {/* Global Search Bar */}
-                        <div className="sa-search-container">
-                            <SearchBar />
                         </div>
 
                         {/* User Icon */}

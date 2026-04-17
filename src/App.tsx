@@ -921,8 +921,6 @@ function AppContent() {
         <SuperAdminDashboard
           token={token}
           onLogout={handleLogout}
-          selectedModelId={selectedModelId}
-          onModelChange={handleModelChange}
         />
       )}
       <GlobalSearch

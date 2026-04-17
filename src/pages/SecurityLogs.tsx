@@ -5,6 +5,7 @@ import { getRecentActivity } from "../services/superAdminApi";
 interface UserActivity {
   id: string;
   userId: string;
+  userEmail: string;
   action: string;
   ipAddress: string;
   userAgent: string;
@@ -35,17 +36,19 @@ export default function SecurityLogs() {
   const filteredLogs = logs.filter(log => 
     log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.ipAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.userId?.toLowerCase().includes(searchTerm.toLowerCase())
+    log.userId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.userEmail?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleExport = () => {
     if (filteredLogs.length === 0) return;
     
     // Create CSV content
-    const headers = ["Timestamp", "Target User", "Action Performed", "IP Address", "User Agent"];
+    const headers = ["Timestamp", "Target User (Email)", "User ID", "Action Performed", "IP Address", "User Agent"];
     const rows = filteredLogs.map(log => [
       new Date(log.createdAt).toLocaleString(),
-      log.userId || "System",
+      log.userEmail || "System",
+      log.userId || "N/A",
       log.action,
       log.ipAddress,
       log.userAgent.replace(/,/g, ';') // Escape commas in user agent
@@ -128,7 +131,7 @@ export default function SecurityLogs() {
                 </td>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FiUser size={16} /> {log.userId || "System"}
+                    <FiUser size={16} /> {log.userEmail || log.userId || "System"}
                   </div>
                 </td>
                 <td>

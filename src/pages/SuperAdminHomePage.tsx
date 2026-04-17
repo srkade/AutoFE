@@ -32,6 +32,7 @@ interface SystemUptime {
 interface UserActivity {
   id: string;
   userId: string;
+  userEmail: string;
   action: string;
   ipAddress: string;
   userAgent: string;
@@ -215,7 +216,9 @@ export default function SuperAdminHomePage() {
             {recentActivities.map((log, index) => (
               <div key={index} style={{ padding: "12px 0", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#334155" }}>{log.action}</div>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#334155" }}>
+                    {log.action} <span style={{ fontWeight: '400', fontSize: '12px', color: '#64748b', marginLeft: '4px' }}>by {log.userEmail || log.userId || "System"}</span>
+                  </div>
                   <div style={{ fontSize: "12px", color: "#64748b" }}>{formatDate(log.createdAt)}</div>
                 </div>
                 <div style={{ fontSize: "12px", background: "#f1f5f9", padding: "4px 8px", borderRadius: "4px", color: "#475569", fontFamily: "monospace" }}>

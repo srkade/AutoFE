@@ -200,6 +200,7 @@ const ModelManagement: React.FC = () => {
             <tr>
               <th>Model Name</th>
               <th>Description</th>
+              <th>Status</th>
               <th>Created</th>
               <th>Assigned Users</th>
               <th>Actions</th>
@@ -241,6 +242,21 @@ const ModelManagement: React.FC = () => {
                     }
                   </td>
                   <td>
+                    {model.isDeleted ? (
+                      <span className="status-badge status-rejected" style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fecaca' }}>
+                        <FiTrash2 size={12} /> Deleted
+                      </span>
+                    ) : (
+                      <span className={`status-badge ${model.isActive ? 'status-active' : 'status-inactive'}`}>
+                        {model.isActive ? (
+                          <><FiCheck size={12} /> Active</>
+                        ) : (
+                          <><FiX size={12} /> Inactive</>
+                        )}
+                      </span>
+                    )}
+                  </td>
+                  <td>
                     {model.createdAt
                       ? new Date(model.createdAt).toLocaleDateString('en-GB', {
                           day: '2-digit', month: 'short', year: 'numeric'
@@ -255,6 +271,22 @@ const ModelManagement: React.FC = () => {
                   </td>
                   <td>
                     <div className="model-actions-cell">
+                      {!model.isDeleted && (
+                        <button
+                          className={`model-action-btn ${model.isActive ? 'edit' : 'assign'}`}
+                          title={model.isActive ? "Deactivate Model" : "Activate Model"}
+                          onClick={async () => {
+                            try {
+                              await updateModel(model.id, model.name, model.description, !model.isActive);
+                              loadData();
+                            } catch (err) {
+                              alert('Failed to update status');
+                            }
+                          }}
+                        >
+                          {model.isActive ? <FiX size={15} /> : <FiCheck size={15} />}
+                        </button>
+                      )}
                       <button
                         className="model-action-btn assign"
                         title="Assign Users"

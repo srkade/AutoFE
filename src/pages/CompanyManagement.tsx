@@ -7,6 +7,11 @@ interface Company {
   name: string;
   description?: string;
   isActive: boolean;
+  isDeleted: boolean;
+  activeModelsCount?: number;
+  deactivatedModelsCount?: number;
+  deletedModelsCount?: number;
+  modelCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -594,6 +599,9 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
                   <th className="col-company">Company Name</th>
                   <th className="col-description">Description</th>
                   <th className="col-status">Status</th>
+                  <th className="col-models">Active Models</th>
+                  <th className="col-models">Deactivated</th>
+                  <th className="col-models">Deleted</th>
                   <th className="col-created">Created</th>
                   <th className="col-actions">Actions</th>
                 </tr>
@@ -613,12 +621,33 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
                       </span>
                     </td>
                     <td className="col-status">
-                      <span className={`status-badge ${company.isActive ? 'status-active' : 'status-inactive'}`}>
-                        {company.isActive ? (
-                          <><FiCheck /> Active</>
-                        ) : (
-                          <><FiX /> Inactive</>
-                        )}
+                      {company.isDeleted ? (
+                        <span className="status-badge status-rejected" style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fecaca' }}>
+                          <FiTrash2 /> Deleted
+                        </span>
+                      ) : (
+                        <span className={`status-badge ${company.isActive ? 'status-active' : 'status-inactive'}`}>
+                          {company.isActive ? (
+                            <><FiCheck /> Active</>
+                          ) : (
+                            <><FiX /> Inactive</>
+                          )}
+                        </span>
+                      )}
+                    </td>
+                    <td className="col-models">
+                      <span className="badge-count status-active" style={{ minWidth: '30px', textAlign: 'center' }}>
+                        {company.activeModelsCount || 0}
+                      </span>
+                    </td>
+                    <td className="col-models">
+                      <span className="badge-count status-inactive" style={{ minWidth: '30px', textAlign: 'center' }}>
+                        {company.deactivatedModelsCount || 0}
+                      </span>
+                    </td>
+                    <td className="col-models">
+                      <span className="badge-count status-rejected" style={{ minWidth: '30px', textAlign: 'center', background: '#fee2e2', color: '#dc2626' }}>
+                        {company.deletedModelsCount || 0}
                       </span>
                     </td>
                     <td className="col-created">

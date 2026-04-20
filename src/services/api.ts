@@ -31,6 +31,8 @@ export interface Model {
   companyId?: string;
   name: string;
   description?: string;
+  isActive: boolean;
+  isDeleted: boolean;
   createdAt?: string;
 }
 
@@ -305,11 +307,20 @@ export async function createModel(name: string, description?: string): Promise<M
   }
 }
 
-export async function updateModel(id: string, name: string, description?: string): Promise<void> {
+export async function updateModel(id: string, name: string, description?: string, isActive?: boolean): Promise<void> {
   try {
-    await api.put(`/models/${id}`, { name, description });
+    await api.put(`/models/${id}`, { name, description, isActive });
   } catch (err) {
     console.error("API ERROR → updateModel:", err);
+    throw err;
+  }
+}
+
+export async function updateModelStatus(id: string, isActive: boolean): Promise<void> {
+  try {
+    await api.put(`/models/${id}/status`, { isActive });
+  } catch (err) {
+    console.error("API ERROR → updateModelStatus:", err);
     throw err;
   }
 }

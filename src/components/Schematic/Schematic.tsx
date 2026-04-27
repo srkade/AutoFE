@@ -675,7 +675,7 @@ export default function Schematic({
   }
 
   function getNaturalWidthForComponent(component: ComponentType): number {
-    const defaultWidth = componentNameWidths[component.id] + padding;
+    const defaultWidth = (componentNameWidths[component.id] ?? 100) + padding;
 
     // --- Calculate total extra width for all fuses on this component ---
     let totalFuseWidth = 0;
@@ -827,11 +827,11 @@ export default function Schematic({
         (connections.length + 1) * interConnectionSpacing;
       originalWidth = Math.max(
         connectionsBasedWidth,
-        connectorNameWidths[conn.id] + connectorNamePadding,
+        (connectorNameWidths[conn.id] ?? 50) + connectorNamePadding,
         100
       );
     } else {
-      originalWidth = connectorNameWidths[conn.id] + connectorNamePadding;
+      originalWidth = (connectorNameWidths[conn.id] ?? 50) + connectorNamePadding;
     }
 
     // Add fuse extra width safely

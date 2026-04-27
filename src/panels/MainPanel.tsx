@@ -150,8 +150,18 @@ export default function MainPanel({ selectedItem, activeTab, isMobile, onCompone
       )}
 
       {/* RENDER SCHEMATIC - Only one instance needed */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
-        {selectedItem?.schematicData && (
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', position: 'relative' }}>
+        {(!selectedItem?.schematicData?.components || selectedItem.schematicData.components.length === 0) ? (
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexDirection: 'column', color: '#6c757d'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }}>📭</div>
+            <h3 style={{ margin: '0 0 8px 0', color: '#495057' }}>No Schematic Data Found</h3>
+            <p style={{ margin: 0 }}>This component has no wiring connections in the database.</p>
+          </div>
+        ) : (
           <Schematic
             key={selectedItem.code} // Helps React reset the view when switching components
             data={selectedItem.schematicData}

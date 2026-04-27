@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import ModelSelector from "../components/ModelSelector";
-import { FiUser, FiHome, FiSettings, FiShield, FiDatabase, FiBarChart2, FiActivity, FiLogOut, FiMenu, FiX, FiGlobe } from "react-icons/fi";
+import { FiUser, FiHome, FiSettings, FiShield, FiDatabase, FiBarChart2, FiActivity, FiLogOut, FiMenu, FiX, FiGlobe, FiEye } from "react-icons/fi";
 import logo from "../assets/Images/logo.png";
 
 
@@ -13,8 +12,6 @@ interface SuperAdminNavigationTabsProps {
     email: string;
     role: string;
   } | null;
-  selectedModelId?: string | null;
-  onModelChange?: (modelId: string | null) => void;
   isMenuOpen: boolean;
   setIsMenuOpen: (isOpen: boolean) => void;
   isPanelHidden?: boolean;
@@ -28,8 +25,6 @@ export default function SuperAdminNavigationTabs({
   onChange,
   onLogout,
   user,
-  selectedModelId,
-  onModelChange,
   isMenuOpen,
   setIsMenuOpen,
   isPanelHidden: parentIsPanelHidden,
@@ -52,13 +47,12 @@ export default function SuperAdminNavigationTabs({
     const handleResize = () => {
       const mobile = window.innerWidth <= 1024;
       setIsMobile(mobile);
-      if (!mobile) {
-        setIsMenuOpen(false);
+      if (mobile) {
         // Reset panel hidden state when switching to mobile
-        if (mobile) {
-          setIsPanelHidden(false);
-          setIsPanelCollapsed(false);
-        }
+        setIsPanelHidden(false);
+        setIsPanelCollapsed(false);
+      } else {
+        setIsMenuOpen(false);
       }
     };
     window.addEventListener("resize", handleResize);
@@ -73,6 +67,7 @@ export default function SuperAdminNavigationTabs({
     { id: "user-analytics", label: "User Analytics", icon: FiBarChart2 },
     { id: "system-monitoring", label: "System Monitoring", icon: FiActivity },
     { id: "company-management", label: "Company Management", icon: FiGlobe },
+    { id: "schematic-viewer", label: "Schematic Viewer", icon: FiEye },
   ];
 
   return (
@@ -90,17 +85,6 @@ export default function SuperAdminNavigationTabs({
             <img className="logo-crisp" src={logo} alt="Logo" style={{ width: isPanelCollapsed ? 40 : 60, height: isPanelCollapsed ? 40 : 60, borderRadius: "8px", objectFit: "contain" }} />
             {!isPanelCollapsed && <h1 style={{ marginLeft: 12, fontSize: 22, color: "#f1f5f9", fontWeight: "700" }}>CRAZYBEES</h1>}
           </div>
-
-          {/* MODEL SELECTOR FOR SUPER ADMIN */}
-          {onModelChange && (
-            <div style={{ padding: '0 16px 20px 16px', borderBottom: '1px solid #334155', marginBottom: '20px' }}>
-              <ModelSelector
-                selectedModelId={selectedModelId || null}
-                onModelChange={onModelChange}
-                isAuthor={true}
-              />
-            </div>
-          )}
 
           {/* Tabs */}
           <div className="tabs" style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>

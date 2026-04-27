@@ -62,12 +62,11 @@ export default function AuthorNavigationTabs({
     const handleResize = () => {
       const mobile = window.innerWidth <= 1024;
       setIsMobile(mobile);
-      if (!mobile) {
+      if (mobile) {
+        setIsPanelHidden(false);
+        setIsPanelCollapsed(false);
+      } else {
         setIsMenuOpen(false);
-        if (mobile) {
-          setIsPanelHidden(false);
-          setIsPanelCollapsed(false);
-        }
       }
     };
     window.addEventListener("resize", handleResize);

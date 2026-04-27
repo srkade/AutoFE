@@ -31,6 +31,8 @@ export interface Model {
   companyId?: string;
   name: string;
   description?: string;
+  isActive: boolean;
+  isDeleted: boolean;
   createdAt?: string;
 }
 
@@ -281,6 +283,31 @@ export interface ImportResponse {
 }
 
 
+
+export interface Company {
+  id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ======================
+// Company APIs
+// ======================
+
+export async function getCompanies(): Promise<Company[]> {
+  try {
+    const res = await api.get<Company[]>(`/companies`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getCompanies:", err);
+    throw err;
+  }
+}
+
 // ======================
 // Model APIs
 // ======================
@@ -305,11 +332,20 @@ export async function createModel(name: string, description?: string): Promise<M
   }
 }
 
-export async function updateModel(id: string, name: string, description?: string): Promise<void> {
+export async function updateModel(id: string, name: string, description?: string, isActive?: boolean): Promise<void> {
   try {
-    await api.put(`/models/${id}`, { name, description });
+    await api.put(`/models/${id}`, { name, description, isActive });
   } catch (err) {
     console.error("API ERROR → updateModel:", err);
+    throw err;
+  }
+}
+
+export async function updateModelStatus(id: string, isActive: boolean): Promise<void> {
+  try {
+    await api.put(`/models/${id}/status`, { isActive });
+  } catch (err) {
+    console.error("API ERROR → updateModelStatus:", err);
     throw err;
   }
 }

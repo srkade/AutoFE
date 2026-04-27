@@ -7,6 +7,7 @@ import UserAnalytics from "./UserAnalytics";
 import SystemMonitoring from "./SystemMonitoring";
 import SuperAdminHomePage from "./SuperAdminHomePage";
 import CompanyManagement from "./CompanyManagement";
+import SuperAdminSchematicViewer from "./SuperAdminSchematicViewer";
 import { FiLogOut, FiMenu } from "react-icons/fi";
 import "../Styles/AuthorNavigationTabs.css";
 
@@ -60,6 +61,7 @@ export default function SuperAdminDashboard({
             case "user-analytics": title = "User Analytics"; break;
             case "system-monitoring": title = "System Monitoring"; break;
             case "company-management": title = "Company Management"; break;
+            case "schematic-viewer": title = "Schematic Viewer"; break;
             default: title = " Super Admin Dashboard";
         }
     }, [activeTab]);
@@ -137,6 +139,7 @@ export default function SuperAdminDashboard({
                                 {activeTab === "database-management" && "Database Management"}
                                 {activeTab === "user-analytics" && "User Analytics"}
                                 {activeTab === "system-monitoring" && "System Monitoring"}
+                                {activeTab === "schematic-viewer" && "Schematic Viewer"}
                             </h1>
                         </div>
 
@@ -232,7 +235,12 @@ export default function SuperAdminDashboard({
                                     <CompanyManagement token={token} />
                                 </div>
                             )}
-                            {!["home", "system-settings", "security-logs", "database-management", "user-analytics", "system-monitoring", "company-management"].includes(activeTab) && (
+                            {activeTab === "schematic-viewer" && (
+                                <div key="schematic-viewer" style={{ height: '100%' }}>
+                                    <SuperAdminSchematicViewer user={userInfo} onLogout={onLogout} />
+                                </div>
+                            )}
+                            {!["home", "system-settings", "security-logs", "database-management", "user-analytics", "system-monitoring", "company-management", "schematic-viewer"].includes(activeTab) && (
                                 <div key="invalid-tab" style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
                                     <h3>Please select a valid tab</h3>
                                     <p>Select an option from the navigation menu to view content</p>

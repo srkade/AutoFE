@@ -14,9 +14,10 @@ export const resetView = (
     const { w: schematicW, h: schematicH, x: fitX, y: fitY } = fitViewBox;
 
     const margin = 0.05;
-    const scaleX = svgWidth / schematicW;
-    const scaleY = svgHeight / schematicH;
+    const scaleX = svgWidth > 0 ? svgWidth / schematicW : 1;
+    const scaleY = svgHeight > 0 ? svgHeight / schematicH : 1;
     let scaleFactor = Math.min(scaleX, scaleY) * (1 - margin);
+    if (scaleFactor === 0) scaleFactor = 1; // Fallback if container has 0 size
 
     let newW: number, newH: number, centerX: number, centerY: number;
 

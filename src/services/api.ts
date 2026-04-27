@@ -283,6 +283,31 @@ export interface ImportResponse {
 }
 
 
+
+export interface Company {
+  id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ======================
+// Company APIs
+// ======================
+
+export async function getCompanies(): Promise<Company[]> {
+  try {
+    const res = await api.get<Company[]>(`/companies`);
+    return res.data;
+  } catch (err) {
+    console.error("API ERROR → getCompanies:", err);
+    throw err;
+  }
+}
+
 // ======================
 // Model APIs
 // ======================

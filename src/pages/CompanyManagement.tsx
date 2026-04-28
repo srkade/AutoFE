@@ -54,10 +54,13 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
   } | null>(null);
 
   useEffect(() => {
-    fetchCompanies();
-  }, []);
+    if (token) {
+      fetchCompanies();
+    }
+  }, [token]);
 
   const fetchCompanies = async () => {
+    if (!token) return;
     try {
       setLoading(true);
       const response = await fetch(`${API_BASE_URL}/api/companies`, {

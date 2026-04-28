@@ -8,6 +8,8 @@ import SystemMonitoring from "./SystemMonitoring";
 import SuperAdminHomePage from "./SuperAdminHomePage";
 import CompanyManagement from "./CompanyManagement";
 import SuperAdminSchematicViewer from "./SuperAdminSchematicViewer";
+import SuperAdminDeletedItems from "./SuperAdminDeletedItems";
+import SuperAdminAuditLogs from "./SuperAdminAuditLogs";
 import { FiLogOut, FiMenu } from "react-icons/fi";
 import "../Styles/AuthorNavigationTabs.css";
 
@@ -62,6 +64,8 @@ export default function SuperAdminDashboard({
             case "system-monitoring": title = "System Monitoring"; break;
             case "company-management": title = "Company Management"; break;
             case "schematic-viewer": title = "Schematic Viewer"; break;
+            case "deleted-items": title = "Deleted Items Tracking"; break;
+            case "audit-logs": title = "System Audit Logs"; break;
             default: title = " Super Admin Dashboard";
         }
     }, [activeTab]);
@@ -140,6 +144,8 @@ export default function SuperAdminDashboard({
                                 {activeTab === "user-analytics" && "User Analytics"}
                                 {activeTab === "system-monitoring" && "System Monitoring"}
                                 {activeTab === "schematic-viewer" && "Schematic Viewer"}
+                                {activeTab === "deleted-items" && "Deleted Items Tracking"}
+                                {activeTab === "audit-logs" && "System Audit Logs"}
                             </h1>
                         </div>
 
@@ -240,7 +246,17 @@ export default function SuperAdminDashboard({
                                     <SuperAdminSchematicViewer user={userInfo} onLogout={onLogout} />
                                 </div>
                             )}
-                            {!["home", "system-settings", "security-logs", "database-management", "user-analytics", "system-monitoring", "company-management", "schematic-viewer"].includes(activeTab) && (
+                            {activeTab === "deleted-items" && (
+                                <div key="deleted-items" style={{ height: '100%' }}>
+                                    <SuperAdminDeletedItems token={token} />
+                                </div>
+                            )}
+                            {activeTab === "audit-logs" && (
+                                <div key="audit-logs" style={{ height: '100%' }}>
+                                    <SuperAdminAuditLogs token={token} />
+                                </div>
+                            )}
+                            {!["home", "system-settings", "security-logs", "database-management", "user-analytics", "system-monitoring", "company-management", "schematic-viewer", "deleted-items", "audit-logs"].includes(activeTab) && (
                                 <div key="invalid-tab" style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
                                     <h3>Please select a valid tab</h3>
                                     <p>Select an option from the navigation menu to view content</p>

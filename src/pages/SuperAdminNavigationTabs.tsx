@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiUser, FiHome, FiSettings, FiShield, FiDatabase, FiBarChart2, FiActivity, FiLogOut, FiMenu, FiX, FiGlobe, FiEye } from "react-icons/fi";
+import { FiUser, FiHome, FiSettings, FiShield, FiDatabase, FiBarChart2, FiActivity, FiLogOut, FiMenu, FiX, FiGlobe, FiEye, FiTrash2, FiList } from "react-icons/fi";
 import logo from "../assets/Images/logo.png";
 
 
@@ -68,6 +68,8 @@ export default function SuperAdminNavigationTabs({
     { id: "system-monitoring", label: "System Monitoring", icon: FiActivity },
     { id: "company-management", label: "Company Management", icon: FiGlobe },
     { id: "schematic-viewer", label: "Schematic Viewer", icon: FiEye },
+    { id: "deleted-items", label: "Deleted Items", icon: FiTrash2 },
+    { id: "audit-logs", label: "Audit Logs", icon: FiList },
   ];
 
   return (
@@ -79,7 +81,13 @@ export default function SuperAdminNavigationTabs({
           </button>
         )}
 
-        <div style={{ padding: isPanelCollapsed ? "20px 8px" : "20px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ 
+          padding: isPanelCollapsed ? "20px 8px" : "20px 16px", 
+          flex: 1, 
+          display: "flex", 
+          flexDirection: "column",
+          minHeight: 0
+        }}>
           {/* Logo */}
           <div className="nav-logo" style={{ justifyContent: isPanelCollapsed ? "center" : "center", marginBottom: isPanelCollapsed ? "16px" : "32px" }}>
             <img className="logo-crisp" src={logo} alt="Logo" style={{ width: isPanelCollapsed ? 40 : 60, height: isPanelCollapsed ? 40 : 60, borderRadius: "8px", objectFit: "contain" }} />
@@ -87,7 +95,19 @@ export default function SuperAdminNavigationTabs({
           </div>
 
           {/* Tabs */}
-          <div className="tabs" style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
+          <div 
+            className="tabs custom-scrollbar" 
+            style={{ 
+              display: "flex", 
+              flexDirection: "column", 
+              gap: "8px", 
+              flex: 1,
+              overflowY: "auto",
+              overflowX: "hidden",
+              paddingRight: "4px",
+              minHeight: 0
+            }}
+          >
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (

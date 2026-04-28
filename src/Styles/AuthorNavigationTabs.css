@@ -660,7 +660,235 @@
   }
 
   .topbar-logo-mobile {
+    font-size: 18px;
+  }
+
+  /* Force sidebar to drawer mode */
+  .sa-nav {
+    width: 280px;
+    transform: translateX(-100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1005;
+  }
+
+  .sa-nav.open {
+    transform: translateX(0);
+  }
+
+  .sa-content {
+    margin-left: 0 !important;
+  }
+
+  .sa-mobile-header {
+    display: flex !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .sa-title {
+    font-size: 16px;
+  }
+  
+  .sa-avatar {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Page Specific Responsive Adjustments */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  display: block; /* Ensure it behaves as a block for overflow */
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px; /* Force minimum width even on smallest screens */
+}
+
+.manage-users-container {
+  padding: 24px;
+}
+
+@media (max-width: 640px) {
+  .manage-users-container {
+    padding: 12px;
+  }
+}
+
+.hide-mobile {
+  display: table-cell;
+}
+
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-bar-wrapper {
+  position: relative;
+}
+
+/* Database Management Mobile Refinements */
+@media (max-width: 640px) {
+  .db-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  
+  .db-header button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .db-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .db-table-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px;
+  }
+
+  .db-table-row > div:last-child {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .db-progress-container {
+    flex: 1;
+    margin-left: 8px;
+  }
+
+  .db-sidebar {
+    border-left: none !important;
+    border-top: 1px solid #e2e8f0 !important;
+    padding: 20px !important;
+  }
+}
+
+.db-sidebar {
+  padding: 32px;
+  border-left: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.search-bar-wrapper input {
+  padding: 10px 10px 10px 35px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  width: 250px;
+  font-size: 14px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+.btn-add {
+  padding: 10px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .toolbar {
+    width: 100%;
+  }
+  
+  .search-bar-wrapper, .search-bar-wrapper input {
+    width: 100%;
+  }
+  
+  .btn-add {
+    width: 100%;
+  }
+}
+
+@media (max-width: 1024px) {
+  .admin-topbar {
+    left: 0;
+    width: 100%;
+  }
+
+  .topbar-logo-mobile {
     display: block;
     margin-left: 10px;
   }
+}
+
+/* Custom Scrollbar for Navigation */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Ensure tooltips are not clipped when collapsed, but allow scroll when expanded */
+.admin-nav {
+  overflow-y: hidden !important;
+  overflow-x: visible !important;
+  max-height: 100vh;
+}
+
+.admin-nav.collapsed {
+  overflow: visible !important;
+}
+
+.tabs.custom-scrollbar {
+  max-height: calc(100vh - 220px);
 }

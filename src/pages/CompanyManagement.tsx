@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiRefreshCw, FiX, FiCheck, FiGlobe, FiInfo, FiAlertCircle, FiKey, FiEye, FiEyeOff } from 'react-icons/fi';
 import '../Styles/ModelManagement.css';
+import { API_BASE_URL as API_BASE_URL_BACKEND } from '../config';
 
 interface Company {
   id: string;
@@ -29,7 +30,7 @@ interface CompanyManagementProps {
   token: string | null;
 }
 
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = API_BASE_URL_BACKEND;
 
 const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -91,7 +92,7 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       showMessage('error', 'Company name is required');
       return;
@@ -276,12 +277,12 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
             <p>Create and manage companies (tenants) for multi-tenant access control</p>
           </div>
         </div>
-        <button 
-          className="btn btn-primary btn-add" 
+        <button
+          className="btn btn-primary btn-add"
           onClick={() => setShowForm(true)}
           disabled={showForm}
         >
-          <FiPlus /> 
+          <FiPlus />
           <span>Add New Company</span>
         </button>
       </div>
@@ -306,7 +307,7 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
                 <FiX />
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="company-form">
               <div className="form-group">
                 <label htmlFor="company-name">
@@ -437,16 +438,16 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
               )}
 
               <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
+                <button
+                  type="button"
+                  className="btn btn-secondary"
                   onClick={resetForm}
                   disabled={submitting}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn btn-primary"
                   disabled={submitting || !formData.name.trim()}
                 >
@@ -480,7 +481,7 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
                 <FiX />
               </button>
             </div>
-            
+
             <div style={{ padding: '24px' }}>
               <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', padding: '16px', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
@@ -499,11 +500,11 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Author Email
                   </label>
-                  <div style={{ 
-                    background: 'white', 
-                    border: '2px solid #e2e8f0', 
-                    borderRadius: '6px', 
-                    padding: '12px', 
+                  <div style={{
+                    background: 'white',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '6px',
+                    padding: '12px',
                     fontFamily: 'monospace',
                     fontSize: '16px',
                     color: '#1e293b',
@@ -517,11 +518,11 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Temporary Password
                   </label>
-                  <div style={{ 
-                    background: 'white', 
-                    border: '2px solid #e2e8f0', 
-                    borderRadius: '6px', 
-                    padding: '12px', 
+                  <div style={{
+                    background: 'white',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '6px',
+                    padding: '12px',
                     fontFamily: 'monospace',
                     fontSize: '16px',
                     color: '#dc2626',
@@ -535,11 +536,11 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Role
                   </label>
-                  <div style={{ 
-                    background: 'white', 
-                    border: '2px solid #10b981', 
-                    borderRadius: '6px', 
-                    padding: '12px', 
+                  <div style={{
+                    background: 'white',
+                    border: '2px solid #10b981',
+                    borderRadius: '6px',
+                    padding: '12px',
                     fontSize: '14px',
                     color: '#10b981',
                     fontWeight: 600,
@@ -561,8 +562,8 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
                 </ol>
               </div>
 
-              <button 
-                className="btn btn-primary" 
+              <button
+                className="btn btn-primary"
                 onClick={closeCredentialsModal}
                 style={{ width: '100%', padding: '12px' }}
               >
@@ -577,7 +578,7 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
       <div className="table-section">
         <div className="table-header">
           <h3>
-            <FiGlobe /> 
+            <FiGlobe />
             Companies ({companies.length})
           </h3>
           <button className="btn btn-outline btn-refresh" onClick={fetchCompanies}>

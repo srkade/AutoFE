@@ -18,6 +18,7 @@ import LampSymbol from "../symbols/Lamp";
 import GroundSymbol from "../symbols/GroundSymbol";
 import ResistorSymbol from "../symbols/ResistorSymbol";
 import Battery from "../symbols/Battery";
+import InfinitySymbol from "../symbols/InfinitySymbol";
 import {
   ComponentType,
   ConnectionType,
@@ -1559,28 +1560,45 @@ export default function Schematic({
                           </g>
                         )
                       )}
-                    <text
-                      vectorEffect="non-scaling-stroke"
-                      ref={(el) => {
-                        componentNameRefs.current[comp.id] = el;
-                      }}
-                      x={safe(getXForComponentTitle(comp), padding)}
-                      // y={getYForComponent(comp) + componentSize.height / 2}
-                      y={safe(
+                    {(() => {
+                      const compCenterX = safe(getXForComponent(comp) + getWidthForComponent(comp) / 2, padding);
+                      const isTopSide = getYForComponent(comp) + componentSize.height / 2 < fitViewBox.y + fitViewBox.h / 2;
+                      
+                      const titleX = compCenterX;
+                      const titleY = safe(
                         getYForComponent(comp) +
-                        (getYForComponent(comp) + componentSize.height / 2 <
-                          fitViewBox.y + fitViewBox.h / 2
-                          ? (comp.componentType?.toLowerCase() === "splice" ? componentSize.height - 10 : -componentSize.height / 2) // above component
+                        (isTopSide
+                          ? (comp.componentType?.toLowerCase() === "splice" ? componentSize.height - 10 : -componentSize.height / 2 - 25)
                           : componentSize.height +
-                          (comp.componentType?.toLowerCase() === "splice" ? -30 : 30)),
+                          (comp.componentType?.toLowerCase() === "splice" ? -30 : 55)),
                         padding
-                      )}
-                      textAnchor="middle"
-                      fontSize="20"
-                      fill="black"
-                    >
-                      {comp.label + ` (${comp.id})`}
-                    </text>
+                      );
+
+                      // Determine anchoring based on rotation and position
+                      let anchor: "middle" | "start" | "end" = "middle";
+                      if (rotation === 90) {
+                        anchor = isTopSide ? "start" : "end";
+                      } else if (rotation === 270) {
+                        anchor = isTopSide ? "end" : "start";
+                      }
+
+                      return (
+                        <text
+                          vectorEffect="non-scaling-stroke"
+                          ref={(el) => {
+                            componentNameRefs.current[comp.id] = el;
+                          }}
+                          x={titleX}
+                          y={titleY}
+                          textAnchor={anchor}
+                          fontSize="20"
+                          fill="black"
+                          transform={rotation !== 0 ? `rotate(${-rotation} ${titleX} ${titleY})` : undefined}
+                        >
+                          {comp.label + ` (${comp.id})`}
+                        </text>
+                      );
+                    })()}
                     {(comp.connectors || []).map((conn) => (
                       <g key={conn.id}>
                         {/* render connector box only if component is not a splice */}
@@ -1617,24 +1635,31 @@ export default function Schematic({
                           </g>
                         )}
 
-                        <text
-                          ref={(el) => {
-                            connectorNameRefs.current[conn.id] = el;
-                          }}
-                          x={safe(
+                        {(() => {
+                          const labelX = safe(
                             getXForConnector(conn, comp) -
                             (comp.componentType?.toLowerCase() === "splice" ? -10 : 1),
                             padding
-                          )} // reduce gap if splice
-                          y={safe(getYForConnector(conn, comp) + 13, padding)}
-                          textAnchor="end" //change to move text at the left
-                          dominantBaseline="middle" //change to take text left at middle
-                          fontSize="10"
-                          fill="black"
-                          fontWeight="bold"
-                        >
-                          {conn.label}
-                        </text>
+                          );
+                          const labelY = safe(getYForConnector(conn, comp) + 13, padding);
+                          return (
+                            <text
+                              ref={(el) => {
+                                connectorNameRefs.current[conn.id] = el;
+                              }}
+                              x={labelX}
+                              y={labelY}
+                              textAnchor="end"
+                              dominantBaseline="middle"
+                              fontSize="10"
+                              fill="black"
+                              fontWeight="bold"
+                              transform={rotation !== 0 ? `rotate(${-rotation} ${labelX} ${labelY})` : undefined}
+                            >
+                              {conn.label}
+                            </text>
+                          );
+                        })()}
                       </g>
                     ))}
                   </g>
@@ -1896,8 +1921,8 @@ export default function Schematic({
                     let isFromTop = isFromMasterComponent;
                     let isToTop = isToMasterComponent;
 
-                    let fromLabelY = isFromTop ? fromY - 5 : fromY + 15;
-                    let toLabelY = isToTop ? toY - 5 : toY + 15;
+                    let fromLabelY = isFromTop ? fromY + 12 : fromY - 12;
+                    let toLabelY = isToTop ? toY + 12 : toY - 12;
                     const fuseX =
                       getXForConnector(from, fromComponent!) +
                       getWidthForConnector(from, fromComponent!) / 2;
@@ -1921,7 +1946,7 @@ export default function Schematic({
                                 />
                                 {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && fromComponent?.label?.toLowerCase().includes("load center"))) &&
                                   wire.wireDetails?.fuse && (
-                                    <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY - 45, 0)})`}>
+                                    <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY - 45, 0)}) ${rotation !== 0 ? `rotate(${-rotation})` : ""}`}>
 
                                       {/* LEFT NORMAL TEXT (not flipped) */}
                                       {wire.wireDetails?.fuse?.code && (
@@ -1979,7 +2004,7 @@ export default function Schematic({
                                 {/* Fuse Code + Symbol + Amp (Bottom Side, normal orientation) */}
                                 {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && fromComponent?.label?.toLowerCase().includes("load center"))) &&
                                   wire.wireDetails?.fuse && (
-                                    <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY + 28, 0)})`}>
+                                    <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY + 28, 0)}) ${rotation !== 0 ? `rotate(${-rotation})` : ""}`}>
 
                                       {/* CODE (left) */}
                                       {wire.wireDetails?.fuse?.code && (
@@ -2095,7 +2120,7 @@ export default function Schematic({
                                   wire.wireDetails?.fuse && (
                                     <g
                                       transform={`translate(${safe(toX, 0)}, ${safe(toY - 10, 0)
-                                        }) scale(1, -1)`}
+                                        }) scale(1, -1) ${rotation !== 0 ? `rotate(${-rotation})` : ""}`}
                                     >
                                       <FuseSymbol
                                         cx={0}
@@ -2122,43 +2147,63 @@ export default function Schematic({
 
                                 {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && toComponent?.label?.toLowerCase().includes("load center"))) &&
                                   wire.wireDetails?.fuse && (
-                                    <FuseSymbol
-                                      cx={safe(toX, 0)}
-                                      cy={safe(toY + 35, 0)}
-                                      size={14}
-                                      color="black"
-                                    />
+                                    <g transform={`translate(${safe(toX, 0)}, ${safe(toY + 35, 0)}) ${rotation !== 0 ? `rotate(${-rotation})` : ""}`}>
+                                      <FuseSymbol
+                                        cx={0}
+                                        cy={0}
+                                        size={14}
+                                        color="black"
+                                      />
+                                    </g>
                                   )}
                               </>
                             )}
                           </>
                         )}
                         {/* Cavity labels near connectors */}
-                        <text
-                          x={safe(fromX + 10, 0)}
-                          y={safe(fromLabelY, 0)}
-                          textAnchor="start"
-                          fontSize="10"
-                          alignmentBaseline="middle"
-                          fill="black"
-                          fontWeight="bold"
-                        >
-                          {wire.from.cavity}
-                        </text>
-                        <text
-                          x={safe(toX + 10, 0)}
-                          y={safe(toLabelY, 0)}
-                          textAnchor="start"
-                          fontSize="10"
-                          alignmentBaseline="middle"
-                          fill="black"
-                          fontWeight="bold"
-                        >
-                          {wire.to.cavity}
-                        </text>
+                        {(() => {
+                          const fX = safe(fromX + 18, 0); // Shift further right to avoid trident
+                          const fY = safe(fromLabelY, 0);
+                          const tX = safe(toX + 18, 0); // Shift further right to avoid trident
+                          const tY = safe(toLabelY, 0);
+                          return (
+                            <>
+                              <text
+                                x={fX}
+                                y={fY}
+                                textAnchor="start"
+                                fontSize="10"
+                                alignmentBaseline="middle"
+                                fill="black"
+                                fontWeight="bold"
+                                transform={rotation !== 0 ? `rotate(${-rotation} ${fX} ${fY})` : undefined}
+                              >
+                                {wire.from.cavity}
+                              </text>
+                              <text
+                                x={tX}
+                                y={tY}
+                                textAnchor="start"
+                                fontSize="10"
+                                alignmentBaseline="middle"
+                                fill="black"
+                                fontWeight="bold"
+                                transform={rotation !== 0 ? `rotate(${-rotation} ${tX} ${tY})` : undefined}
+                              >
+                                {wire.to.cavity}
+                              </text>
+                            </>
+                          );
+                        })()}
                         {/* Wire identity label: circuit number centered on the wire */}
                         {wire.wireDetails?.circuitNumber && (
-                          <g>
+                          <g transform={rotation !== 0 ? `rotate(${-rotation} ${(() => {
+                            const isStraight = Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5;
+                            return isStraight ? safe(fromX, 0) : safe((fromX + toX) / 2, 0);
+                          })()} ${(() => {
+                            const isStraight = Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5;
+                            return isStraight ? safe((fromY + toY) / 2, 0) : safe(intermediateY, 0);
+                          })()})` : undefined}>
                             {(() => {
                               const isStraight = Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5;
                               // Both straight and Z-shape: center label on the wire
@@ -2209,6 +2254,87 @@ export default function Schematic({
                     );
                     return <g key={i}>{wireElement}</g>;
                   });
+                })()}
+
+                {/* Render Infinity Symbols for CAN wire pairs sequentially */}
+                {(() => {
+                  const elements: JSX.Element[] = [];
+
+                  interface CanEndpoint {
+                    wire: ConnectionType;
+                    side: "from" | "to";
+                  }
+
+                  const canEndpoints: CanEndpoint[] = [];
+                  (data.connections || []).forEach(w => {
+                    if (w.wireDetails?.from?.devName?.toUpperCase().includes("PIN CAN")) {
+                      canEndpoints.push({ wire: w, side: "from" });
+                    }
+                    if (w.wireDetails?.to?.devName?.toUpperCase().includes("PIN CAN")) {
+                      canEndpoints.push({ wire: w, side: "to" });
+                    }
+                  });
+
+                  const getWireXAndY = (wire: ConnectionType, side: "from" | "to") => {
+                    const connPoint = side === "from" ? wire.from : wire.to;
+                    const comp = (data.components || []).find(c => c.id === connPoint.componentId);
+                    if (!comp) return { x: 0, y: 0, isMasterComponent: false };
+                    const conn = comp.connectors?.find(c => c.id === connPoint.connectorId);
+                    if (!conn) return { x: 0, y: 0, isMasterComponent: false };
+
+                    const isMasterComponent = smartMasterIds.has(comp.id);
+                    const connectorX = getXForConnector(conn, comp);
+                    const connectorWidth = getWidthForConnector(conn, comp);
+                    const connectorCount = calculateCavityCountForConnector(conn, data);
+                    const connPoints = getConnectionPointsForConnector(conn, data, smartMasterIds);
+
+                    const pointIndex = connPoints.findIndex(p => p.wire === wire && p.side === side);
+                    let x = connectorX + connectorWidth / 2;
+                    if (pointIndex !== -1) {
+                      const offset = connectorCount === 1
+                        ? connectorWidth / 2
+                        : (connectorWidth / (connectorCount + 1)) * (pointIndex + 1);
+                      x = comp.shape === "circle"
+                        ? connectorX + (connectorWidth / 2) + ((pointIndex - (connectorCount - 1) / 2) * 5)
+                        : connectorX + offset;
+                    }
+
+                    const y = isMasterComponent ? getYForConnector(conn, comp) + 20 : getYForConnector(conn, comp);
+                    return { x, y, isMasterComponent };
+                  };
+
+                  for (let i = 0; i < canEndpoints.length - 1; i += 2) {
+                    const ep1 = canEndpoints[i];
+                    const ep2 = canEndpoints[i + 1];
+                    const pos1 = getWireXAndY(ep1.wire, ep1.side);
+                    const pos2 = getWireXAndY(ep2.wire, ep2.side);
+
+                    if (!pos1.x || !pos2.x) continue;
+
+                    const cx = (pos1.x + pos2.x) / 2;
+                    // If pos1 is master, the connector is at the top, wire goes down. Place symbol below connector.
+                    // If pos1 is regular, connector is at the bottom, wire goes up. Place symbol above connector.
+                    const cy = pos1.isMasterComponent 
+                      ? Math.max(pos1.y, pos2.y) + 25 
+                      : Math.min(pos1.y, pos2.y) - 25;
+
+                    const width = Math.max(Math.abs(pos2.x - pos1.x), 10);
+                    // Fixed height to prevent stretching into giant ellipses
+                    const height = 12;
+
+                    elements.push(
+                      <InfinitySymbol 
+                        key={`can-pair-${i}`} 
+                        cx={cx} 
+                        cy={cy} 
+                        width={width} 
+                        height={height} 
+                        color="black" 
+                      />
+                    );
+                  }
+
+                  return elements;
                 })()}
 
               </g>

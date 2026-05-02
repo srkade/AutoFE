@@ -64,7 +64,7 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
     if (!token) return;
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/companies`, {
+      const response = await fetch(`${API_BASE_URL}/companies`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -102,8 +102,8 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
 
     try {
       const url = editingCompany
-        ? `${API_BASE_URL}/api/companies/${editingCompany.id}`
-        : `${API_BASE_URL}/api/companies`;
+        ? `${API_BASE_URL}/companies/${editingCompany.id}`
+        : `${API_BASE_URL}/companies`;
 
       const method = editingCompany ? 'PUT' : 'POST';
 
@@ -140,7 +140,7 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
             if (authorEdit.email.trim()) authorPayload.email = authorEdit.email.trim();
             if (authorEdit.newPassword.trim()) authorPayload.password = authorEdit.newPassword.trim();
 
-            const authorRes = await fetch(`${API_BASE_URL}/api/companies/${editingCompany.id}/author`, {
+            const authorRes = await fetch(`${API_BASE_URL}/companies/${editingCompany.id}/author`, {
               method: 'PUT',
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -177,7 +177,7 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
   const fetchCompanyAuthor = async (companyId: string) => {
     setFetchingAuthor(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/companies/${companyId}/author`, {
+      const res = await fetch(`${API_BASE_URL}/companies/${companyId}/author`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -212,7 +212,7 @@ const CompanyManagement: React.FC<CompanyManagementProps> = ({ token }) => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/companies/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/companies/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

@@ -246,6 +246,15 @@ const ImportedFiles: React.FC = () => {
     });
   };
 
+  const handleSelectAll = () => {
+    if (selectedUploads.size === filteredAndSortedUploads.length) {
+      setSelectedUploads(new Set());
+    } else {
+      const allIds = new Set(filteredAndSortedUploads.map(u => u.id));
+      setSelectedUploads(allIds);
+    }
+  };
+
   const formatFileSize = (sizeInBytes: number) => {
     if (!sizeInBytes) return '--';
     if (sizeInBytes === 0) return '0 B';
@@ -474,9 +483,18 @@ const ImportedFiles: React.FC = () => {
 
           <div className="upload-actions-right">
             {selectedUploads.size > 0 && (
-              <button onClick={deleteSelected} className="btn-danger">
-                🗑️ Delete ({selectedUploads.size})
-              </button>
+              <>
+                <button 
+                  onClick={handleSelectAll} 
+                  className="btn-outline"
+                  style={{ marginRight: '8px' }}
+                >
+                  {selectedUploads.size === filteredAndSortedUploads.length ? 'Deselect All' : 'Select All'}
+                </button>
+                <button onClick={deleteSelected} className="btn-danger">
+                  🗑️ Delete ({selectedUploads.size})
+                </button>
+              </>
             )}
           </div>
         </div>

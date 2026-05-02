@@ -12,6 +12,11 @@ export async function getAuthorCount() {
   return response.data;
 }
 
+export async function getUserSessions() {
+  const response = await api.get("/auth/sessions");
+  return response.data;
+}
+
 export async function getUploadsPerUser() {
   try {
     const response = await api.get("/uploads/uploadedByPerUser");

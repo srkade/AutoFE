@@ -210,11 +210,16 @@ export default function UserAnalytics() {
                 </tr>
               </thead>
               <tbody>
-                {uploadsPerUser.map((user, idx) => (
-                  <tr key={`${user.userId}-${user.email}-${idx}`} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '16px', fontWeight: '700', color: '#1e293b' }}>{user.authorName || (user as any).username || 'N/A'}</td>
-                    <td style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>{user.email || 'N/A'}</td>
-                    <td style={{ padding: '16px', textAlign: 'center', fontWeight: '800', color: '#3b82f6' }}>{user.uploadCount || 0}</td>
+                {uploadsPerUser.map((user, idx) => {
+                  const authorName = user.authorName || (user as any).username || (user as any).uploaded_by || 'N/A';
+                  const email = user.email || (user as any).user_email || 'N/A';
+                  const uploadCount = user.uploadCount || (user as any).upload_count || 0;
+                  
+                  return (
+                  <tr key={`${(user as any).userId || (user as any).uploaded_by}-${idx}`} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '16px', fontWeight: '700', color: '#1e293b' }}>{authorName}</td>
+                    <td style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>{email}</td>
+                    <td style={{ padding: '16px', textAlign: 'center', fontWeight: '800', color: '#3b82f6' }}>{uploadCount}</td>
                     <td style={{ padding: '16px' }}>
                       <div style={{ 
                         display: 'inline-block', 
@@ -222,14 +227,14 @@ export default function UserAnalytics() {
                         borderRadius: '20px', 
                         fontSize: '12px', 
                         fontWeight: '700',
-                        backgroundColor: user.uploadCount > 10 ? '#dcfce7' : user.uploadCount > 5 ? '#eff6ff' : '#f8fafc',
-                        color: user.uploadCount > 10 ? '#166534' : user.uploadCount > 5 ? '#1d4ed8' : '#475569'
+                        backgroundColor: uploadCount > 10 ? '#dcfce7' : uploadCount > 5 ? '#eff6ff' : '#f8fafc',
+                        color: uploadCount > 10 ? '#166534' : uploadCount > 5 ? '#1d4ed8' : '#475569'
                       }}>
-                        {user.uploadCount > 10 ? 'Power User' : user.uploadCount > 5 ? 'Active' : 'Contributor'}
+                        {uploadCount > 10 ? 'Power User' : uploadCount > 5 ? 'Active' : 'Contributor'}
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
          </div>

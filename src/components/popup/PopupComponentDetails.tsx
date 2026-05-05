@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ComponentType } from "../Schematic/SchematicTypes";
+import { API_BASE_URL as CONFIG_API_BASE_URL } from "../../config";
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || CONFIG_API_BASE_URL;
 
 interface PopupComponentDetailsProps {
   popupComponent: ComponentType | null;
@@ -10,6 +13,36 @@ export default function PopupComponentDetails({
   popupComponent,
   onClose,
 }: PopupComponentDetailsProps) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!popupComponent?.id) return;
+    
+    // Reset image while fetching
+    setImageUrl(null);
+    const defaultUrl = `/images/components/${popupComponent.id}.png`;
+
+    fetch(`${API_BASE_URL}/assets/images/code/${popupComponent.id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Not found");
+        return res.json();
+      })
+      .then((json) => {
+        if (json.data && json.data.imageUrl) {
+          setImageUrl(json.data.imageUrl);
+        } else {
+          setImageUrl(defaultUrl);
+        }
+      })
+      .catch(() => {
+        setImageUrl(defaultUrl);
+      });
+  }, [popupComponent]);
+
   if (!popupComponent) return null; // If no component selected, render nothing
 
   return (
@@ -89,14 +122,14 @@ export default function PopupComponentDetails({
       >
         <div style={{ marginTop: '16px', textAlign: 'center' }}>
           <img
-            src={`/images/components/${popupComponent.id}.png`}
+            src={imageUrl || `/images/components/${popupComponent.id}.png`}
             alt={popupComponent.label}
-            style={{ maxWidth: '160px', width: '100%', borderRadius: '8px' }}
+            style={{ maxWidth: '160px', width: '100%', borderRadius: '8px', minHeight: '100px', objectFit: 'contain' }}
             onError={(e) => {
               const target = e.currentTarget;
-              if (target.src.endsWith('.png')) {
+              if (target.src.endsWith('.png') && target.src.includes('/images/')) {
                 target.src = target.src.replace('.png', '.jpg');
-              } else if (target.src.endsWith('.jpg')) {
+              } else if (target.src.endsWith('.jpg') && target.src.includes('/images/')) {
                 target.src = target.src.replace('.jpg', '.jpeg');
               }
             }}

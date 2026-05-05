@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FiSearch, FiFilter, FiTrash2, FiUpload, FiDownload } from "react-icons/fi";
+import * as XLSX from "xlsx";
 import "../Styles/ImageManagement.css";
 import { API_BASE_URL as CONFIG_API_BASE_URL } from "../config";
 
@@ -86,9 +87,12 @@ export default function ImageManagement() {
   const fetchComponentAndConnectorLists = async () => {
     setLoadingLists(true);
     try {
+      const modelId = sessionStorage.getItem("selectedModelId") || "";
+      const queryParam = modelId ? `?modelId=${modelId}` : "";
+
       // Fetch components from serviceconnector table
       const componentResponse = await fetch(
-        `${DIRECTORY_API}/schematics/components`,
+        `${DIRECTORY_API}/schematics/components${queryParam}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
@@ -103,7 +107,7 @@ export default function ImageManagement() {
 
       // Fetch connectors from serviceconnector table
       const connectorResponse = await fetch(
-        `${DIRECTORY_API}/schematics/connectors`,
+        `${DIRECTORY_API}/schematics/connectors${queryParam}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
@@ -242,7 +246,7 @@ export default function ImageManagement() {
 
       if (!response.ok) {
         const errorData: ApiError = await response.json();
-        throw new Error(errorData.message || `Upload failed: ${response.statusText}`);
+        throw new Error(errorData.details || errorData.message || `Upload failed: ${response.statusText}`);
       }
 
       const result: UploadResponse[] = await response.json();
@@ -302,7 +306,7 @@ export default function ImageManagement() {
 
       if (!response.ok) {
         const errorData: ApiError = await response.json();
-        throw new Error(errorData.message || `Upload failed: ${response.statusText}`);
+        throw new Error(errorData.details || errorData.message || `Upload failed: ${response.statusText}`);
       }
 
       setSuccessMessage(
@@ -327,53 +331,59 @@ export default function ImageManagement() {
     }
   };
 
-  // ==================== EXPORT TO EXCEL ====================
-  const handleExportToExcel = () => {
+  const handleExportToExcel = async () => {
     try {
+      let modelName = "All_Models";
+      const modelId = sessionStorage.getItem("selectedModelId");
+      if (modelId) {
+        try {
+          const modelsRes = await fetch(`${API_BASE_URL}/models`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("authToken") || ""}` }
+          });
+          if (modelsRes.ok) {
+            const models = await modelsRes.json();
+            const found = models.find((m: any) => m.id === modelId);
+            if (found) modelName = found.name;
+          }
+        } catch (e) {
+          console.error("Failed to fetch model name", e);
+        }
+      }
+
       // Prepare data
-      const dataToExport = [];
+      const dataToExport: any[] = [];
 
-      // Add header
-      dataToExport.push([
-        "Entity Code",
-        "Entity Name",
-        "Entity Type",
-        "Image File Name",
-        "File Size (KB)",
-        "Uploaded Date",
-      ]);
-
-      // Add all assets
-      imageAssets.forEach((asset) => {
-        dataToExport.push([
-          asset.entityCode,
-          "", // Name from list (auto-fill)
-          asset.entityType,
-          asset.fileName,
-          (asset.fileSize / 1024).toFixed(2),
-          new Date(asset.uploadedAt).toLocaleDateString(),
-        ]);
+      // Add Components
+      componentList.forEach((comp) => {
+        dataToExport.push({
+          "component name": comp.name || "",
+          "component code": comp.code || "",
+          "connector code": ""
+        });
       });
 
-      // Convert to CSV
-      const csvContent = dataToExport
-        .map((row) => row.map((cell) => `"${cell}"`).join(","))
-        .join("\n");
+      // Add Connectors
+      connectorList.forEach((conn) => {
+        dataToExport.push({
+          "component name": conn.name || "",
+          "component code": "",
+          "connector code": conn.code || ""
+        });
+      });
 
-      // Create blob and download
-      const blob = new Blob([csvContent], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `image-assets-${new Date().toISOString().split("T")[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Create a new workbook and add the worksheet
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Asset Codes");
 
-      setSuccessMessage("Exported to CSV successfully");
+      // Generate Excel file and trigger download
+      const safeModelName = modelName.replace(/[^a-z0-9]/gi, '_');
+      const fileName = `${safeModelName}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+
+      setSuccessMessage("Exported to Excel successfully");
     } catch (err) {
-      setError("Failed to export to CSV");
+      setError("Failed to export to Excel");
       console.error("Export error:", err);
     }
   };
@@ -581,6 +591,15 @@ export default function ImageManagement() {
             <p className="im-hint">
               Select multiple files. Filename must match component code (e.g., B3.jpg)
             </p>
+            <div style={{ marginBottom: "16px" }}>
+              <button
+                className="im-btn im-btn-secondary im-btn-full"
+                onClick={handleExportToExcel}
+                title="Download all codes for the selected model to use as a renaming template"
+              >
+                <FiDownload /> Download Codes Template
+              </button>
+            </div>
             <label className="im-file-input-wrapper">
               <input
                 id="bulk-file-input"
@@ -739,9 +758,9 @@ export default function ImageManagement() {
         <button
           className="im-btn im-btn-secondary"
           onClick={handleExportToExcel}
-          title="Export to CSV for editing"
+          title="Export to Excel for editing"
         >
-          <FiDownload /> Export CSV
+          <FiDownload /> Export Excel
         </button>
       </div>
 

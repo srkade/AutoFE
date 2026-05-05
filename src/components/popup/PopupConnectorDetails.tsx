@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { PopupConnectorType } from "../Schematic/SchematicTypes";
 
 import { DTC_STEPS_DATA } from "../../utils/DtcStepsData";
+import { API_BASE_URL as CONFIG_API_BASE_URL } from "../../config";
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || CONFIG_API_BASE_URL;
 
 interface PopupConnectorDetailsProps {
   popupConnector: PopupConnectorType | null;
@@ -19,6 +22,7 @@ export default function PopupConnectorDetails({
   selectedDTC,
 }: PopupConnectorDetailsProps) {
   const [activeTab, setActiveTab] = useState<"connection" | "dtc">("connection");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedTab === "DTC") {
@@ -27,6 +31,34 @@ export default function PopupConnectorDetails({
       setActiveTab("connection");
     }
   }, [selectedTab, popupConnector]);
+
+  useEffect(() => {
+    if (!popupConnector?.connectorCode) return;
+    
+    // Reset image while fetching
+    setImageUrl(null);
+    const defaultUrl = `/images/connectors/${popupConnector.connectorCode}.png`;
+
+    fetch(`${API_BASE_URL}/assets/images/code/${popupConnector.connectorCode}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Not found");
+        return res.json();
+      })
+      .then((json) => {
+        if (json.data && json.data.imageUrl) {
+          setImageUrl(json.data.imageUrl);
+        } else {
+          setImageUrl(defaultUrl);
+        }
+      })
+      .catch(() => {
+        setImageUrl(defaultUrl);
+      });
+  }, [popupConnector]);
 
   if (!popupConnector) return null;
 
@@ -198,14 +230,14 @@ export default function PopupConnectorDetails({
       {/* Popup Connector Image */}
       <div style={{ marginTop: '16px', textAlign: 'center' }}>
         <img
-          src={`/images/connectors/${popupConnector.connectorCode}.png`}
+          src={imageUrl || `/images/connectors/${popupConnector.connectorCode}.png`}
           alt={popupConnector.connectorCode}
-          style={{ maxWidth: '160px', width: '100%', borderRadius: '8px' }}
+          style={{ maxWidth: '160px', width: '100%', borderRadius: '8px', minHeight: '100px', objectFit: 'contain' }}
           onError={(e) => {
             const target = e.currentTarget;
-            if (target.src.endsWith('.png')) {
+            if (target.src.endsWith('.png') && target.src.includes('/images/')) {
               target.src = target.src.replace('.png', '.jpg');
-            } else if (target.src.endsWith('.jpg')) {
+            } else if (target.src.endsWith('.jpg') && target.src.includes('/images/')) {
               target.src = target.src.replace('.jpg', '.jpeg');
             }
           }}

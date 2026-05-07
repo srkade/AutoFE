@@ -1,4 +1,3 @@
-// ...existing code...
 import React, {
   useState,
   useEffect,
@@ -67,7 +66,7 @@ import {
 import { schematicExportManager } from "./SchematicExport";
 
 
-// ...existing code...
+
 const colors = {
   OG: "orange",
 };
@@ -91,6 +90,7 @@ export default function Schematic({
   dtcCode,
   onComponentRightClick,
   onSpliceRightClick,
+  highlightedElementId,
 }: {
   data: SchematicData;
   scale?: number;
@@ -98,6 +98,7 @@ export default function Schematic({
   dtcCode?: string;
   onComponentRightClick?: (component: ComponentType, pos: { x: number; y: number }) => void;
   onSpliceRightClick?: (splice: ComponentType) => void;
+  highlightedElementId?: string | null;
 }) {
   const svgWrapperRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -393,6 +394,8 @@ export default function Schematic({
   useEffect(() => {
     if (activeTab !== 'DTC') setSelectedDTC(null);
   }, [activeTab]);
+
+  // Selection logic removed focus effect to respect user position
 
   const handleRotate = () => {
     setRotation((prev) => (prev + 90) % 360);
@@ -1258,6 +1261,30 @@ export default function Schematic({
                 handleMouseUp();
               }}
             >
+              <defs>
+                <filter id="highlight-glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feFlood floodColor="#007bff" result="color" />
+                  <feComposite in="color" in2="blur" operator="in" result="glow" />
+                  <feMerge>
+                    <feMergeNode in="glow" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <style>
+                  {`
+                    @keyframes highlight-pulse {
+                      0% { filter: drop-shadow(0 0 2px #007bff); stroke-width: 2; }
+                      50% { filter: drop-shadow(0 0 8px #007bff); stroke-width: 4; }
+                      100% { filter: drop-shadow(0 0 2px #007bff); stroke-width: 2; }
+                    }
+                    .element-highlighted {
+                      animation: highlight-pulse 2s infinite;
+                      stroke: #007bff !important;
+                    }
+                  `}
+                </style>
+              </defs>
               <g transform={`rotate(${rotation} ${viewBox.x + viewBox.w / 2} ${viewBox.y + viewBox.h / 2})`}>
 
                 {(data.components || []).map((comp, componentIndex) => (
@@ -1304,8 +1331,9 @@ export default function Schematic({
                                   : "black"
                             }
                             strokeWidth={
-                              comp.isHighlighted ? 3 : popupSplice?.spliceId === comp.id ? 2 : 1
+                              comp.id === highlightedElementId ? 4 : (comp.isHighlighted ? 3 : (popupSplice?.spliceId === comp.id ? 2 : 1))
                             }
+                            className={comp.id === highlightedElementId ? "element-highlighted" : ""}
                           />
                           <circle
                             cx={safe(
@@ -1366,8 +1394,8 @@ export default function Schematic({
 
                               //  Dynamic fill
                               fill={
-                                selectedComponentIds.includes(comp.id)
-                                  ? "#93c5fd"                     // selected = blue-300
+                                selectedComponentIds.includes(comp.id) || comp.id === highlightedElementId
+                                  ? "#93c5fd"                     // selected/highlighted = blue-300
                                   : comp.isHighlighted
                                     ? "yellow"                     // duplicate = yellow
                                     : "lightblue"
@@ -1377,14 +1405,15 @@ export default function Schematic({
                               stroke={
                                 comp.isHighlighted
                                   ? "#dc2626"                     // duplicate = strong red border
-                                  : selectedComponentIds.includes(comp.id)
-                                    ? "#2563eb"                     // selected = strong blue
+                                  : (selectedComponentIds.includes(comp.id) || comp.id === highlightedElementId)
+                                    ? "#2563eb"                     // selected/highlighted = strong blue
                                     : "black"
                               }
 
                               strokeWidth={
-                                comp.isHighlighted ? 3 : 1
+                                comp.id === highlightedElementId ? 4 : (comp.isHighlighted ? 3 : 1)
                               }
+                              className={comp.id === highlightedElementId ? "element-highlighted" : ""}
 
                               strokeDasharray={
                                 componentIndex !== 0 ? "6,4" : undefined
@@ -1615,11 +1644,13 @@ export default function Schematic({
                                   : "lightgreen"
                               }
                               stroke="black"
+                              strokeWidth={conn.id === highlightedElementId ? 4 : 1}
                               strokeDasharray={
                                 componentIndex !== 0 ? "6,4" : undefined
                               }
                               onClick={(e) => handleConnectorClick(e, conn, comp)}
                               style={{ cursor: "pointer" }}
+                              className={conn.id === highlightedElementId ? "element-highlighted" : ""}
                             />
                             {selectedConnector?.id === conn.id && (
                               <rect

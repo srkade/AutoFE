@@ -5,6 +5,7 @@ import { DashboardItem } from "../App";
 import "../Styles/LeftPanel.css";
 
 import Schematic from "../components/Schematic/Schematic";
+import { SchematicData } from "../components/Schematic/SchematicTypes";
 
 interface LeftPanelProps {
   activeTab: string;
@@ -16,6 +17,8 @@ interface LeftPanelProps {
   onViewSchematic: (selectedCodes: string[]) => void;
   isMobile: boolean;
   traceMode?: boolean;
+  schematicData?: SchematicData | null;
+  onHighlightElement?: (id: string | null) => void;
 }
 
 export default function LeftPanel({
@@ -28,8 +31,12 @@ export default function LeftPanel({
   onViewSchematic,
   isMobile,
   traceMode = false,
+  schematicData,
+  onHighlightElement,
 }: LeftPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [activePanelTab, setActivePanelTab] = useState<"index" | "legend">("index");
+  const [highlightedLegendId, setHighlightedLegendId] = useState<string | null>(null);
 
   const search = searchTerm.trim().toLowerCase();
 
@@ -60,21 +67,16 @@ export default function LeftPanel({
     setSearchTerm("");
   },[activeTab]);
 
+  useEffect(() => {
+    if (selectedCodes.length === 0) {
+      setActivePanelTab("index");
+    }
+  }, [selectedCodes]);
+
   const selectedSet = new Set(selectedCodes);
 
-  // Place the currently displayed item at the top only when in trace mode (came from right-click)
-  // Otherwise, the selected item will appear in its normal position
-  const displayedItemPart = (selectedItem && traceMode) ? [selectedItem].filter(item => filtered.some(f => f.code === item.code)) : [];
-  
-  const selectedPart = filtered.filter((item) =>
-    selectedSet.has(item.code) && (!traceMode || !selectedItem || item.code !== selectedItem.code) // avoid duplicates in trace mode
-  );
-
-  const otherPart = filtered.filter((item) =>
-    !selectedSet.has(item.code) && (!traceMode || !selectedItem || item.code !== selectedItem.code) // avoid duplicates in trace mode
-  );
-
-  const filteredData = [...displayedItemPart, ...selectedPart, ...otherPart];
+  const checkedData = filtered.filter(item => selectedSet.has(item.code));
+  const unCheckedData = filtered.filter(item => !selectedSet.has(item.code));
 
   const handleItemClick = (item: DashboardItem) => {
     if (showCheckbox && selectedCodes.length > 0) {
@@ -174,66 +176,59 @@ export default function LeftPanel({
           </span>
         </div>
 
-        {showCheckbox && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "8px 16px",
-              borderBottom: "1px solid #e9ecef",
-              gap: "8px",
-            }}
-          >
-            {selectedCodes.length > 0 && (
-              <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: isMobile ? 'space-between' : 'flex-end' }}>
-                {isMobile && (
-                  <button
-                    onClick={() => onViewSchematic(selectedCodes)}
-                    className="view-merged-btn"
-                    title="View Selected"
-                    style={{
-                      padding: "8px 16px",
-                      background: "#0d6efd",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      flex: 1
-                    }}
-                  >
-                    👁️ View ({selectedCodes.length})
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    setSelectedCodes([]);
-                    onViewSchematic([]);
-                  }}
-                  title="Clear Selection"
-                  style={{
-                    width: isMobile ? "auto" : "36px",
-                    height: "36px",
-                    background: "#f8f9fa",
-                    border: "1px solid #dee2e6",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "16px",
-                    padding: isMobile ? "0 12px" : "0",
-                    color: "#6c757d"
-                  }}
-                >
-                  {isMobile ? "🧹 Clear" : "🧹"}
-                </button>
-              </div>
+        {selectedCodes.length > 0 && (
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: "16px",
+            gap: "8px"
+          }}>
+            <button
+              onClick={() => {
+                setSelectedCodes([]);
+                onViewSchematic([]);
+              }}
+              style={{
+                flex: 1,
+                padding: "8px 12px",
+                background: "#f8f9fa",
+                border: "1px solid #dee2e6",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "14px",
+                color: "#6c757d",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                fontWeight: "600"
+              }}
+            >
+              🧹 Clear Selection
+            </button>
+            
+            {isMobile && (
+              <button
+                onClick={() => onViewSchematic(selectedCodes)}
+                style={{
+                  flex: 1,
+                  padding: "8px 12px",
+                  background: "#0d6efd",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px"
+                }}
+              >
+                👁️ View ({selectedCodes.length})
+              </button>
             )}
           </div>
         )}
@@ -241,6 +236,7 @@ export default function LeftPanel({
 
       {/* Items List */}
       <div
+        className="panel-scroll-area"
         style={{
           flex: 1,
           overflowY: "auto",
@@ -248,106 +244,257 @@ export default function LeftPanel({
           paddingBottom: "30px",
         }}
       >
+        {/* SECTION 1: Checked Items (Always visible if any) */}
+        {checkedData.map((item) => {
+          const isSelected = selectedItem?.code === item.code;
+          const isChecked = true; // They are in checkedData
 
-        {/* FIXED "No items found" */}
-        {filteredData.length === 0 ? (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "40px 20px",
-              color: "#6c757d",
-            }}
-          >
-            <p style={{ margin: 0, fontSize: "16px" }}>
-              No {activeTab} found
-            </p>
-
-            {searchTerm && (
-              <p style={{ margin: "8px 0 0 0", fontSize: "14px" }}>
-                Try adjusting your search terms
-              </p>
-            )}
-          </div>
-        ) : (
-          filteredData.map((item) => {
-            const isSelected = selectedItem?.code === item.code;
-            const isChecked = selectedCodes.includes(item.code);
-
-            return (
-              <div key={item.code}>
-                <div
-                  style={{
-                    padding: "16px",
-                    marginBottom: "12px",
-                    border: `2px solid ${isSelected
-                      ? "#007bff"
-                      : isChecked
-                        ? "#007bff"
-                        : "#e9ecef"
-                      }`,
-                    borderRadius: "12px",
-                    background: isSelected
-                      ? "#f0f8ff"
-                      : isChecked
-                        ? "#cce5ff"
-                        : "white",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    position: "relative",
-                  }}
-                  onClick={() => handleItemClick(item)}
-                >
-                  {showCheckbox && (
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => handleCheckboxChange(item)}
-                      onClick={(e) => e.stopPropagation()}
-                      style={{
-                        width: "16px",
-                        height: "16px",
-                        cursor: "pointer",
-                        position: "absolute",
-                        top: "12px",
-                        left: "12px",
-                      }}
-                    />
-                  )}
-
-                  <div
+          return (
+            <div key={item.code} style={{ marginBottom: "12px" }}>
+              <div
+                style={{
+                  padding: "16px",
+                  border: `2px solid ${isSelected ? "#007bff" : "#007bff"}`,
+                  borderRadius: "12px",
+                  background: isSelected ? "#f0f8ff" : "#cce5ff",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  position: "relative",
+                }}
+                onClick={() => handleItemClick(item)}
+              >
+                {showCheckbox && (
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => handleCheckboxChange(item)}
+                    onClick={(e) => e.stopPropagation()}
                     style={{
-                      marginLeft: showCheckbox ? "24px" : "0px",
+                      width: "16px",
+                      height: "16px",
+                      cursor: "pointer",
+                      position: "absolute",
+                      top: "12px",
+                      left: "12px",
                     }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: "600",
-                        color: "#007bff",
-                        background: "#e7f3ff",
-                        padding: "4px 8px",
-                        borderRadius: "4px",
-                        marginRight: "12px",
-                      }}
-                    >
-                      {item.code}
-                    </span>
+                  />
+                )}
 
-                    <h4
-                      style={{
-                        margin: "8px 0 0",
-                        fontSize: "16px",
-                        fontWeight: "600",
-                        color: "#212529",
-                      }}
-                    >
-                      {item.name}
-                    </h4>
-                  </div>
+                <div style={{ marginLeft: showCheckbox ? "24px" : "0px" }}>
+                  <span style={{
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: "#007bff",
+                    background: "#e7f3ff",
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                    marginRight: "12px",
+                  }}>
+                    {item.code}
+                  </span>
+                  <h4 style={{ margin: "8px 0 0", fontSize: "16px", fontWeight: "600", color: "#212529" }}>
+                    {item.name}
+                  </h4>
                 </div>
               </div>
-            );
-          })
+            </div>
+          );
+        })}
+
+        {/* SECTION 2: Tabs (Only if items are checked) */}
+        {selectedCodes.length > 0 && (
+          <div style={{
+            display: "flex",
+            margin: "0 -16px 20px -16px",
+            gap: "12px",
+            borderBottom: "1px solid #e9ecef",
+            background: "white",
+            position: "sticky",
+            top: "-16px", // Align with the top of the scroll area
+            zIndex: 10,
+            padding: "8px 20px",
+            boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" // Subtle shadow to indicate depth
+          }}>
+            <button
+              onClick={() => {
+                setActivePanelTab("index");
+                onHighlightElement?.(null);
+                setHighlightedLegendId(null);
+              }}
+              style={{
+                padding: "8px 16px",
+                fontSize: "14px",
+                fontWeight: "600",
+                color: activePanelTab === "index" ? "#007bff" : "#6c757d",
+                background: "transparent",
+                border: "none",
+                borderBottom: activePanelTab === "index" ? "2px solid #007bff" : "2px solid transparent",
+                cursor: "pointer",
+              }}
+            >
+              Index
+            </button>
+            <button
+              onClick={() => setActivePanelTab("legend")}
+              style={{
+                padding: "8px 16px",
+                fontSize: "14px",
+                fontWeight: "600",
+                color: activePanelTab === "legend" ? "#007bff" : "#6c757d",
+                background: "transparent",
+                border: "none",
+                borderBottom: activePanelTab === "legend" ? "2px solid #007bff" : "2px solid transparent",
+                cursor: "pointer",
+              }}
+            >
+              Legend
+            </button>
+          </div>
+        )}
+
+        {/* SECTION 3: Tab Content (Index or Legend) */}
+        {activePanelTab === "index" ? (
+          <>
+            {unCheckedData.length === 0 && checkedData.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px 20px", color: "#6c757d" }}>
+                <p style={{ margin: 0, fontSize: "16px" }}>No {activeTab} found</p>
+              </div>
+            ) : (
+              unCheckedData.map((item) => {
+                const isSelected = selectedItem?.code === item.code;
+                const isChecked = false;
+
+                return (
+                  <div key={item.code} style={{ marginBottom: "12px" }}>
+                    <div
+                      style={{
+                        padding: "16px",
+                        border: `2px solid ${isSelected ? "#007bff" : "#e9ecef"}`,
+                        borderRadius: "12px",
+                        background: isSelected ? "#f0f8ff" : "white",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        position: "relative",
+                      }}
+                      onClick={() => handleItemClick(item)}
+                    >
+                      {showCheckbox && (
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => handleCheckboxChange(item)}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            width: "16px",
+                            height: "16px",
+                            cursor: "pointer",
+                            position: "absolute",
+                            top: "12px",
+                            left: "12px",
+                          }}
+                        />
+                      )}
+
+                      <div style={{ marginLeft: showCheckbox ? "24px" : "0px" }}>
+                        <span style={{
+                          fontSize: "14px",
+                          fontWeight: "600",
+                          color: "#007bff",
+                          background: "#e7f3ff",
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                          marginRight: "12px",
+                        }}>
+                          {item.code}
+                        </span>
+                        <h4 style={{ margin: "8px 0 0", fontSize: "16px", fontWeight: "600", color: "#212529" }}>
+                          {item.name}
+                        </h4>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </>
+        ) : (
+          <div className="legend-tab">
+            <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "16px", color: "#343a40" }}>Legend</h3>
+            {schematicData ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {/* Selected Components */}
+                {schematicData?.components?.map((comp) => (
+                  <div
+                    key={comp.id}
+                    onClick={() => {
+                      onHighlightElement?.(comp.id);
+                      setHighlightedLegendId(comp.id);
+                    }}
+                    style={{
+                      padding: "10px 12px",
+                      background: highlightedLegendId === comp.id ? "#e7f3ff" : "#f8f9fa",
+                      border: highlightedLegendId === comp.id ? "1px solid #007bff" : "1px solid #dee2e6",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      transition: "all 0.2s ease"
+                    }}
+                  >
+                    <span style={{ 
+                      width: "10px", 
+                      height: "10px", 
+                      borderRadius: "2px", 
+                      background: comp.componentType?.toLowerCase() === "splice" ? "black" : "#007bff" 
+                    }}></span>
+                    <span style={{ fontWeight: "600", color: "#495057" }}>{comp.label || comp.id}</span>
+                    <span style={{ fontSize: "12px", color: "#6c757d" }}>({comp.componentType || "Component"})</span>
+                  </div>
+                ))}
+                
+                {/* Connectors */}
+                {Array.from(new Set(schematicData?.components?.flatMap(c => c.connectors || []).map(conn => conn.id) || [])).map(connId => {
+                  const conn = schematicData?.components?.flatMap(c => c.connectors || []).find(c => c.id === connId);
+                  if (!conn) return null;
+                  return (
+                    <div
+                      key={conn.id}
+                      onClick={() => {
+                        onHighlightElement?.(conn.id);
+                        setHighlightedLegendId(conn.id);
+                      }}
+                      style={{
+                        padding: "10px 12px",
+                        background: highlightedLegendId === conn.id ? "#e7f3ff" : "#f8f9fa",
+                        border: highlightedLegendId === conn.id ? "1px solid #007bff" : "1px solid #dee2e6",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        transition: "all 0.2s ease"
+                      }}
+                    >
+                      <span style={{ 
+                        width: "10px", 
+                        height: "10px", 
+                        borderRadius: "2px", 
+                        background: "lightgreen",
+                        border: "1px solid #28a745"
+                      }}></span>
+                      <span style={{ fontWeight: "600", color: "#495057" }}>{conn.label || conn.id}</span>
+                      <span style={{ fontSize: "12px", color: "#6c757d" }}>(Connector)</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p style={{ color: "#6c757d", fontSize: "14px" }}>No schematic data available</p>
+            )}
+          </div>
         )}
       </div>
     </div>

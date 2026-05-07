@@ -14,13 +14,15 @@ interface MainPanelProps {
   traceBreadcrumb?: string;
   onBackClick?: () => void;
   onMobileBack?: () => void;
+  highlightedElementId?: string | null;
 }
 
-export default function MainPanel({ selectedItem, activeTab, isMobile, onComponentRightClick, onSpliceRightClick,
+export default function MainPanel({ selectedItem, activeTab, isMultipleComponents, isMobile, onComponentRightClick, onSpliceRightClick,
   traceMode = false,
   traceBreadcrumb = '',
   onBackClick,
-  onMobileBack }: MainPanelProps) {
+  onMobileBack,
+  highlightedElementId }: MainPanelProps) {
 
   const placeholderMessages: Record<string, string> = {
     Components: "Choose a component from the left panel to view its schematic diagram with interactive controls.",
@@ -163,12 +165,13 @@ export default function MainPanel({ selectedItem, activeTab, isMobile, onCompone
           </div>
         ) : (
           <Schematic
-            key={selectedItem.code} // Helps React reset the view when switching components
+            key={isMultipleComponents ? "merged-view" : selectedItem.code} // Stabilize key during merges to prevent unwanted view resets
             data={selectedItem.schematicData}
             activeTab={activeTab}
             dtcCode={selectedItem.type === 'DTC' ? selectedItem.code : undefined}
             onComponentRightClick={onComponentRightClick} // NOW IT IS PASSED CORRECTLY
             onSpliceRightClick={onSpliceRightClick}
+            highlightedElementId={highlightedElementId}
           />
         )}
       </div>

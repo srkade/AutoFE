@@ -129,6 +129,7 @@ function AppContent() {
 
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const [mergedSchematic, setMergedSchematic] = useState<SchematicData | null>(null);
+  const [highlightedElementId, setHighlightedElementId] = useState<string | null>(null);
 
   const handleSpliceExpand = useCallback(async (splice: any) => {
     try {
@@ -648,6 +649,7 @@ function AppContent() {
               setShowWelcome(false);
               setMergedSchematic(null);
               setSelectedCodes([]);
+              setHighlightedElementId(null);
             }}
             onLogout={handleLogout}
             user={currentUser}
@@ -713,6 +715,8 @@ function AppContent() {
                   setSelectedCodes={setSelectedCodes}
                   onViewSchematic={handleViewSchematic}
                   isMobile={isMobile}
+                  schematicData={mergedSchematic || selectedItem?.schematicData}
+                  onHighlightElement={setHighlightedElementId}
                 />
               </div>
 
@@ -751,12 +755,15 @@ function AppContent() {
                     setSelectedItem(prevState.selectedItem);
                     setMergedSchematic(prevState.mergedSchematic);
                     setSelectedCodes([]);
+                    setHighlightedElementId(null);
                   }}
                   onMobileBack={() => {
                     setSelectedItem(null);
                     setMergedSchematic(null);
                     setSelectedCodes([]);
+                    setHighlightedElementId(null);
                   }}
+                  highlightedElementId={highlightedElementId}
                 />
               </div>
             </div>
@@ -868,6 +875,8 @@ function AppContent() {
                           setSelectedCodes={setSelectedCodes}
                           onViewSchematic={handleViewSchematic}
                           isMobile={isMobile}
+                          schematicData={mergedSchematic || selectedItem?.schematicData}
+                          onHighlightElement={setHighlightedElementId}
                         />
                       </div>
 
@@ -905,6 +914,7 @@ function AppContent() {
                             setMergedSchematic(null);
                             setSelectedCodes([]);
                           }}
+                          highlightedElementId={highlightedElementId}
                         />
                       </div>
                     </div>

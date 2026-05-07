@@ -51,6 +51,7 @@ export default function SuperAdminSchematicViewer({ user, onLogout }: SuperAdmin
   const [selectedItem, setSelectedItem] = useState<DashboardItem | null>(null);
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const [mergedSchematic, setMergedSchematic] = useState<SchematicData | null>(null);
+  const [highlightedElementId, setHighlightedElementId] = useState<string | null>(null);
   
   // Data Lists
   const [components, setComponents] = useState<any[]>([]);
@@ -133,6 +134,7 @@ export default function SuperAdminSchematicViewer({ user, onLogout }: SuperAdmin
     setSelectedItem(null);
     setSelectedCodes([]);
     setMergedSchematic(null);
+    setHighlightedElementId(null);
     if (trace.isTraceMode) trace.exitTrace();
   };
 
@@ -349,6 +351,8 @@ export default function SuperAdminSchematicViewer({ user, onLogout }: SuperAdmin
                 onViewSchematic={handleViewSchematic}
                 isMobile={false}
                 traceMode={trace.isTraceMode}
+                schematicData={mergedSchematic || selectedItem?.schematicData}
+                onHighlightElement={setHighlightedElementId}
               />
 
               <div className="sa-main-panel-container">
@@ -370,7 +374,9 @@ export default function SuperAdminSchematicViewer({ user, onLogout }: SuperAdmin
                     setSelectedItem(prevState.selectedItem);
                     setMergedSchematic(prevState.mergedSchematic);
                     setSelectedCodes([]);
+                    setHighlightedElementId(null);
                   }}
+                  highlightedElementId={highlightedElementId}
                 />
               </div>
             </div>

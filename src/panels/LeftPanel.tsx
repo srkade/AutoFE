@@ -1,4 +1,5 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { Search, XCircle } from "lucide-react";
 
 import { DashboardItem } from "../App";
 
@@ -153,78 +154,89 @@ export default function LeftPanel({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
-              width: "80%",
+              width: "100%",
               padding: "10px 12px 10px 40px",
-              border: "1px solid #ced4da",
-              borderRadius: "8px",
+              border: "1px solid #dee2e6",
+              borderRadius: "10px",
               fontSize: "14px",
               background: "#f8f9fa",
-              color: "#495057",
+              color: "#212529",
+              boxSizing: "border-box",
+              transition: "border-color 0.2s ease, box-shadow 0.2s ease",
             }}
           />
-          <span
+          <Search
+            size={18}
             style={{
               position: "absolute",
               left: "12px",
               top: "50%",
               transform: "translateY(-50%)",
-              color: "#6c757d",
-              fontSize: "16px",
+              color: "#adb5bd",
             }}
-          >
-            🔍
-          </span>
+          />
         </div>
 
         {selectedCodes.length > 0 && (
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginTop: "16px",
-            gap: "8px"
-          }}>
+          <div style={{ marginTop: "16px" }}>
             <button
               onClick={() => {
                 setSelectedCodes([]);
                 onViewSchematic([]);
+                onHighlightElement?.(null);
+                setHighlightedLegendId(null);
+                setActivePanelTab("index");
               }}
               style={{
-                flex: 1,
-                padding: "8px 12px",
-                background: "#f8f9fa",
+                width: "100%",
+                padding: "10px 12px",
+                background: "white",
                 border: "1px solid #dee2e6",
-                borderRadius: "6px",
+                borderRadius: "10px",
                 cursor: "pointer",
                 fontSize: "14px",
-                color: "#6c757d",
+                color: "#495057",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "6px",
-                fontWeight: "600"
+                gap: "8px",
+                fontWeight: "500",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#fff5f5";
+                e.currentTarget.style.borderColor = "#feb2b2";
+                e.currentTarget.style.color = "#c53030";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "white";
+                e.currentTarget.style.borderColor = "#dee2e6";
+                e.currentTarget.style.color = "#495057";
               }}
             >
-              🧹 Clear Selection
+              <XCircle size={16} />
+              Clear Selection
             </button>
             
             {isMobile && (
               <button
                 onClick={() => onViewSchematic(selectedCodes)}
                 style={{
-                  flex: 1,
-                  padding: "8px 12px",
+                  width: "100%",
+                  marginTop: "8px",
+                  padding: "10px 12px",
                   background: "#0d6efd",
                   color: "white",
                   border: "none",
-                  borderRadius: "6px",
+                  borderRadius: "10px",
                   cursor: "pointer",
                   fontSize: "14px",
                   fontWeight: "600",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "6px"
+                  gap: "8px",
+                  boxShadow: "0 4px 6px -1px rgba(13, 110, 253, 0.2)"
                 }}
               >
                 👁️ View ({selectedCodes.length})
@@ -304,51 +316,67 @@ export default function LeftPanel({
         {/* SECTION 2: Tabs (Only if items are checked) */}
         {selectedCodes.length > 0 && (
           <div style={{
-            display: "flex",
-            margin: "0 -16px 20px -16px",
-            gap: "12px",
-            borderBottom: "1px solid #e9ecef",
-            background: "white",
             position: "sticky",
-            top: "-16px", // Align with the top of the scroll area
+            top: "-16px",
             zIndex: 10,
-            padding: "8px 20px",
-            boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" // Subtle shadow to indicate depth
+            background: "white",
+            padding: "8px 16px",
+            margin: "0 -16px 24px -16px",
+            borderBottom: "1px solid #f1f3f5",
+            display: "flex",
+            gap: "4px",
+            boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)"
           }}>
-            <button
-              onClick={() => {
-                setActivePanelTab("index");
-                onHighlightElement?.(null);
-                setHighlightedLegendId(null);
-              }}
-              style={{
-                padding: "8px 16px",
-                fontSize: "14px",
-                fontWeight: "600",
-                color: activePanelTab === "index" ? "#007bff" : "#6c757d",
-                background: "transparent",
-                border: "none",
-                borderBottom: activePanelTab === "index" ? "2px solid #007bff" : "2px solid transparent",
-                cursor: "pointer",
-              }}
-            >
-              Index
-            </button>
-            <button
-              onClick={() => setActivePanelTab("legend")}
-              style={{
-                padding: "8px 16px",
-                fontSize: "14px",
-                fontWeight: "600",
-                color: activePanelTab === "legend" ? "#007bff" : "#6c757d",
-                background: "transparent",
-                border: "none",
-                borderBottom: activePanelTab === "legend" ? "2px solid #007bff" : "2px solid transparent",
-                cursor: "pointer",
-              }}
-            >
-              Legend
-            </button>
+            {[
+              { id: "index", label: "Index" },
+              { id: "legend", label: "Legend" }
+            ].map((tab) => {
+              const isActive = activePanelTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActivePanelTab(tab.id as any);
+                    if (tab.id === "index") {
+                      onHighlightElement?.(null);
+                      setHighlightedLegendId(null);
+                    }
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "10px 16px",
+                    fontSize: "13px",
+                    fontWeight: isActive ? "600" : "500",
+                    color: isActive ? "#004085" : "#6c757d",
+                    background: isActive ? "#e7f3ff" : "transparent",
+                    border: isActive ? "1.5px solid #004085" : "1.5px solid transparent",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    position: "relative",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.background = "#f8f9fa";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  {tab.label}
+                  {isActive && (
+                    <div style={{
+                      position: "absolute",
+                      bottom: "0",
+                      left: "20%",
+                      right: "20%",
+                      height: "2px",
+                      background: "#004085",
+                      borderRadius: "2px 2px 0 0"
+                    }} />
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
 

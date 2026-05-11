@@ -1461,12 +1461,12 @@ export default function Schematic({
                                 y={safe(
                                   getYForComponent(comp) <
                                     fitViewBox.y + fitViewBox.h / 2
-                                    ? getYForComponent(comp) - 60
+                                    ? getYForComponent(comp) - 85
                                     : getYForComponent(comp) + 60,
                                   padding
                                 )}
                                 width={safe(getWidthForComponent(comp), 100)}
-                                height={componentSize.height}
+                                height={85}
                                 fill="#3390FF"
                                 opacity={0.3}
                                 pointerEvents="none" // so the click still passes through to the base rect

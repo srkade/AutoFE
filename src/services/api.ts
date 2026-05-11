@@ -593,4 +593,20 @@ export async function getSystemConfig() {
   }
 }
 
+/**
+ * Downloads a dynamically generated template from the backend
+ */
+export async function downloadTemplate(type: string) {
+  try {
+    const res = await api.get(`/templates/download`, {
+      params: { type },
+      responseType: "blob",
+    });
+    return res.data; // This is the blob
+  } catch (err) {
+    console.error("API ERROR → downloadTemplate:", err);
+    throw err;
+  }
+}
+
 export default api;

@@ -16,9 +16,9 @@ import {
   FiAlertCircle
 } from 'react-icons/fi';
 import '../Styles/SuperAdminTracking.css';
+import { API_BASE_URL } from '../config';
 
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
 const SuperAdminAuditLogs = ({ token }: { token: string | null }) => {
   const [logs, setLogs] = useState<any[]>([]);

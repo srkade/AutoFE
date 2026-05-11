@@ -14,6 +14,7 @@ import {
   FiArrowDown
 } from "react-icons/fi";
 import TableEditorModal from './TableEditorModal';
+import TemplateDropdown from '../components/TemplateDropdown';
 
 interface UploadStatus {
   id: string;
@@ -380,9 +381,12 @@ const ImportedFiles: React.FC = () => {
   return (
     <div className="import-dashboard">
       {/* HEADER */}
-      <div className="dashboard-header">
-        <h1>📤 Import Files</h1>
-        <p>Upload CSV / Excel files and track their live status</p>
+      <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1>📤 Import Files</h1>
+          <p>Upload CSV / Excel files and track their live status</p>
+        </div>
+        <TemplateDropdown />
       </div>
 
       {/* TOP UPLOAD BAR & CONTROLS */}

@@ -4,6 +4,7 @@ import { FiUsers, FiUpload, FiCpu, FiUser, FiImage, FiMenu, FiX, FiLogOut, FiSun
 import SearchBar from "../components/SearchBar";
 import ModelSelector from "../components/ModelSelector";
 import { useTheme } from "../components/ThemeContext";
+import { API_BASE_URL } from "../config";
 
 interface AuthorNavigationTabsProps {
   active: string;
@@ -276,7 +277,7 @@ export function AuthorTopbar({
     setCpLoading(true);
     setCpMessage(null);
     try {
-      const res = await fetch('http://localhost:8080/api/auth/change-password', {
+      const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

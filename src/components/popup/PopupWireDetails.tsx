@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import { WirePopupType } from "../Schematic/SchematicTypes";
 
+import DtcStepsSection from "./DtcStepsSection";
+
 interface PopupWireDetailsProps {
   popupWire: WirePopupType | null;
   onClose: (e: React.MouseEvent) => void;
+  dtcCode?: string | null;
 }
 
 export default function PopupWireDetails({
   popupWire,
   onClose,
+  dtcCode,
 }: PopupWireDetailsProps) {
   // Add local state to handle active tab
   const [activeTab, setActiveTab] = useState<"wire" | "connection">("wire");
@@ -405,6 +409,19 @@ export default function PopupWireDetails({
           }}
         />
       </div>
+
+      {dtcCode && (
+        <DtcStepsSection 
+          dtcCode={dtcCode}
+          contextData={{
+            circuitNumber: popupWire.wire?.wireDetails?.circuitNumber,
+            componentCode: popupWire.fromComponent?.id || popupWire.toComponent?.id,
+            componentName: popupWire.fromComponent?.label || popupWire.toComponent?.label,
+            connectorCode: popupWire.fromConnector?.label || popupWire.toConnector?.label,
+            harnessName: popupWire.fromComponent?.harness_name || popupWire.toComponent?.harness_name
+          }}
+        />
+      )}
     </div>
   );
 }

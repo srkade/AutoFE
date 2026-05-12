@@ -4,14 +4,18 @@ import { API_BASE_URL as CONFIG_API_BASE_URL } from "../../config";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || CONFIG_API_BASE_URL;
 
+import DtcStepsSection from "./DtcStepsSection";
+
 interface PopupComponentDetailsProps {
   popupComponent: ComponentType | null;
   onClose: () => void;
+  dtcCode?: string | null;
 }
 
 export default function PopupComponentDetails({
   popupComponent,
   onClose,
+  dtcCode,
 }: PopupComponentDetailsProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
@@ -438,6 +442,19 @@ export default function PopupComponentDetails({
               )}
           </tbody>
         </table>
+        
+        {dtcCode && (
+          <DtcStepsSection 
+            dtcCode={dtcCode}
+            contextData={{
+              componentCode: popupComponent.id,
+              componentName: popupComponent.label || popupComponent.engineering_component_name,
+              harnessName: popupComponent.harness_name,
+              connectorCode: popupComponent.connectors?.map(c => c.label).join(", ")
+            }}
+          />
+        )}
+
         <img src="" alt="" />
 
       </div>

@@ -134,7 +134,7 @@ export default function NavigationTabs({
         className={`nav-tabs ${menuOpen ? "open" : ""}`}
         style={{
           display: "flex",
-          gap: "12px",
+          gap: "16px",
           flex: 1,
           justifyContent: isMobile ? "flex-start" : "center",
           height: "100%",
@@ -188,7 +188,7 @@ export default function NavigationTabs({
               display: "flex",
               alignItems: "center",
               margin: isMobile ? "0 5px" : "0 10px",
-              maxWidth: "280px"
+              maxWidth: "220px"
             }}
           >
             <SearchBar />

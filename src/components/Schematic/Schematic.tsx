@@ -2510,6 +2510,7 @@ export default function Schematic({
         <PopupComponentDetails
           popupComponent={popupComponent}
           onClose={() => setPopupComponent(null)}
+          dtcCode={dtcCode}
         />
         <PopupWireDetails
           popupWire={popupWire}
@@ -2518,6 +2519,7 @@ export default function Schematic({
             setSelectedWires([]);
             setPopupWire(null);
           }}
+          dtcCode={dtcCode}
         />
         <PopupSpliceDetails
           popupSplice={popupSplice}

@@ -76,6 +76,12 @@ function AppContent() {
     sessionStorage.setItem("currentUser", JSON.stringify(userData));
     sessionStorage.setItem("role", loggedInRole);
 
+    // Reset tabs to defaults
+    setAuthorTab("manage-users");
+    setActiveTab("components");
+    setSchematicTab("components");
+    setShowWelcome(true);
+    
     setPage("dashboard");
   };
 
@@ -97,6 +103,13 @@ function AppContent() {
     if (storedUser && storedRole && storedToken) {
       setCurrentUser(JSON.parse(storedUser));
       setRole(storedRole as "superadmin" | "author" | "user");
+      
+      // Reset tabs to defaults on fresh entry
+      setAuthorTab("manage-users");
+      setActiveTab("components");
+      setSchematicTab("components");
+      setShowWelcome(true);
+      
       setPage("dashboard");
     } else {
       setPage("login");
@@ -112,6 +125,14 @@ function AppContent() {
     setRole(null);
     setCurrentUser(null);
     setToken(null);
+    
+    // Clear schematic state
+    setSelectedItem(null);
+    setMergedSchematic(null);
+    setSelectedCodes([]);
+    setHighlightedElementId(null);
+    setSelectedModelId(null);
+    setShowWelcome(true);
 
     // Redirect to login
     setPage("login");
@@ -600,13 +621,15 @@ function AppContent() {
     if (id) sessionStorage.setItem("selectedModelId", id);
     else sessionStorage.removeItem("selectedModelId");
 
-    // Refresh data for the new model if anything was selected
-    if (selectedCodes.length > 0) {
-      handleViewSchematic(selectedCodes);
-    } else if (selectedItem) {
-      handleItemSelection(selectedItem);
-    }
-  }, [selectedCodes, selectedItem, handleViewSchematic, handleItemSelection]);
+    // Clear schematic state for the new model
+    setSelectedItem(null);
+    setMergedSchematic(null);
+    setSelectedCodes([]);
+    setHighlightedElementId(null);
+    
+    // Optional: Only refresh if you really want to try loading same codes in new model
+    // but usually it's safer to just clear it.
+  }, []);
 
   return (
     <div>

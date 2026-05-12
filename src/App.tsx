@@ -798,6 +798,7 @@ function AppContent() {
               isPanelCollapsed={isAuthorPanelCollapsed}
               onPanelCollapse={setIsAuthorPanelCollapsed}
               setIsMenuOpen={setIsAuthorMenuOpen}
+              hideSearch={authorTab === "view-schematic"}
             />
 
 

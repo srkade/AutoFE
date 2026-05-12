@@ -1,8 +1,7 @@
 .import-dashboard {
-  padding: 24px;
+  padding: 20px 24px;
   background: var(--bg-primary);
   min-height: 100vh;
-  margin-top: 60px;
 }
 
 .dashboard-header {

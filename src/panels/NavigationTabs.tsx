@@ -134,10 +134,12 @@ export default function NavigationTabs({
         className={`nav-tabs ${menuOpen ? "open" : ""}`}
         style={{
           display: "flex",
-          gap: "2px",
+          gap: "12px",
           flex: 1,
           justifyContent: isMobile ? "flex-start" : "center",
-          height: "100%"
+          height: "100%",
+          minWidth: 0,
+          overflow: "hidden"
         }}>
 
         {/* MODEL SELECTOR */}
@@ -162,35 +164,35 @@ export default function NavigationTabs({
                 onTabChange(tab.id);
                 setMenuOpen(false);
               }}
+              style={{ flexShrink: 1, minWidth: 0 }}
             >
               <span><Icon size={18} /></span>
-              <span>{tab.label}</span>
+              <span style={{ whiteSpace: "nowrap" }}>{tab.label}</span>
             </button>
           );
         })}      </nav>
 
       {/* SEARCH AND USER MENU */}
-      <div
-        className="nav-actions"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          flexShrink: 0
-        }}
-      >
-        {!hideSearch && (
+        <div
+          className="nav-actions"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            flexShrink: 0
+          }}
+        >
           <div
             className="nav-search-bar"
             style={{
               display: "flex",
               alignItems: "center",
-              margin: isMobile ? "0 10px" : "0 20px",
+              margin: isMobile ? "0 5px" : "0 10px",
+              maxWidth: "280px"
             }}
           >
             <SearchBar />
           </div>
-        )}
 
         {!hideLogout && (
           <div
@@ -204,15 +206,15 @@ export default function NavigationTabs({
             <div
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               style={{
-                width: "40px",
-                height: "40px",
+                width: "32px",
+                height: "32px",
                 borderRadius: "50%",
                 background: "var(--accent-primary)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "var(--text-on-accent)",
                 transition: "all 0.2s ease",

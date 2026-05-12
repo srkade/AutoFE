@@ -68,20 +68,24 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
         style={{
           background: "white",
           borderBottom: "1px solid #e9ecef",
-          padding: "0 24px",
+          padding: "0 12px",
           display: "flex",
-          gap: "2px"
-          
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "nowrap",
+          width: "100%",
+          boxSizing: "border-box",
+          gap: "12px"
         }}>
         {/* LOGO AND BRANDING */}
         {!hideLogo && (
           <div
             style={{
-              width: isMobile ? "auto" : "320px",
               display: "flex",
               height: isMobile ? "60px" : "80px",
               alignItems: "center",
-              padding: isMobile ? "0 10px" : "0",
+              padding: isMobile ? "0 5px" : "0",
+              flexShrink: 0
             }}
           >
             <img
@@ -95,9 +99,10 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
             {!isSmallMobile && (
               <h1
                 style={{
-                  marginRight: isMobile ? "10px" : "40px",
+                  marginRight: isMobile ? "10px" : "20px",
                   marginLeft: "10px",
-                  fontSize: isMobile ? "16px" : "20px",
+                  fontSize: isMobile ? "16px" : "18px",
+                  whiteSpace: "nowrap"
                 }}
               >
                 CRAZYBEES
@@ -128,7 +133,7 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
                 borderBottom: activeTab === tab.id ? "3px solid #007bff" : "3px solid transparent",
                 borderTop: activeTab === tab.id ? "3px solid #007bff" : "3px solid transparent",
                 cursor: "pointer",
-                fontSize: "15px",
+                fontSize: "14px",
                 fontWeight: "bold",
                 borderRadius: "8px 8px 0 0",
                 transition: "all 0.2s ease",
@@ -136,6 +141,8 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
                 justifyContent: "center",
                 outline: "none",
                 userSelect: "none",
+                whiteSpace: "nowrap",
+                flexShrink: 1
               }}
               onMouseEnter={(e) => {
                 if (activeTab !== tab.id) {
@@ -157,13 +164,17 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
         })}
         {/* Search Bar */}
         <div style={{ 
-          display: "flex", 
-          alignItems: "center", 
-          margin: "0 20px",
-          flex: "1",
-          maxWidth: "400px"
+          flex: "1", 
+          maxWidth: "280px", 
+          margin: isMobile ? "0 5px" : "0 10px", 
+          display: 'flex', 
+          alignItems: 'center',
+          minWidth: 0,
+          flexShrink: 2
         }}>
-          <SearchBar />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <SearchBar />
+          </div>
         </div>
         {!hideLogout && (
           <div
@@ -178,15 +189,15 @@ export default function NavigationTabs({ activeTab, onTabChange, onLogout, user,
             <div
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               style={{
-                width: "40px",
-                height: "40px",
+                width: "32px",
+                height: "32px",
                 borderRadius: "50%",
                 background: "#f1f3f5",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                fontSize: "20px",
+                fontSize: "16px",
                 color: "#343a40",
                 transition: "background 0.3s ease",
               }}

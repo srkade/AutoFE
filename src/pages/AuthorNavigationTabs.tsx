@@ -223,7 +223,8 @@ export function AuthorTopbar({
   isPanelCollapsed,
   onPanelCollapse,
   setIsMenuOpen,
-  token
+  token,
+  hideSearch
 }: {
   onLogout: () => void;
   user: any;
@@ -233,6 +234,7 @@ export function AuthorTopbar({
   onPanelCollapse?: (collapsed: boolean) => void;
   setIsMenuOpen?: (open: boolean) => void;
   token?: string | null;
+  hideSearch?: boolean;
 }) {
   const { theme, setTheme, logo } = useTheme();
   const [showPopup, setShowPopup] = useState(false);
@@ -332,18 +334,38 @@ export function AuthorTopbar({
           <img className="logo-crisp" src={logo} alt="Logo" style={{ width: 32, height: 32 }} />
         </div>
 
-        <div style={{ flex: "1", maxWidth: "500px", margin: isMobile ? "0 10px" : "0 20px", display: 'flex', alignItems: 'center' }}>
-          <SearchBar />
-          {onModelChange && (
-            <div style={{ marginLeft: '20px' }}>
-              <ModelSelector
-                selectedModelId={selectedModelId || null}
-                onModelChange={onModelChange}
-                isAuthor={true}
-              />
+        {!hideSearch && (
+          <div style={{ 
+            flex: "1", 
+            maxWidth: "450px", 
+            margin: isMobile ? "0 10px" : "0 20px", 
+            display: 'flex', 
+            alignItems: 'center',
+            minWidth: 0 // Allow shrinking
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <SearchBar />
             </div>
-          )}
-        </div>
+            {onModelChange && (
+              <div style={{ marginLeft: isMobile ? '8px' : '20px', flexShrink: 0 }}>
+                <ModelSelector
+                  selectedModelId={selectedModelId || null}
+                  onModelChange={onModelChange}
+                  isAuthor={true}
+                />
+              </div>
+            )}
+          </div>
+        )}
+        {hideSearch && onModelChange && (
+          <div style={{ marginLeft: '20px', display: 'flex', alignItems: 'center' }}>
+            <ModelSelector
+              selectedModelId={selectedModelId || null}
+              onModelChange={onModelChange}
+              isAuthor={true}
+            />
+          </div>
+        )}
 
         <div
           ref={userIconRef}

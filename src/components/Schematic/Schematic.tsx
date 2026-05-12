@@ -298,33 +298,74 @@ export default function Schematic({
   }, [data, smartMasterIds]);
 
   // Channel routing heuristic: sort cross-row wires to eliminate track crossings
+  // Improved logic: Wires are sorted such that "outer" wires (longer spans) 
+  // get tracks further from the center, creating a nested "waterfall" look.
   const crossRowTracks = useMemo(() => {
     const tracks: { [index: number]: number } = {};
     if (!data.connections) return tracks;
 
-    const wireSpans = data.connections.map((wire, i) => {
-      const fromComp = (data.components || []).find(c => c.id === wire.from.componentId);
-      const toComp = (data.components || []).find(c => c.id === wire.to.componentId);
-      const fx = fromComp ? getXForComponent(fromComp) : 0;
-      const tx = toComp ? getXForComponent(toComp) : 0;
-      return { index: i, fx, tx };
+    const wireInfo = data.connections.map((wire, i) => {
+      const fromData = getComponentConnectorTupleFromConnectionPoint(wire.from, data);
+      const toData = getComponentConnectorTupleFromConnectionPoint(wire.to, data);
+      
+      const fromComp = fromData[0];
+      const fromConn = fromData[1];
+      const toComp = toData[0];
+      const toConn = toData[1];
+
+      let fx = 0;
+      if (fromComp && fromConn) {
+        const fromConnectorX = getXForConnector(fromConn, fromComp);
+        const fromConnectorWidth = getWidthForConnector(fromConn, fromComp);
+        const fromConnectorCount = calculateCavityCountForConnector(fromConn, data);
+        const connPoints = getConnectionPointsForConnector(fromConn, data, smartMasterIds);
+        const pointIndex = connPoints.findIndex(p => p.wire === wire && p.side === "from");
+        const fromConnectorOffset = fromConnectorCount === 1 ? fromConnectorWidth / 2 : (fromConnectorWidth / (fromConnectorCount + 1)) * (pointIndex + 1);
+        fx = fromComp.shape === "circle" ? fromConnectorX + (fromConnectorWidth / 2) + ((pointIndex - (fromConnectorCount - 1) / 2) * 5) : fromConnectorX + fromConnectorOffset;
+      }
+
+      let tx = 0;
+      if (toComp && toConn) {
+        const toConnectorX = getXForConnector(toConn, toComp);
+        const toConnectorWidth = getWidthForConnector(toConn, toComp);
+        const toConnectorCount = calculateCavityCountForConnector(toConn, data);
+        const connPointsTo = getConnectionPointsForConnector(toConn, data, smartMasterIds);
+        const pointIndexTo = connPointsTo.findIndex(p => p.wire === wire && p.side === "to");
+        const toConnectorOffset = toConnectorCount === 1 ? toConnectorWidth / 2 : (toConnectorWidth / (toConnectorCount + 1)) * (pointIndexTo + 1);
+        tx = toComp.shape === "circle" ? toConnectorX + (toConnectorWidth / 2) + ((pointIndexTo - (toConnectorCount - 1) / 2) * 5) : toConnectorX + toConnectorOffset;
+      }
+      
+      const isFromTop = smartMasterIds.has(fromComp?.id || "");
+      const isToTop = smartMasterIds.has(toComp?.id || "");
+      const isCrossRow = isFromTop !== isToTop;
+      
+      return { index: i, fx, tx, isCrossRow, isFromTop };
     });
 
-    const rightGoing = wireSpans.filter(w => w.fx <= w.tx);
-    const leftGoing = wireSpans.filter(w => w.fx > w.tx);
+    const crossRowWires = wireInfo.filter(w => w.isCrossRow);
+    
+    const ltr = crossRowWires.filter(w => w.fx <= w.tx);
+    const rtl = crossRowWires.filter(w => w.fx > w.tx);
 
-    // Right-going wires: Largest fromX gets Top track
-    rightGoing.sort((a, b) => b.fx - a.fx);
+    // Precise sorting to eliminate crossings
+    // For Right-Going: Rightmost source turns highest.
+    ltr.sort((a, b) => {
+      if (Math.abs(a.fx - b.fx) > 1) return b.fx - a.fx;
+      return a.tx - b.tx;
+    });
 
-    // Left-going wires: Smallest fromX gets Top track (among bottom tracks)
-    leftGoing.sort((a, b) => a.fx - b.fx);
+    // For Left-Going: Leftmost source turns highest.
+    rtl.sort((a, b) => {
+      if (Math.abs(a.fx - b.fx) > 1) return a.fx - b.fx;
+      return b.tx - a.tx;
+    });
 
     let trackNo = 1;
-    rightGoing.forEach(w => tracks[w.index] = trackNo++);
-    leftGoing.forEach(w => tracks[w.index] = trackNo++);
+    ltr.forEach(w => tracks[w.index] = trackNo++);
+    rtl.forEach(w => tracks[w.index] = trackNo++);
 
     return tracks;
-  }, [data, smartMasterIds, sortedComponentIds, componentNameWidths]);
+  }, [data, smartMasterIds, sortedComponentIds]);
 
   // Temporary storage for connection points during wire rendering
   let connectionPoints: { [id: string]: { x: number; y: number } } = {};
@@ -679,7 +720,10 @@ export default function Schematic({
   }
 
   function getNaturalWidthForComponent(component: ComponentType): number {
-    const defaultWidth = (componentNameWidths[component.id] ?? 100) + padding;
+    const nameWidth = componentNameWidths[component.id] ?? 100;
+    // Cap the width contribution from the name to keep components standard-sized
+    const cappedNameWidth = Math.min(nameWidth, 180);
+    const defaultWidth = cappedNameWidth + padding;
 
     // --- Calculate total extra width for all fuses on this component ---
     let totalFuseWidth = 0;
@@ -1611,6 +1655,25 @@ export default function Schematic({
                         anchor = isTopSide ? "end" : "start";
                       }
 
+                      const fullLabel = comp.label + ` (${comp.id})`;
+                      const maxCharsPerLine = 16;
+                      const words = fullLabel.split(/\s+/);
+                      const lines: string[] = [];
+                      let currentLine = "";
+
+                      words.forEach(word => {
+                        if ((currentLine + " " + word).trim().length > maxCharsPerLine && currentLine !== "") {
+                          lines.push(currentLine.trim());
+                          currentLine = word;
+                        } else {
+                          currentLine = (currentLine + " " + word).trim();
+                        }
+                      });
+                      if (currentLine) lines.push(currentLine);
+
+                      const lineHeight = 22;
+                      const totalHeight = (lines.length - 1) * lineHeight;
+
                       return (
                         <text
                           vectorEffect="non-scaling-stroke"
@@ -1621,10 +1684,19 @@ export default function Schematic({
                           y={titleY}
                           textAnchor={anchor}
                           fontSize="20"
+                          fontWeight="bold"
                           fill="black"
                           transform={rotation !== 0 ? `rotate(${-rotation} ${titleX} ${titleY})` : undefined}
                         >
-                          {comp.label + ` (${comp.id})`}
+                          {lines.map((line, i) => (
+                            <tspan
+                              key={i}
+                              x={titleX}
+                              dy={i === 0 ? -(totalHeight / 2) : lineHeight}
+                            >
+                              {line}
+                            </tspan>
+                          ))}
                         </text>
                       );
                     })()}
@@ -1926,22 +1998,31 @@ export default function Schematic({
                     }
 
                     let intermediateY: number;
+                    const totalConnections = data.connections?.length ?? 1;
+                    const trackIndex = crossRowTracks[i] || (i + 1);
+
                     if (isFromMasterComponent && isToMasterComponent) {
-                      // Both in master row: route below both master components with distinct vertical tiers
-                      // using the wire index so multiple same-row wires don't overlap horizontally.
-                      intermediateY = Math.max(fromY, toY) + 40 + (i * 10);
+                      // Same Row (Top): staggered U-shape below components
+                      const offset = 30 + (trackIndex * 8);
+                      intermediateY = Math.max(fromY, toY) + offset;
                     } else if (!isFromMasterComponent && !isToMasterComponent) {
-                      // Both in regular row: route above both regular components with distinct vertical tiers
-                      intermediateY = Math.min(fromY, toY) - 40 - (i * 10);
+                      // Same Row (Bottom): staggered U-shape above components
+                      const offset = 30 + (trackIndex * 8);
+                      intermediateY = Math.min(fromY, toY) - offset;
                     } else {
-                      // Cross-row wire: each wire gets its own evenly-spaced horizontal band.
-                      // Sorted perfectly by the channel routing heuristic (crossRowTracks) 
-                      // to eliminate horizontal/vertical track line crossings.
-                      const availableGap = regularBusY - masterBusY;
-                      const totalWires = data.connections?.length ?? 1;
-                      const slotHeight = availableGap / (totalWires + 1);
-                      const optimalTrackIndex = crossRowTracks[i] || (i + 1);
-                      intermediateY = Math.round(masterBusY + slotHeight * optimalTrackIndex);
+                      // Cross-Row (Top to Bottom or Bottom to Top)
+                      // We use a very generous slot height (20px) and a large base offset (60px)
+                      // to ensure absolutely no "touching" and maximum readability.
+                      const slotHeight = 20;
+                      const baseOffset = 60;
+                      
+                      // If going from Top to Bottom, we start the waterfall with a clear gap below the connector
+                      if (isFromMasterComponent) {
+                        intermediateY = masterBusY + baseOffset + (slotHeight * trackIndex);
+                      } else {
+                        // If going from Bottom to Top, we start the waterfall with a clear gap above the connector
+                        intermediateY = regularBusY - baseOffset - (slotHeight * trackIndex);
+                      }
                     }
 
 
@@ -2108,31 +2189,61 @@ export default function Schematic({
                           }}
                           style={{ cursor: "pointer" }}
                         >
-                          {Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5 ? (
-                            // Straight vertical line when endpoints share same X
-                            <line
-                              x1={safe(fromX, 0)}
-                              y1={safe(fromY, 0)}
-                              x2={safe(toX, 0)}
-                              y2={safe(toY, 0)}
-                              fill="none"
-                              stroke={selectedWires.includes(i.toString()) ? "#3390FF" : wire.color}
-                              strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
-                              markerEnd="url(#arrowhead)"
-                              pointerEvents="stroke"
-                            />
-                          ) : (
-                            // Z-shape routing when X positions differ
-                            <polyline
-                              key={i}
-                              points={`${safe(fromX, 0)},${safe(fromY, 0)} ${safe(fromX, 0)},${safe(intermediateY, 0)} ${safe(toX, 0)},${safe(intermediateY, 0)} ${safe(toX, 0)},${safe(toY, 0)}`}
-                              fill="none"
-                              stroke={selectedWires.includes(i.toString()) ? "#3390FF" : wire.color}
-                              strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
-                              markerEnd="url(#arrowhead)"
-                              pointerEvents="stroke"
-                            />
-                          )}
+                          {(() => {
+                            const fx = safe(fromX, 0);
+                            const fy = safe(fromY, 0);
+                            const tx = safe(toX, 0);
+                            const ty = safe(toY, 0);
+                            const iy = safe(intermediateY, 0);
+                            const r = 6; // compact corner radius
+
+                            if (Math.abs(fx - tx) < 5) {
+                              // Straight vertical line
+                              return (
+                                <line
+                                  x1={fx}
+                                  y1={fy}
+                                  x2={tx}
+                                  y2={ty}
+                                  fill="none"
+                                  stroke={selectedWires.includes(i.toString()) ? "#3390FF" : (wire.color === "RD" ? "red" : (wire.color === "BLK" ? "black" : (wire.color === "WH" ? "#ccc" : wire.color)))}
+                                  strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
+                                  markerEnd="url(#arrowhead)"
+                                  pointerEvents="stroke"
+                                />
+                              );
+                            }
+
+                            // Orthogonal path with rounded corners (Z-shape)
+                            // Points: (fx, fy) -> (fx, iy) -> (tx, iy) -> (tx, ty)
+                            
+                            // Direction from Y1 to IY
+                            const dirY1 = iy > fy ? 1 : -1;
+                            // Direction from FX to TX
+                            const dirX = tx > fx ? 1 : -1;
+                            // Direction from IY to TY
+                            const dirY2 = ty > iy ? 1 : -1;
+
+                            const d = `
+                              M ${fx} ${fy}
+                              L ${fx} ${iy - r * dirY1}
+                              Q ${fx} ${iy} ${fx + r * dirX} ${iy}
+                              L ${tx - r * dirX} ${iy}
+                              Q ${tx} ${iy} ${tx} ${iy + r * dirY2}
+                              L ${tx} ${ty}
+                            `;
+
+                            return (
+                              <path
+                                d={d}
+                                fill="none"
+                                stroke={selectedWires.includes(i.toString()) ? "#3390FF" : (wire.color === "RD" ? "red" : (wire.color === "BLK" ? "black" : (wire.color === "WH" ? "#ccc" : wire.color)))}
+                                strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
+                                markerEnd="url(#arrowhead)"
+                                pointerEvents="stroke"
+                              />
+                            );
+                          })()}
                         </g>
                         {/* <circle cx={toX} cy={toY} r={5} fill={wire.color}></circle> */}
                         {toComponent?.componentType?.toLowerCase() !== "splice" && (

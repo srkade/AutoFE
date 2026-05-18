@@ -1797,12 +1797,61 @@ export default function Schematic({
                         )}
 
                         {(() => {
-                          const labelX = safe(
-                            getXForConnector(conn, comp) -
-                            (comp.componentType?.toLowerCase() === "splice" ? -10 : 1),
-                            padding
-                          );
-                          const labelY = safe(getYForConnector(conn, comp) + 13, padding);
+                          let labelX = 0;
+                          let labelY = 0;
+                          let textAnchor: "start" | "middle" | "end" = "end";
+
+                          const x_c = getXForConnector(conn, comp);
+                          const y_c = getYForConnector(conn, comp);
+                          const w_c = getWidthForConnector(conn, comp);
+                          const h_c = connectorHeight;
+                          const isMaster = smartMasterIds.has(comp.id);
+                          const isSplice = comp.componentType?.toLowerCase() === "splice";
+
+                          if (isSplice) {
+                            labelX = x_c - (-10);
+                            labelY = y_c + 13;
+                            textAnchor = "end";
+                          } else if (rotation === 270) {
+                            // 270 degrees rotation (e.g. Master on Left, Regular on Right)
+                            // "XD01" (master): top-left corner of connector, starts at boundary
+                            // "XD-12" (regular): top-right corner of connector, ends at boundary
+                            if (isMaster) {
+                              labelX = x_c + w_c + 6;
+                              labelY = y_c + 4;
+                              textAnchor = "start";
+                            } else {
+                              labelX = x_c + w_c + 6;
+                              labelY = (y_c + h_c) - 4;
+                              textAnchor = "end";
+                            }
+                          } else if (rotation === 90) {
+                            // 90 degrees rotation (e.g. Master on Right, Regular on Left)
+                            // Master: top-right corner of connector, ends at boundary
+                            // Regular: top-left corner of connector, starts at boundary
+                            if (isMaster) {
+                              labelX = x_c - 6;
+                              labelY = (y_c + h_c) - 4;
+                              textAnchor = "end";
+                            } else {
+                              labelX = x_c - 6;
+                              labelY = y_c + 4;
+                              textAnchor = "start";
+                            }
+                          } else if (rotation === 180) {
+                            labelX = x_c + w_c / 2;
+                            labelY = isMaster ? y_c - 6 : y_c + h_c + 12;
+                            textAnchor = "middle";
+                          } else {
+                            // 0 degrees rotation (default layout)
+                            labelX = x_c - 1;
+                            labelY = y_c + 13;
+                            textAnchor = "end";
+                          }
+
+                          labelX = safe(labelX, padding);
+                          labelY = safe(labelY, padding);
+
                           return (
                             <text
                               ref={(el) => {
@@ -1810,7 +1859,7 @@ export default function Schematic({
                               }}
                               x={labelX}
                               y={labelY}
-                              textAnchor="end"
+                              textAnchor={textAnchor}
                               dominantBaseline="middle"
                               fontSize="10"
                               fill="black"

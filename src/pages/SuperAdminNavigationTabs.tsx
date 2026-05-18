@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiUser, FiHome, FiSettings, FiShield, FiDatabase, FiBarChart2, FiActivity, FiLogOut, FiMenu, FiX, FiGlobe, FiEye, FiTrash2, FiList } from "react-icons/fi";
+import { FiUser, FiHome, FiSettings, FiShield, FiDatabase, FiBarChart2, FiActivity, FiLogOut, FiMenu, FiX, FiGlobe, FiEye, FiTrash2, FiList, FiVideo } from "react-icons/fi";
 import logo from "../assets/Images/logo.png";
 
 
@@ -70,6 +70,7 @@ export default function SuperAdminNavigationTabs({
     { id: "schematic-viewer", label: "Schematic Viewer", icon: FiEye },
     { id: "deleted-items", label: "Deleted Items", icon: FiTrash2 },
     { id: "audit-logs", label: "Audit Logs", icon: FiList },
+    { id: "demo-videos", label: "Demo Videos", icon: FiVideo },
   ];
 
   return (

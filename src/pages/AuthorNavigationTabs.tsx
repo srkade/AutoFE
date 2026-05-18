@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../Styles/AuthorNavigationTabs.css";
-import { FiUsers, FiUpload, FiCpu, FiUser, FiImage, FiMenu, FiX, FiLogOut, FiSun, FiMoon, FiDroplet, FiBriefcase, FiEye, FiLock, FiEyeOff, FiCheck } from "react-icons/fi";
+import { FiUsers, FiUpload, FiCpu, FiUser, FiImage, FiMenu, FiX, FiLogOut, FiSun, FiMoon, FiDroplet, FiBriefcase, FiEye, FiLock, FiEyeOff, FiCheck, FiPlay } from "react-icons/fi";
 import SearchBar from "../components/SearchBar";
 import ModelSelector from "../components/ModelSelector";
 import { useTheme } from "../components/ThemeContext";
@@ -224,7 +224,8 @@ export function AuthorTopbar({
   onPanelCollapse,
   setIsMenuOpen,
   token,
-  hideSearch
+  hideSearch,
+  onShowDemo
 }: {
   onLogout: () => void;
   user: any;
@@ -235,6 +236,7 @@ export function AuthorTopbar({
   setIsMenuOpen?: (open: boolean) => void;
   token?: string | null;
   hideSearch?: boolean;
+  onShowDemo?: () => void;
 }) {
   const { theme, setTheme, logo } = useTheme();
   const [showPopup, setShowPopup] = useState(false);
@@ -403,6 +405,22 @@ export function AuthorTopbar({
                   {user?.role?.toUpperCase() || "AUTHOR"}
                 </span>
               </div>
+
+              {onShowDemo && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onShowDemo(); setShowPopup(false); }}
+                  style={{
+                    width: "100%", padding: "9px", background: "var(--bg-primary)", color: "var(--text-primary)",
+                    border: "1px solid var(--border-color)", borderRadius: "8px", cursor: "pointer",
+                    fontWeight: "600", fontSize: "13px", display: "flex", alignItems: "center",
+                    justifyContent: "center", gap: "8px", transition: "background 0.2s ease", marginBottom: "12px"
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-primary)", e.currentTarget.style.color = "var(--text-on-accent)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-primary)", e.currentTarget.style.color = "var(--text-primary)")}
+                >
+                  <FiPlay size={14} /> Watch Demo Videos
+                </button>
+              )}
 
               {/* Change Password button */}
               <button

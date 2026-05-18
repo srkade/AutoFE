@@ -1331,8 +1331,122 @@ export default function Schematic({
               </defs>
               <g transform={`rotate(${rotation} ${viewBox.x + viewBox.w / 2} ${viewBox.y + viewBox.h / 2})`}>
 
-                {(data.components || []).map((comp, componentIndex) => (
-                  <g key={comp.id}>
+                {(data.components || []).map((comp, componentIndex) => {
+                  const compX = safe(getXForComponent(comp), padding);
+                  const compY = safe(getYForComponent(comp), padding);
+                  const compW = safe(getWidthForComponent(comp), 100);
+                  const compH = componentSize.height;
+                  const compCenterX = safe(compX + compW / 2, padding);
+                  const isTopSide = compY + compH / 2 < fitViewBox.y + fitViewBox.h / 2;
+
+                  const titleX = compCenterX;
+                  const titleY = safe(
+                    compY +
+                    (isTopSide
+                      ? (comp.componentType?.toLowerCase() === "splice" ? compH - 10 : -compH / 2 - 25)
+                      : compH +
+                      (comp.componentType?.toLowerCase() === "splice" ? -30 : 55)),
+                    padding
+                  );
+
+                  const fullLabel = comp.label + ` (${comp.id})`;
+                  const maxCharsPerLine = 16;
+                  const words = fullLabel.split(/\s+/);
+                  const lines: string[] = [];
+                  let currentLine = "";
+
+                  words.forEach(word => {
+                    if ((currentLine + " " + word).trim().length > maxCharsPerLine && currentLine !== "") {
+                      lines.push(currentLine.trim());
+                      currentLine = word;
+                    } else {
+                      currentLine = (currentLine + " " + word).trim();
+                    }
+                  });
+                  if (currentLine) lines.push(currentLine);
+
+                  const lineHeight = 22;
+                  const totalTextHeight = (lines.length - 1) * lineHeight;
+
+                  // Label visual dimensions
+                  const labelVW = componentNameWidths[comp.id] ?? 100;
+                  const labelVH = lines.length * lineHeight;
+
+                  // Determine anchoring based on rotation and position
+                  let anchor: "middle" | "start" | "end" = "middle";
+                  if (rotation === 90) {
+                    anchor = isTopSide ? "start" : "end";
+                  } else if (rotation === 270) {
+                    anchor = isTopSide ? "end" : "start";
+                  }
+
+                  // Label local bounds calculation
+                  let tMinX, tMaxX, tMinY, tMaxY;
+                  if (rotation === 0 || rotation === 180) {
+                    tMinX = titleX - labelVW / 2;
+                    tMaxX = titleX + labelVW / 2;
+                    tMinY = titleY - labelVH / 2;
+                    tMaxY = titleY + labelVH / 2;
+                  } else if (rotation === 90) {
+                    // Local Width = visual Height, Local Height = visual Width
+                    tMinX = titleX - labelVH / 2;
+                    tMaxX = titleX + labelVH / 2;
+                    if (anchor === "start") {
+                      tMinY = titleY - labelVW;
+                      tMaxY = titleY;
+                    } else {
+                      tMinY = titleY;
+                      tMaxY = titleY + labelVW;
+                    }
+                  } else { // rotation === 270
+                    tMinX = titleX - labelVH / 2;
+                    tMaxX = titleX + labelVH / 2;
+                    if (anchor === "start") {
+                      tMinY = titleY;
+                      tMaxY = titleY + labelVW;
+                    } else {
+                      tMinY = titleY - labelVW;
+                      tMaxY = titleY;
+                    }
+                  }
+
+                  // Selection bounds in local space
+                  let actualCompMinX = compX;
+                  let actualCompMaxX = compX + compW;
+                  let actualCompMinY = compY;
+                  let actualCompMaxY = compY + compH;
+
+                  if (comp.componentType?.toLowerCase() === "splice" || comp.label?.toLowerCase() === "splice") {
+                    const scY = getSpliceCenterY(comp);
+                    const sR = componentSize.height / 8;
+                    actualCompMinY = scY - sR;
+                    actualCompMaxY = scY + sR;
+                    actualCompMinX = compCenterX - sR;
+                    actualCompMaxX = compCenterX + sR;
+                  }
+
+                  const selectionMinX = Math.min(actualCompMinX, tMinX);
+                  const selectionMaxX = Math.max(actualCompMaxX, tMaxX);
+                  const selectionMinY = Math.min(actualCompMinY, tMinY);
+                  const selectionMaxY = Math.max(actualCompMaxY, tMaxY);
+
+                  const isSelected = selectedComponentIds.includes(comp.id) ||
+                    comp.id === highlightedElementId ||
+                    (popupSplice?.spliceId === comp.id);
+
+                  return (
+                    <g key={comp.id}>
+                      {isSelected && (
+                        <rect
+                          x={selectionMinX - 5}
+                          y={selectionMinY - 5}
+                          width={selectionMaxX - selectionMinX + 10}
+                          height={selectionMaxY - selectionMinY + 10}
+                          fill="#3390FF"
+                          opacity={0.3}
+                          pointerEvents="none"
+                        />
+                      )}
                     {(comp.componentType?.toLowerCase() === "splice" ||
                       comp.label?.toLowerCase() === "splice")
                       ? (
@@ -1499,23 +1613,7 @@ export default function Schematic({
                                 setPopupComponent(comp);
                               }}
                             />
-                            {selectedComponentIds.includes(comp.id) && (
-                              <rect
-                                x={safe(getXForComponent(comp), padding)}
-                                y={safe(
-                                  getYForComponent(comp) <
-                                    fitViewBox.y + fitViewBox.h / 2
-                                    ? getYForComponent(comp) - 85
-                                    : getYForComponent(comp) + 60,
-                                  padding
-                                )}
-                                width={safe(getWidthForComponent(comp), 100)}
-                                height={85}
-                                fill="#3390FF"
-                                opacity={0.3}
-                                pointerEvents="none" // so the click still passes through to the base rect
-                              />
-                            )}
+                            {/* selection highlight handled at component group level */}
 
                             {comp.category?.toLowerCase() === "sensor" && (
                               <Sensor
@@ -1634,46 +1732,6 @@ export default function Schematic({
                         )
                       )}
                     {(() => {
-                      const compCenterX = safe(getXForComponent(comp) + getWidthForComponent(comp) / 2, padding);
-                      const isTopSide = getYForComponent(comp) + componentSize.height / 2 < fitViewBox.y + fitViewBox.h / 2;
-                      
-                      const titleX = compCenterX;
-                      const titleY = safe(
-                        getYForComponent(comp) +
-                        (isTopSide
-                          ? (comp.componentType?.toLowerCase() === "splice" ? componentSize.height - 10 : -componentSize.height / 2 - 25)
-                          : componentSize.height +
-                          (comp.componentType?.toLowerCase() === "splice" ? -30 : 55)),
-                        padding
-                      );
-
-                      // Determine anchoring based on rotation and position
-                      let anchor: "middle" | "start" | "end" = "middle";
-                      if (rotation === 90) {
-                        anchor = isTopSide ? "start" : "end";
-                      } else if (rotation === 270) {
-                        anchor = isTopSide ? "end" : "start";
-                      }
-
-                      const fullLabel = comp.label + ` (${comp.id})`;
-                      const maxCharsPerLine = 16;
-                      const words = fullLabel.split(/\s+/);
-                      const lines: string[] = [];
-                      let currentLine = "";
-
-                      words.forEach(word => {
-                        if ((currentLine + " " + word).trim().length > maxCharsPerLine && currentLine !== "") {
-                          lines.push(currentLine.trim());
-                          currentLine = word;
-                        } else {
-                          currentLine = (currentLine + " " + word).trim();
-                        }
-                      });
-                      if (currentLine) lines.push(currentLine);
-
-                      const lineHeight = 22;
-                      const totalHeight = (lines.length - 1) * lineHeight;
-
                       return (
                         <text
                           vectorEffect="non-scaling-stroke"
@@ -1692,7 +1750,7 @@ export default function Schematic({
                             <tspan
                               key={i}
                               x={titleX}
-                              dy={i === 0 ? -(totalHeight / 2) : lineHeight}
+                              dy={i === 0 ? -(totalTextHeight / 2) : lineHeight}
                             >
                               {line}
                             </tspan>
@@ -1766,7 +1824,7 @@ export default function Schematic({
                       </g>
                     ))}
                   </g>
-                ))}
+                )})}
 
                 {/* Pre-compute a single shared intermediate Y for ALL cross-row wires.
                *  This creates a clean single-bus topology: all wires travel vertically

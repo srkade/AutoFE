@@ -10,7 +10,7 @@ import {
   AlertTriangle,
   Cable
 } from "lucide-react";
-import { FiLogOut, FiSun, FiMoon, FiDroplet, FiBriefcase, FiEye } from "react-icons/fi";
+import { FiLogOut, FiSun, FiMoon, FiDroplet, FiBriefcase, FiEye, FiPlay } from "react-icons/fi";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useTheme } from "../components/ThemeContext";
 
@@ -30,6 +30,7 @@ interface NavigationTabsProps {
   selectedModelId?: string | null;
   onModelChange?: (modelId: string | null) => void;
   onModelsLoaded?: (count: number) => void;
+  onShowDemo?: () => void;
 }
 
 const tabs = [
@@ -53,7 +54,8 @@ export default function NavigationTabs({
   hideModelSelector = false,
   selectedModelId,
   onModelChange,
-  onModelsLoaded
+  onModelsLoaded,
+  onShowDemo
 }: NavigationTabsProps) {
   const { theme, setTheme, logo } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -278,6 +280,36 @@ export default function NavigationTabs({
                     </span>
                   </div>
                 </div>
+
+                {onShowDemo && (
+                  <button
+                    onClick={() => {
+                      onShowDemo();
+                      setUserMenuOpen(false);
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      background: "var(--bg-primary)",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      fontSize: "13px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      marginBottom: "12px",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-primary)", e.currentTarget.style.color = "var(--text-on-accent)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-primary)", e.currentTarget.style.color = "var(--text-primary)")}
+                  >
+                    <FiPlay size={16} /> Watch Demo Videos
+                  </button>
+                )}
 
                 <div style={{ marginBottom: "16px" }}>
                   <div style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase", marginBottom: "8px" }}>Theme</div>

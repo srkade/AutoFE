@@ -19,6 +19,7 @@ import { normalizeSchematic } from "./utils/normalizeSchematic";
 import RegisterForm from "./pages/RegistrationForm";
 import { useTraceNavigation } from './hooks/useTraceNavigation';
 import PasswordResetPage from './pages/PasswordResetPage';
+import DemoVideoModal from "./components/DemoVideoModal";
 
 export type DashboardItem = {
   code: string;
@@ -59,6 +60,7 @@ function AppContent() {
     role: "superadmin" | "author" | "user";
   } | null>(null);
   const [modelCount, setModelCount] = useState<number | null>(null);
+  const [showDemoModal, setShowDemoModal] = useState(false);
 
 
 
@@ -81,6 +83,12 @@ function AppContent() {
     setActiveTab("components");
     setSchematicTab("components");
     setShowWelcome(true);
+    
+    // Check if user has seen demo video
+    const hasSeenDemo = localStorage.getItem(`hasSeenDemo_${user.email}`);
+    if (!hasSeenDemo) {
+        setShowDemoModal(true);
+    }
     
     setPage("dashboard");
   };
@@ -679,6 +687,7 @@ function AppContent() {
             selectedModelId={selectedModelId}
             onModelChange={handleModelChange}
             onModelsLoaded={setModelCount}
+            onShowDemo={() => setShowDemoModal(true)}
           />
 
           {modelCount === 0 && role === "user" ? (
@@ -822,6 +831,7 @@ function AppContent() {
               onPanelCollapse={setIsAuthorPanelCollapsed}
               setIsMenuOpen={setIsAuthorMenuOpen}
               hideSearch={authorTab === "view-schematic"}
+              onShowDemo={() => setShowDemoModal(true)}
             />
 
 
@@ -955,6 +965,7 @@ function AppContent() {
         <SuperAdminDashboard
           token={token}
           onLogout={handleLogout}
+          onShowDemo={() => setShowDemoModal(true)}
         />
       )}
       <GlobalSearch
@@ -968,6 +979,15 @@ function AppContent() {
         }}
       />
       <AuditLogViewer currentUserEmail={currentUser?.email} />
+      <DemoVideoModal 
+        isOpen={showDemoModal} 
+        onClose={() => {
+          setShowDemoModal(false);
+          if (currentUser) {
+              localStorage.setItem(`hasSeenDemo_${currentUser.email}`, "true");
+          }
+        }} 
+      />
     </div>
   );
 }

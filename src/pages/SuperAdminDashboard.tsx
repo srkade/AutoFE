@@ -10,15 +10,18 @@ import CompanyManagement from "./CompanyManagement";
 import SuperAdminSchematicViewer from "./SuperAdminSchematicViewer";
 import SuperAdminDeletedItems from "./SuperAdminDeletedItems";
 import SuperAdminAuditLogs from "./SuperAdminAuditLogs";
-import { FiLogOut, FiMenu } from "react-icons/fi";
+import VideoManagement from "./VideoManagement";
+import { FiLogOut, FiMenu, FiPlay } from "react-icons/fi";
 import "../Styles/AuthorNavigationTabs.css";
 
 export default function SuperAdminDashboard({
     token,
-    onLogout
+    onLogout,
+    onShowDemo
 }: {
     token: string | null;
     onLogout: () => void;
+    onShowDemo?: () => void;
 }) {
     const [activeTab, setActiveTab] = useState("home");
     const [userInfo, setUserInfo] = useState<{
@@ -146,6 +149,7 @@ export default function SuperAdminDashboard({
                                 {activeTab === "schematic-viewer" && "Schematic Viewer"}
                                 {activeTab === "deleted-items" && "Deleted Items Tracking"}
                                 {activeTab === "audit-logs" && "System Audit Logs"}
+                                {activeTab === "demo-videos" && "Demo Video Management"}
                             </h1>
                         </div>
 
@@ -180,6 +184,43 @@ export default function SuperAdminDashboard({
                                             <span className="sa-label">Role</span>
                                             <div className="sa-value sa-role">{userInfo?.role || "Super Admin"}</div>
                                         </div>
+                                    </div>
+                                    <div style={{ padding: '0 16px', marginBottom: '12px' }}>
+                                        {onShowDemo && (
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onShowDemo();
+                                                    setShowUserPopup(false);
+                                                }}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '10px',
+                                                    background: 'rgba(59, 130, 246, 0.1)',
+                                                    color: '#3b82f6',
+                                                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                                                    borderRadius: '8px',
+                                                    cursor: 'pointer',
+                                                    fontWeight: '600',
+                                                    fontSize: '13px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '8px',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = '#3b82f6';
+                                                    e.currentTarget.style.color = 'white';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                                                    e.currentTarget.style.color = '#3b82f6';
+                                                }}
+                                            >
+                                                <FiPlay size={14} /> Watch Demo
+                                            </button>
+                                        )}
                                     </div>
                                     <div className="sa-popup-footer">
                                         <button 
@@ -256,7 +297,12 @@ export default function SuperAdminDashboard({
                                     <SuperAdminAuditLogs token={token} />
                                 </div>
                             )}
-                            {!["home", "system-settings", "security-logs", "database-management", "user-analytics", "system-monitoring", "company-management", "schematic-viewer", "deleted-items", "audit-logs"].includes(activeTab) && (
+                            {activeTab === "demo-videos" && (
+                                <div key="demo-videos" style={{ height: '100%' }}>
+                                    <VideoManagement />
+                                </div>
+                            )}
+                            {!["home", "system-settings", "security-logs", "database-management", "user-analytics", "system-monitoring", "company-management", "schematic-viewer", "deleted-items", "audit-logs", "demo-videos"].includes(activeTab) && (
                                 <div key="invalid-tab" style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
                                     <h3>Please select a valid tab</h3>
                                     <p>Select an option from the navigation menu to view content</p>

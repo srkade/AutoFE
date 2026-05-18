@@ -101,10 +101,10 @@ export default function LeftPanel({
     }
 
     //  LIMIT CHECK: Max selection 15
-    if (selectedCodes.length >= 15) {
-      alert("You can select maximum 15 components only.");
-      return;
-    }
+    // if (selectedCodes.length >= 15) {
+    //   alert("You can select maximum 15 components only.");
+    //   return;
+    // }
 
     // Add the new item
     const newSelectedCodes = [...selectedCodes, code];
@@ -215,7 +215,7 @@ export default function LeftPanel({
               }}
             >
               <XCircle size={16} />
-              Clear Selection
+              Clear Selection ({selectedCodes.length})
             </button>
             
             {isMobile && (

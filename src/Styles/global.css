@@ -22,3 +22,91 @@ html {
   transform: translateZ(0);
   will-change: transform;
 }
+
+/* Schematic Toolbar & Dropdowns */
+.schematic-toolbar {
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--card-shadow) !important;
+}
+
+.schematic-toolbar-btn {
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
+}
+
+.schematic-toolbar-btn:hover {
+  background-color: var(--bg-primary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.schematic-toolbar-dropdown-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.schematic-toolbar-dropdown-btn:hover {
+  background-color: var(--bg-primary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.schematic-export-menu {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: var(--card-shadow);
+  z-index: 1000;
+  display: none;
+  min-width: 180px;
+}
+
+.schematic-export-menu-btn {
+  width: 100%;
+  padding: 12px 16px;
+  text-align: left;
+  border: none;
+  background-color: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.schematic-export-menu-btn:hover:not(:disabled) {
+  background-color: var(--bg-primary);
+  color: var(--accent-primary);
+}
+
+.schematic-export-menu-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.schematic-export-menu-hr {
+  margin: 4px 0;
+  border: none;
+  border-top: 1px solid var(--border-color);
+}

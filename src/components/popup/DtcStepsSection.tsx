@@ -61,14 +61,14 @@ const DtcStepsSection: React.FC<DtcStepsSectionProps> = ({ dtcCode, contextData 
     <div style={{ 
       marginTop: '20px', 
       padding: '16px', 
-      backgroundColor: '#f8f9fa', 
+      backgroundColor: 'var(--bg-primary)', 
       borderRadius: '8px',
-      borderLeft: '4px solid #007bff',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+      borderLeft: '4px solid var(--accent-primary)',
+      boxShadow: 'var(--card-shadow)'
     }}>
       <h4 style={{ 
         margin: '0 0 12px 0', 
-        color: '#007bff', 
+        color: 'var(--accent-primary)', 
         fontSize: '16px',
         display: 'flex',
         alignItems: 'center',
@@ -82,25 +82,25 @@ const DtcStepsSection: React.FC<DtcStepsSectionProps> = ({ dtcCode, contextData 
           {steps.map((step: string, index: number) => (
             <div key={index} style={{ 
               fontSize: '13px', 
-              color: '#333',
+              color: 'var(--text-primary)', 
               lineHeight: '1.5',
               padding: '8px',
-              backgroundColor: '#fff',
+              backgroundColor: 'var(--bg-secondary)', 
               borderRadius: '4px',
-              border: '1px solid #eee'
+              border: '1px solid var(--border-color)'
             }}>
               {formatStep(step)}
             </div>
           ))}
         </div>
       ) : (
-        <p style={{ fontSize: '13px', color: '#666', fontStyle: 'italic' }}>No specific steps defined for this code.</p>
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>No specific steps defined for this code.</p>
       )}
 
       {dtcInfo.probableCauses && dtcInfo.probableCauses.length > 0 && (
         <div style={{ marginTop: '16px' }}>
-          <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#555' }}>Probable Causes:</h5>
-          <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12px', color: '#666' }}>
+          <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>Probable Causes:</h5>
+          <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12px', color: 'var(--text-secondary)' }}>
             {dtcInfo.probableCauses.map((cause: string, index: number) => (
               <li key={index} style={{ marginBottom: '4px' }}>{formatStep(cause)}</li>
             ))}

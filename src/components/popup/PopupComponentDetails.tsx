@@ -58,14 +58,15 @@ export default function PopupComponentDetails({
         width: "100%",
         maxWidth: "350px",
         maxHeight: "100%",
-        background: "#ffffff",
-        border: "1px solid #ddd",
+        background: "var(--bg-secondary)",
+        border: "1px solid var(--border-color)",
         borderRadius: "12px",
-        boxShadow: "0px 6px 24px rgba(0,0,0,0.15)",
+        boxShadow: "var(--card-shadow)",
         zIndex: 10,
         fontFamily: "'Segoe UI', Arial, sans-serif",
         display: "flex",
         flexDirection: "column",
+        
       }}
     >
 
@@ -73,8 +74,8 @@ export default function PopupComponentDetails({
         style={{
           position: "sticky",
           top: 0,
-          background: "#ffffff",
-          borderBottom: "3px solid #007bff",
+          background: "var(--bg-secondary)",
+          borderBottom: "3px solid var(--accent-primary)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -85,7 +86,7 @@ export default function PopupComponentDetails({
         <h3
           style={{
             margin: 0,
-            color: "#333",
+            color: "var(--text-primary)",
             fontSize: "20px",
             textAlign: "center",
             flexGrow: 1,
@@ -97,13 +98,12 @@ export default function PopupComponentDetails({
         <span
           onClick={onClose}
           style={{
-            color: "black",
+            color: "var(--text-primary)",
             fontSize: "22px",
             fontWeight: "bold",
             cursor: "pointer",
             marginLeft: "12px",
             userSelect: "none",
-            // backgroundColor: "red",
             width: "30px",
             height: "30px",
             display: "flex",
@@ -150,19 +150,19 @@ export default function PopupComponentDetails({
           <tbody>
             {/* ID */}
             {popupComponent.id && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
                     width: "45%",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   ID
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.id}
                 </td>
               </tr>
@@ -170,18 +170,18 @@ export default function PopupComponentDetails({
 
             {/* Label */}
             {popupComponent.label && popupComponent.label !== popupComponent.id && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Label
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.label}
                 </td>
               </tr>
@@ -189,18 +189,18 @@ export default function PopupComponentDetails({
 
             {/* Engineering Component Name */}
             {(popupComponent.engineering_component_name || popupComponent.label) && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Engineering Component Name
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.engineering_component_name || popupComponent.label}
                 </td>
               </tr>
@@ -208,18 +208,18 @@ export default function PopupComponentDetails({
 
             {/* Category */}
             {popupComponent.category && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Category
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.category}
                 </td>
               </tr>
@@ -227,13 +227,13 @@ export default function PopupComponentDetails({
 
             {/* Shape */}
             {popupComponent.shape && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Shape
@@ -252,18 +252,18 @@ export default function PopupComponentDetails({
 
             {/* Engineering Manufacturer */}
             {popupComponent.engineering_manufacturer && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Engineering Manufacturer
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.engineering_manufacturer}
                 </td>
               </tr>
@@ -271,18 +271,18 @@ export default function PopupComponentDetails({
 
             {/* Manufacturer */}
             {popupComponent.manufacturer && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Manufacturer
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.manufacturer}
                 </td>
               </tr>
@@ -290,18 +290,18 @@ export default function PopupComponentDetails({
 
             {/* Primary Part Number */}
             {popupComponent.primary_part_number && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Primary Part Number
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.primary_part_number}
                 </td>
               </tr>
@@ -309,18 +309,18 @@ export default function PopupComponentDetails({
 
             {/* Connector Part Number */}
             {popupComponent.connector_part_number && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Connector Part Number
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.connector_part_number}
                 </td>
               </tr>
@@ -328,18 +328,18 @@ export default function PopupComponentDetails({
 
             {/* Harness Name */}
             {popupComponent.harness_name && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Harness Name
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.harness_name}
                 </td>
               </tr>
@@ -347,18 +347,18 @@ export default function PopupComponentDetails({
 
             {/* Component Type */}
             {popupComponent.componentType && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Component Type
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.componentType}
                 </td>
               </tr>
@@ -366,18 +366,18 @@ export default function PopupComponentDetails({
 
             {/* Connector Type */}
             {popupComponent.connector_type && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Connector Type
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.connector_type}
                 </td>
               </tr>
@@ -385,18 +385,18 @@ export default function PopupComponentDetails({
 
             {/* Gender */}
             {popupComponent.gender && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Gender
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.gender}
                 </td>
               </tr>
@@ -404,18 +404,18 @@ export default function PopupComponentDetails({
 
             {/* Remove Status */}
             {popupComponent.remove !== undefined && (
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td
                   style={{
                     fontWeight: "600",
                     padding: "10px 8px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#555",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   Remove Status
                 </td>
-                <td style={{ padding: "10px 8px", color: "#333" }}>
+                <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                   {popupComponent.remove ? "Yes" : "No"}
                 </td>
               </tr>
@@ -424,18 +424,18 @@ export default function PopupComponentDetails({
             {/* Connectors */}
             {popupComponent.connectors &&
               popupComponent.connectors.length > 0 && (
-                <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+                <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
                   <td
                     style={{
                       fontWeight: "600",
                       padding: "10px 8px",
-                      backgroundColor: "#f8f9fa",
-                      color: "#555",
+                      backgroundColor: "var(--bg-primary)",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Connectors
                   </td>
-                  <td style={{ padding: "10px 8px", color: "#333" }}>
+                  <td style={{ padding: "10px 8px", color: "var(--text-primary)" }}>
                     {popupComponent.connectors.map((c) => c.label).join(", ")}
                   </td>
                 </tr>

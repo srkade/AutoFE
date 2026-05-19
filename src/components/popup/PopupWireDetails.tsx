@@ -27,21 +27,22 @@ export default function PopupWireDetails({
     width: "100%",
     maxWidth: "350px",
     maxHeight: "100%", // same height as SVG
-    background: "#ffffff",
+    background: "var(--bg-secondary)",
     borderRadius: "12px 0 0 12px",
-    boxShadow: "0px 6px 24px rgba(0,0,0,0.15)",
+    boxShadow: "var(--card-shadow)",
     padding: "24px",
     zIndex: 1000,
     overflowY: "auto", // scrollable if content too long
     fontFamily: "'Segoe UI', Arial, sans-serif",
     lineHeight: "1.6",
+    border: "2px solid var(--border-color)",
   };
 
   const headerStyle: React.CSSProperties = {
-    borderBottom: "3px solid #007bff",
+    borderBottom: "3px solid var(--accent-primary)",
     paddingBottom: "10px",
     marginBottom: "20px",
-    color: "#333",
+    color: "var(--text-primary)",
     fontSize: "20px",
     fontWeight: "bold",
     textAlign: "center",
@@ -49,14 +50,14 @@ export default function PopupWireDetails({
   const headerWrapperStyle: React.CSSProperties = {
     position: "sticky",
     top: 0,
-    backgroundColor: "#fff",
+    backgroundColor: "var(--bg-secondary)",
     zIndex: 10,
-    borderBottom: "3px solid #007bff",
+    borderBottom: "3px solid var(--accent-primary)",
     padding: "16px 16px 10px 16px",
     textAlign: "center",
     fontWeight: "bold",
     fontSize: "18px",
-    color: "#333",
+    color: "var(--text-primary)",
   };
   const contentStyle: React.CSSProperties = {
     flex: 1,
@@ -72,32 +73,31 @@ export default function PopupWireDetails({
   };
 
   const thStyle: React.CSSProperties = {
-    border: "1px solid #ddd",
+    border: "1px solid var(--border-color)",
     padding: "10px",
     fontWeight: 600,
-    backgroundColor: "#007bff",
-    color: "white",
+    backgroundColor: "var(--accent-primary)",
+    color: "var(--text-on-accent)",
   };
 
   const tdLabelStyle: React.CSSProperties = {
     fontWeight: 600,
     padding: "10px 8px",
-    backgroundColor: "#f8f9fa",
-    color: "#555",
-    border: "1px solid #ddd",
+    backgroundColor: "var(--bg-primary)",
+    color: "var(--text-secondary)",
+    border: "1px solid var(--border-color)",
   };
 
   const tdValueStyle: React.CSSProperties = {
     padding: "10px 8px",
-    color: "#333",
-    border: "1px solid #ddd",
+    color: "var(--text-primary)",
+    border: "1px solid var(--border-color)",
   };
 
   const closeButtonStyle: React.CSSProperties = {
     width: "28px",
     height: "28px",
-    //backgroundColor: "red",
-    color: "black",
+    color: "var(--text-primary)",
     fontWeight: "bold",
     fontSize: "20px",
     display: "flex",
@@ -145,8 +145,8 @@ export default function PopupWireDetails({
               textAlign: "center",
               padding: "8px 0",
               cursor: "pointer",
-              background: activeTab === "wire" ? "#007bff" : "#f0f0f0",
-              color: activeTab === "wire" ? "#fff" : "#333",
+              background: activeTab === "wire" ? "var(--accent-primary)" : "var(--bg-primary)",
+              color: activeTab === "wire" ? "var(--accent-primary-text, #fff)" : "var(--text-secondary)",
               border: "none",
               borderRadius: "6px",
               margin: "0 4px",
@@ -164,8 +164,8 @@ export default function PopupWireDetails({
               textAlign: "center",
               padding: "8px 0",
               cursor: "pointer",
-              background: activeTab === "connection" ? "#007bff" : "#f0f0f0",
-              color: activeTab === "connection" ? "#fff" : "#333",
+              background: activeTab === "connection" ? "var(--accent-primary)" : "var(--bg-primary)",
+              color: activeTab === "connection" ? "var(--accent-primary-text, #fff)" : "var(--text-secondary)",
               border: "none",
               borderRadius: "6px",
               margin: "0 4px",
@@ -411,7 +411,7 @@ export default function PopupWireDetails({
       </div>
 
       {dtcCode && (
-        <DtcStepsSection 
+        <DtcStepsSection
           dtcCode={dtcCode}
           contextData={{
             circuitNumber: popupWire.wire?.wireDetails?.circuitNumber,

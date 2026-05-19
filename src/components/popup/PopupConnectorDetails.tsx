@@ -71,23 +71,24 @@ export default function PopupConnectorDetails({
     width: "100%",
     maxWidth: "350px",
     maxHeight: "100%", // same height as SVG container
-    background: "#ffffff",
+    background: "var(--bg-secondary)",
     borderRadius: "12px 0 0 12px",
-    boxShadow: "0px 6px 24px rgba(0,0,0,0.15)",
+    boxShadow: "var(--card-shadow)",
     padding: "24px",
     zIndex: 1000,
     overflowY: "auto", // scrollable content
     fontFamily: "'Segoe UI', Arial, sans-serif",
     lineHeight: "1.6",
+    border: "2px solid var(--border-color)",
   };
 
   const headerContainerStyle: React.CSSProperties = {
     position: "sticky",
     top: 0,
-    background: "#fff",
+    background: "var(--bg-secondary)",
     zIndex: 2,
     padding: "16px 16px 10px 16px",
-    borderBottom: "3px solid #007bff", // Full-width blue line
+    borderBottom: "3px solid var(--accent-primary)", // Full-width line
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -101,25 +102,24 @@ export default function PopupConnectorDetails({
   const headerTitleStyle: React.CSSProperties = {
     fontSize: "20px",
     fontWeight: "bold",
-    color: "#333",
+    color: "var(--text-primary)",
     margin: 0,
   };
   const headerStyle: React.CSSProperties = {
     fontSize: "20px",
     fontWeight: "bold",
-    color: "#333",
+    color: "var(--text-primary)",
     margin: 0,
-    borderBottom: "3px solid #007bff", // Blue line only below text
+    borderBottom: "3px solid var(--accent-primary)", // Line only below text
     paddingBottom: "6px",
     flexGrow: 1,
   };
 
   const closeIconStyle: React.CSSProperties = {
-    //  backgroundColor: "red",
     position: "absolute",
     top: "-45px",
     right: "-10px",
-    color: "black",
+    color: "var(--text-primary)",
     border: "none",
     width: "40px",
     height: "40px",
@@ -144,8 +144,8 @@ export default function PopupConnectorDetails({
   const tabButtonStyle = (active: boolean): React.CSSProperties => ({
     padding: "6px 12px",
     cursor: "pointer",
-    background: active ? "#007bff" : "#f0f0f0",
-    color: active ? "#fff" : "#333",
+    background: active ? "var(--accent-primary)" : "var(--bg-primary)",
+    color: active ? "var(--accent-primary-text, #fff)" : "var(--text-secondary)",
     border: "none",
     borderRadius: "6px",
     fontWeight: 600,
@@ -160,21 +160,21 @@ export default function PopupConnectorDetails({
   const labelCell: React.CSSProperties = {
     fontWeight: 600,
     padding: "10px 8px",
-    backgroundColor: "#f8f9fa",
-    color: "#555",
-    borderBottom: "1px solid #e0e0e0",
+    backgroundColor: "var(--bg-primary)",
+    color: "var(--text-secondary)",
+    borderBottom: "1px solid var(--border-color)",
     width: "45%",
   };
 
   const valueCell: React.CSSProperties = {
     padding: "10px 8px",
-    color: "#333",
-    borderBottom: "1px solid #e0e0e0",
+    color: "var(--text-primary)",
+    borderBottom: "1px solid var(--border-color)",
   };
 
   const closeButtonStyle: React.CSSProperties = {
-    background: "linear-gradient(135deg, #007bff 0%, #0056b3 100%)",
-    color: "#fff",
+    background: "var(--accent-primary)",
+    color: "var(--accent-primary-text, #fff)",
     border: "none",
     padding: "10px 24px",
     borderRadius: "8px",

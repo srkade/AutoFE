@@ -44,6 +44,8 @@ import PopupComponentDetails from "../popup/PopupComponentDetails";
 import PopupWireDetails from "../popup/PopupWireDetails";
 import PopupConnectorDetails from "../popup/PopupConnectorDetails";
 import PopupSpliceDetails from "../popup/PopupSpliceDetails";
+import { useTheme } from "../ThemeContext";
+
 
 import { DTC_STEPS_DATA } from "../../utils/DtcStepsData";
 import {
@@ -100,6 +102,7 @@ export default function Schematic({
   onSpliceRightClick?: (splice: ComponentType) => void;
   highlightedElementId?: string | null;
 }) {
+  const { theme } = useTheme();
   const svgWrapperRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const popupRef = useRef<HTMLDivElement | null>(null);
@@ -977,7 +980,6 @@ export default function Schematic({
       },
         data
       );
-
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
@@ -988,7 +990,6 @@ export default function Schematic({
     }
   };
 
-  // export function end
   return (
     <div
       ref={svgWrapperRef}
@@ -998,39 +999,38 @@ export default function Schematic({
         flexDirection: "column",
         width: "100%",
         height: isFullscreen ? "100vh" : "100%",
-        background: "#fafafa",
+        background: "var(--bg-primary, #fafafa)",
         overflow: "hidden",
-        minHeight: isFullscreen ? undefined : "100%", // ensure min height stays fixed
-        maxHeight: isFullscreen ? undefined : "100%", // prevent growing heights
+        minHeight: isFullscreen ? undefined : "100%",
+        maxHeight: isFullscreen ? undefined : "100%",
       }}
     >
       <div
         style={{
-          flex: 1, // Dynamically takes all available vertical space
+          flex: 1,
           overflow: "hidden",
           display: "flex",
         }}
       >
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
           <div
+            className="schematic-toolbar"
             style={{
               position: "absolute",
               top: 4,
               left: 4,
               padding: 8,
               zIndex: 10,
-              //background: "white",
               display: "flex",
               gap: 8,
               borderRadius: 8,
-              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
               flexShrink: 0,
             }}
           >
             <button
               onClick={handleRotate}
               title="Rotate view"
-              style={buttonStyle}
+              className="schematic-toolbar-btn"
             >
               <RotateCcw size={18} />
             </button>
@@ -1040,19 +1040,19 @@ export default function Schematic({
                 resetView(svgWrapperRef, fitViewBox, setViewBox);
               }}
               title="Reset view"
-              style={buttonStyle}
+              className="schematic-toolbar-btn"
             >
               <RefreshCw size={18} />
             </button>
             <button
               onClick={() => zoom("in", viewBox, setViewBox)}
-              style={buttonStyle}
+              className="schematic-toolbar-btn"
             >
               <ZoomIn size={18} />
             </button>
             <button
               onClick={() => zoom("out", viewBox, setViewBox)}
-              style={buttonStyle}
+              className="schematic-toolbar-btn"
             >
               <ZoomOut size={18} />
             </button>
@@ -1060,7 +1060,7 @@ export default function Schematic({
               onClick={() =>
                 isFullscreen ? exitFullscreen() : enterFullscreen(svgWrapperRef)
               }
-              style={buttonStyle}
+              className="schematic-toolbar-btn"
             >
               {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
             </button>
@@ -1071,12 +1071,9 @@ export default function Schematic({
                 gap: "8px",
                 alignItems: "center",
                 padding: "0 12px",
-                borderLeft: "1px solid #ccc",
+                borderLeft: "1px solid var(--border-color)",
               }}
             >
-
-
-              {/* Dropdown Menu for Additional Export Options */}
               <div
                 style={{
                   position: "relative",
@@ -1092,42 +1089,14 @@ export default function Schematic({
                     }
                   }}
                   title="More export options"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "6px",
-                    border: "1px solid #ccc",
-                    backgroundColor: "#fff",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#f0f0f0";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#fff";
-                  }}
+                  className="schematic-toolbar-dropdown-btn"
                 >
                   ▼
                 </button>
 
                 <div
                   id="export-menu"
-                  style={{
-                    position: "absolute",
-                    top: "45px",
-                    right: 0,
-                    backgroundColor: "#fff",
-                    border: "1px solid #ccc",
-                    borderRadius: "6px",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                    zIndex: 1000,
-                    display: "none",
-                    minWidth: "180px",
-                  }}
+                  className="schematic-export-menu"
                 >
                   <button
                     onClick={() => {
@@ -1136,33 +1105,11 @@ export default function Schematic({
                       if (menu) menu.style.display = "none";
                     }}
                     disabled={isExporting}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      textAlign: "left",
-                      border: "none",
-                      backgroundColor: "transparent",
-                      cursor: isExporting ? "not-allowed" : "pointer",
-                      fontSize: "14px",
-                      transition: "background-color 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isExporting)
-                        e.currentTarget.style.backgroundColor = "#f0f0f0";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent";
-                    }}
+                    className="schematic-export-menu-btn"
                   >
                     📄 Export as PDF
                   </button>
-                  <hr
-                    style={{
-                      margin: "4px 0",
-                      border: "none",
-                      borderTop: "1px solid #eee",
-                    }}
-                  />
+                  <hr className="schematic-export-menu-hr" />
                   <button
                     onClick={() => {
                       handleExportImage();
@@ -1170,37 +1117,14 @@ export default function Schematic({
                       if (menu) menu.style.display = "none";
                     }}
                     disabled={isExporting}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      textAlign: "left",
-                      border: "none",
-                      backgroundColor: "transparent",
-                      cursor: isExporting ? "not-allowed" : "pointer",
-                      fontSize: "14px",
-                      transition: "background-color 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isExporting)
-                        e.currentTarget.style.backgroundColor = "#f0f0f0";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent";
-                    }}
+                    className="schematic-export-menu-btn"
                   >
                     🖼️ Export as PNG
                   </button>
-                  <hr
-                    style={{
-                      margin: "4px 0",
-                      border: "none",
-                      borderTop: "1px solid #eee",
-                    }}
-                  />
+                  <hr className="schematic-export-menu-hr" />
                 </div>
               </div>
 
-              {/* Error Message Display */}
               {exportError && (
                 <div
                   style={{
@@ -1220,7 +1144,6 @@ export default function Schematic({
                 </div>
               )}
 
-              {/* Loading Indicator */}
               {isExporting && (
                 <div
                   style={{
@@ -1228,7 +1151,7 @@ export default function Schematic({
                     alignItems: "center",
                     gap: "8px",
                     padding: "0 12px",
-                    color: "#666",
+                    color: "var(--text-secondary)",
                     fontSize: "12px",
                   }}
                 >
@@ -1238,8 +1161,8 @@ export default function Schematic({
                       width: "12px",
                       height: "12px",
                       borderRadius: "50%",
-                      border: "2px solid #f3f3f3",
-                      borderTop: "2px solid #007bff",
+                      border: "2px solid var(--border-color)",
+                      borderTop: "2px solid var(--accent-primary)",
                       animation: "spin 0.8s linear infinite",
                     }}
                   />
@@ -1249,7 +1172,6 @@ export default function Schematic({
             </div>
           </div>
           <div id="export" style={{ width: "100%", height: "100%" }}>
-
             <svg
               ref={svgRef}
               onClick={(e) => {
@@ -1621,7 +1543,7 @@ export default function Schematic({
                                 y={safe(getYForComponent(comp) + 15, 50)} // top of rectangle
                                 width={safe(getWidthForComponent(comp) / 20, 5)} // match rectangle width
                                 height={componentSize.height / 2} // match rectangle height
-                                stroke="black"
+                                stroke="var(--text-primary, black)"
                                 strokeWidth={1}
                               />
                             )}
@@ -1631,7 +1553,7 @@ export default function Schematic({
                                 x={safe(getXForComponent(comp), padding)}
                                 y={safe(getYForComponent(comp), padding)}
                                 sizeMultiplier={0.5}
-                                stroke="black"
+                                stroke="var(--text-primary, black)"
                                 strokeWidth={1}
                               />
                             )}
@@ -1645,7 +1567,7 @@ export default function Schematic({
                                 )} // horizontal centering
                                 y={safe(getYForComponent(comp) + componentSize.height / 2, padding)} // vertical centering
                                 sizeMultiplier={0.3} // make smaller so it fits neatly inside
-                                stroke="black"
+                                stroke="var(--text-primary, black)"
                                 strokeWidth={5}
                               />
                             )}
@@ -1658,9 +1580,9 @@ export default function Schematic({
                                 )} // horizontal centering
                                 y={safe(getYForComponent(comp) + componentSize.height / 6, padding)} // vertical centering
                                 sizeMultiplier={0.2} // scale it down to fit
-                                stroke="black"
+                                stroke="var(--text-primary, black)"
                                 strokeWidth={1}
-                                fill="black"
+                                fill="var(--text-primary, black)"
                               />
                             )}
                             {comp.category?.toLowerCase() === "motor" && (
@@ -1678,7 +1600,7 @@ export default function Schematic({
                                   ) * 0.5,
                                   20
                                 )} // scale to fit rectangle
-                                color="black"
+                                color="var(--text-primary, black)"
                                 fill="#B0E0E6"
                               />
                             )}
@@ -1697,7 +1619,7 @@ export default function Schematic({
                                   ) * 0.5,
                                   20
                                 )}
-                                color="black"
+                                color="var(--text-primary, black)"
                               />
                             )}
                             {comp.category?.toLowerCase() === "ground" && (
@@ -1706,7 +1628,7 @@ export default function Schematic({
                                 y={safe(getYForComponent(comp) + 15, padding)} // adjust vertical position
                                 width={safe(getWidthForComponent(comp) / 2, 50)} // adjust width scaling
                                 height={safe(componentSize.height / 2, 30)} // adjust height scaling
-                                stroke="black"
+                                stroke="var(--text-primary, black)"
                                 strokeWidth={3}
                               />
                             )}
@@ -1743,7 +1665,7 @@ export default function Schematic({
                           textAnchor={anchor}
                           fontSize="20"
                           fontWeight="bold"
-                          fill="black"
+                          fill="var(--text-primary, black)"
                           transform={rotation !== 0 ? `rotate(${-rotation} ${titleX} ${titleY})` : undefined}
                         >
                           {lines.map((line, i) => (
@@ -1773,7 +1695,7 @@ export default function Schematic({
                                   ? "#3390FF"
                                   : "lightgreen"
                               }
-                              stroke="black"
+                              stroke="var(--text-primary, black)"
                               strokeWidth={conn.id === highlightedElementId ? 4 : 1}
                               strokeDasharray={
                                 componentIndex !== 0 ? "6,4" : undefined
@@ -1862,7 +1784,7 @@ export default function Schematic({
                               textAnchor={textAnchor}
                               dominantBaseline="middle"
                               fontSize="10"
-                              fill="black"
+                              fill="var(--text-primary, black)"
                               fontWeight="bold"
                               transform={rotation !== 0 ? `rotate(${-rotation} ${labelX} ${labelY})` : undefined}
                             >
@@ -2174,7 +2096,7 @@ export default function Schematic({
                                           y={4}
                                           textAnchor="end"
                                           fontSize="10"
-                                          fill="black"
+                                          fill="var(--text-primary, black)"
                                           fontWeight="bold"
                                           alignmentBaseline="middle"
                                         >
@@ -2184,7 +2106,7 @@ export default function Schematic({
 
                                       {/* FLIPPED SYMBOL ONLY */}
                                       <g transform="scale(1, -1)">
-                                        <FuseSymbol cx={0} cy={0} size={12} color="black" />
+                                        <FuseSymbol cx={0} cy={0} size={12} color="var(--text-primary, black)" />
                                       </g>
 
                                       {/* RIGHT NORMAL TEXT (not flipped) */}
@@ -2194,7 +2116,7 @@ export default function Schematic({
                                           y={4}
                                           textAnchor="start"
                                           fontSize="10"
-                                          fill="black"
+                                          fill="var(--text-primary, black)"
                                           fontWeight="bold"
                                           alignmentBaseline="middle"
                                         >
@@ -2232,7 +2154,7 @@ export default function Schematic({
                                           y={4}
                                           textAnchor="end"
                                           fontSize="10"
-                                          fill="black"
+                                          fill="var(--text-primary, black)"
                                           fontWeight="bold"
                                           alignmentBaseline="middle"
                                         >
@@ -2241,7 +2163,7 @@ export default function Schematic({
                                       )}
 
                                       {/* Fuse Icon (center) */}
-                                      <FuseSymbol cx={0} cy={0} size={12} color="black" />
+                                      <FuseSymbol cx={0} cy={0} size={12} color="var(--text-primary, black)" />
 
                                       {/* AMP (right) */}
                                       {wire.wireDetails?.fuse?.ampere && (
@@ -2250,7 +2172,7 @@ export default function Schematic({
                                           y={4}
                                           textAnchor="start"
                                           fontSize="10"
-                                          fill="black"
+                                          fill="var(--text-primary, black)"
                                           fontWeight="bold"
                                           alignmentBaseline="middle"
                                         >
@@ -2313,7 +2235,7 @@ export default function Schematic({
                                   x2={tx}
                                   y2={ty}
                                   fill="none"
-                                  stroke={selectedWires.includes(i.toString()) ? "#3390FF" : (wire.color === "RD" ? "red" : (wire.color === "BLK" ? "black" : (wire.color === "WH" ? "#ccc" : wire.color)))}
+                                  stroke={selectedWires.includes(i.toString()) ? "#3390FF" : (wire.color === "RD" ? "red" : (wire.color === "BLK" ? "var(--text-primary, black)" : (wire.color === "WH" ? "#ccc" : wire.color)))}
                                   strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
                                   markerEnd="url(#arrowhead)"
                                   pointerEvents="stroke"
@@ -2344,7 +2266,7 @@ export default function Schematic({
                               <path
                                 d={d}
                                 fill="none"
-                                stroke={selectedWires.includes(i.toString()) ? "#3390FF" : (wire.color === "RD" ? "red" : (wire.color === "BLK" ? "black" : (wire.color === "WH" ? "#ccc" : wire.color)))}
+                                stroke={selectedWires.includes(i.toString()) ? "#3390FF" : (wire.color === "RD" ? "red" : (wire.color === "BLK" ? "var(--text-primary, black)" : (wire.color === "WH" ? "#ccc" : wire.color)))}
                                 strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
                                 markerEnd="url(#arrowhead)"
                                 pointerEvents="stroke"
@@ -2375,7 +2297,7 @@ export default function Schematic({
                                         cx={0}
                                         cy={30}
                                         size={14}
-                                        color="black"
+                                        color="var(--text-primary, black)"
                                       />
                                     </g>
                                   )}
@@ -2401,7 +2323,7 @@ export default function Schematic({
                                         cx={0}
                                         cy={0}
                                         size={14}
-                                        color="black"
+                                        color="var(--text-primary, black)"
                                       />
                                     </g>
                                   )}
@@ -2423,7 +2345,7 @@ export default function Schematic({
                                 textAnchor="start"
                                 fontSize="10"
                                 alignmentBaseline="middle"
-                                fill="black"
+                                fill="var(--text-primary, black)"
                                 fontWeight="bold"
                                 transform={rotation !== 0 ? `rotate(${-rotation} ${fX} ${fY})` : undefined}
                               >
@@ -2435,7 +2357,7 @@ export default function Schematic({
                                 textAnchor="start"
                                 fontSize="10"
                                 alignmentBaseline="middle"
-                                fill="black"
+                                fill="var(--text-primary, black)"
                                 fontWeight="bold"
                                 transform={rotation !== 0 ? `rotate(${-rotation} ${tX} ${tY})` : undefined}
                               >
@@ -2578,7 +2500,7 @@ export default function Schematic({
                         cy={cy} 
                         width={width} 
                         height={height} 
-                        color="black" 
+                        color="var(--text-primary, black)" 
                       />
                     );
                   }
@@ -2592,10 +2514,10 @@ export default function Schematic({
             {contextMenu && (
               <div style={{
                 position: 'fixed', top: contextMenu.y, left: contextMenu.x,
-                background: 'white', border: '1px solid #ccc', borderRadius: '4px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 1000, padding: '8px 0', minWidth: '160px'
+                background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '4px',
+                boxShadow: 'var(--card-shadow)', zIndex: 1000, padding: '8px 0', minWidth: '160px'
               }}>
-                <div style={{ padding: '4px 16px', color: '#888', fontSize: '12px' }}>{contextMenu.component.label}</div>
+                <div style={{ padding: '4px 16px', color: 'var(--text-secondary)', fontSize: '12px' }}>{contextMenu.component.label}</div>
                 <button
                   onClick={() => {
                     if (onComponentRightClick) {
@@ -2605,7 +2527,22 @@ export default function Schematic({
                     }
                     setContextMenu(null);
                   }}
-                  style={{ width: '100%', padding: '10px', cursor: 'pointer' }}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: 'transparent',
+                    color: 'var(--text-primary)',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                 >
                   📍 Open Component
                 </button>

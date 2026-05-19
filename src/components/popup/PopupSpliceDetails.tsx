@@ -24,27 +24,28 @@ export default function PopupSpliceDetails({
     width: "100%",
     maxWidth: "350px",
     maxHeight: "100%",
-    background: "#ffffff",
+    background: "var(--bg-secondary)",
     borderRadius: "12px 0 0 12px",
-    boxShadow: "0px 6px 24px rgba(0,0,0,0.15)",
+    boxShadow: "var(--card-shadow)",
     padding: "24px",
     zIndex: 1000,
     overflowY: "auto",
     fontFamily: "'Segoe UI', Arial, sans-serif",
     lineHeight: "1.6",
+    border: "2px solid var(--border-color)",
   };
 
   const headerWrapperStyle: React.CSSProperties = {
     position: "sticky",
     top: 0,
-    backgroundColor: "#fff",
+    backgroundColor: "var(--bg-secondary)",
     zIndex: 10,
-    borderBottom: "3px solid #007bff",
+    borderBottom: "3px solid var(--accent-primary)",
     padding: "16px 16px 10px 16px",
     textAlign: "center",
     fontWeight: "bold",
     fontSize: "18px",
-    color: "#333",
+    color: "var(--text-primary)",
   };
 
   const tableStyle: React.CSSProperties = {
@@ -55,31 +56,31 @@ export default function PopupSpliceDetails({
   };
 
   const thStyle: React.CSSProperties = {
-    border: "1px solid #ddd",
+    border: "1px solid var(--border-color)",
     padding: "10px",
     fontWeight: 600,
-    backgroundColor: "#007bff",
-    color: "white",
+    backgroundColor: "var(--accent-primary)",
+    color: "var(--text-on-accent)",
   };
 
   const tdLabelStyle: React.CSSProperties = {
     fontWeight: 600,
     padding: "10px 8px",
-    backgroundColor: "#f8f9fa",
-    color: "#555",
-    border: "1px solid #ddd",
+    backgroundColor: "var(--bg-primary)",
+    color: "var(--text-secondary)",
+    border: "1px solid var(--border-color)",
   };
 
   const tdValueStyle: React.CSSProperties = {
     padding: "10px 8px",
-    color: "#333",
-    border: "1px solid #ddd",
+    color: "var(--text-primary)",
+    border: "1px solid var(--border-color)",
   };
 
   const closeButtonStyle: React.CSSProperties = {
     width: "28px",
     height: "28px",
-    color: "black",
+    color: "var(--text-primary)",
     fontWeight: "bold",
     fontSize: "20px",
     display: "flex",
@@ -161,7 +162,7 @@ export default function PopupSpliceDetails({
             {/* Connected Wires */}
             {popupSplice.connections && popupSplice.connections.length > 0 ? (
               <>
-                <div style={{ fontWeight: "bold", marginBottom: "10px", color: "#333", fontSize: "16px" }}>
+                <div style={{ fontWeight: "bold", marginBottom: "10px", color: "var(--text-primary)", fontSize: "16px" }}>
                   Connected Wires ({popupSplice.connections.length})
                 </div>
                 <table style={tableStyle}>
@@ -182,12 +183,12 @@ export default function PopupSpliceDetails({
                         <td style={{...tdValueStyle, fontSize: "12px"}}>
                           <strong>{conn.fromComponentLabel || conn.fromComponentId || "—"}</strong>
                           <br/>
-                          <span style={{ color: "#777" }}>{conn.fromConnectorId}</span>
+                          <span style={{ color: "var(--text-secondary)" }}>{conn.fromConnectorId}</span>
                         </td>
                         <td style={{...tdValueStyle, fontSize: "12px"}}>
                           <strong>{conn.toComponentLabel || conn.toComponentId || "—"}</strong>
                           <br/>
-                          <span style={{ color: "#777" }}>{conn.toConnectorId}</span>
+                          <span style={{ color: "var(--text-secondary)" }}>{conn.toConnectorId}</span>
                         </td>
                         <td style={{...tdValueStyle, textAlign: "center", fontSize: "12px"}}>
                           {conn.fromCavity || "—"} → {conn.toCavity || "—"}
@@ -198,7 +199,7 @@ export default function PopupSpliceDetails({
                 </table>
               </>
             ) : (
-              <div style={{ textAlign: "center", padding: "20px", color: "#666" }}>
+              <div style={{ textAlign: "center", padding: "20px", color: "var(--text-secondary)" }}>
                 No connection details available.
               </div>
             )}

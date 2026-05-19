@@ -1,4 +1,3 @@
-
 /* Hamburger hidden on desktop */
 .hamburger {
   display: none;
@@ -36,13 +35,14 @@
 
 .nav-tab.active {
   background: var(--accent-primary);
-  color: white !important;
+  color: var(--text-on-accent);
+  border-color: var(--accent-primary);
   box-shadow: 0 4px 12px rgba(var(--accent-rgb, 59, 130, 246), 0.3);
   transform: translateY(0);
 }
 
 .nav-tab.active span {
-  color: white !important;
+  color: var(--text-on-accent) !important;
 }
 
 
@@ -55,7 +55,8 @@
 /* laptop/tablet */
 @media(max-width:1400px) {
   .nav-tab span:last-child {
-    display: none; /* Hide labels earlier to save space */
+    display: none;
+    /* Hide labels earlier to save space */
   }
 }
 
@@ -69,9 +70,11 @@
   .nav-tabs {
     gap: 4px !important;
   }
+
   .nav-tab {
     padding: 10px 14px !important;
   }
+
   .nav-actions {
     gap: 8px !important;
   }
@@ -84,28 +87,33 @@
     padding: 4px 8px;
     gap: 6px;
   }
+
   .nav-tab {
     flex: 1 1 auto;
     min-width: 60px;
     padding: 8px 8px !important;
     font-size: 12px !important;
   }
+
   .nav-tab span:last-child {
-    display: inline; /* Re-show labels if they wrap */
+    display: inline;
+    /* Re-show labels if they wrap */
   }
 }
 
 /* Mobile ≤480px */
 @media (max-width: 480px) {
   .hamburger {
-    display: block; /* show hamburger on mobile */
+    display: block;
+    /* show hamburger on mobile */
   }
 
   .nav-tabs {
-    display: none !important; /* hide nav by default, override inline style */
+    display: none !important;
+    /* hide nav by default, override inline style */
     flex-direction: column;
     position: absolute;
-    top: 50px; 
+    top: 50px;
     left: 0;
     width: 100%;
     background: var(--bg-secondary);
@@ -113,7 +121,8 @@
   }
 
   .nav-tabs.open {
-    display: flex !important; /* show nav only when hamburger clicked */
+    display: flex !important;
+    /* show nav only when hamburger clicked */
   }
 
   .nav-tab {
@@ -121,10 +130,12 @@
     justify-content: center;
   }
 }
+
 /* Between 480px and 768px */
 @media (min-width: 481px) and (max-width: 768px) {
   .hamburger {
-    display: none; /* hide hamburger above 480px */
+    display: none;
+    /* hide hamburger above 480px */
   }
 
   .nav-tabs {

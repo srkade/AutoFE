@@ -138,6 +138,7 @@ export default function Schematic({
   const [componentNameWidths, setComponentNameWidths] = useState<{ [id: string]: number }>({});
   const [connectorNameWidths, setConnectorNameWidths] = useState<{ [id: string]: number }>({});
   const [connectorConnectionCount, setConnectorConnectionCount] = useState<{ [id: string]: number }>({});
+  const [hoveredWire, setHoveredWire] = useState<string | null>(null);
 
   const smartMasterIds = useMemo(() => {
     const seeds = new Set(data.masterComponents || []);
@@ -310,7 +311,7 @@ export default function Schematic({
     const wireInfo = data.connections.map((wire, i) => {
       const fromData = getComponentConnectorTupleFromConnectionPoint(wire.from, data);
       const toData = getComponentConnectorTupleFromConnectionPoint(wire.to, data);
-      
+
       const fromComp = fromData[0];
       const fromConn = fromData[1];
       const toComp = toData[0];
@@ -337,16 +338,16 @@ export default function Schematic({
         const toConnectorOffset = toConnectorCount === 1 ? toConnectorWidth / 2 : (toConnectorWidth / (toConnectorCount + 1)) * (pointIndexTo + 1);
         tx = toComp.shape === "circle" ? toConnectorX + (toConnectorWidth / 2) + ((pointIndexTo - (toConnectorCount - 1) / 2) * 5) : toConnectorX + toConnectorOffset;
       }
-      
+
       const isFromTop = smartMasterIds.has(fromComp?.id || "");
       const isToTop = smartMasterIds.has(toComp?.id || "");
       const isCrossRow = isFromTop !== isToTop;
-      
+
       return { index: i, fx, tx, isCrossRow, isFromTop };
     });
 
     const crossRowWires = wireInfo.filter(w => w.isCrossRow);
-    
+
     const ltr = crossRowWires.filter(w => w.fx <= w.tx);
     const rtl = crossRowWires.filter(w => w.fx > w.tx);
 
@@ -1229,7 +1230,7 @@ export default function Schematic({
             >
               <defs>
                 <filter id="highlight-glow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feGaussianBlur stdDeviation="10" result="blur" />
                   <feFlood floodColor="#007bff" result="color" />
                   <feComposite in="color" in2="blur" operator="in" result="glow" />
                   <feMerge>
@@ -1369,433 +1370,434 @@ export default function Schematic({
                           pointerEvents="none"
                         />
                       )}
-                    {(comp.componentType?.toLowerCase() === "splice" ||
-                      comp.label?.toLowerCase() === "splice")
-                      ? (
-                        <g
-                          onClick={(e) => {
-                            const spliceConnections = (data.connections || []).filter(
-                              (wire) =>
-                                wire.from?.componentId === comp.id ||
-                                wire.to?.componentId === comp.id
-                            );
-                            handleSpliceClick(e, comp, spliceConnections);
-                          }}
-                          onContextMenu={(e) => {
-                            e.preventDefault();
-                            if (onSpliceRightClick) {
-                              onSpliceRightClick(comp);
-                            }
-                          }}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <circle
-                            cx={safe(
-                              getXForComponent(comp) + getWidthForComponent(comp) / 2,
-                              padding
-                            )}
-                            cy={safe(getSpliceCenterY(comp), padding)}
-                            r={componentSize.height / 8} // adjust radius as needed
-                            fill={
-                              comp.isHighlighted
-                                ? "yellow"                      // highlighted/expanded = yellow
-                                : popupSplice?.spliceId === comp.id
-                                  ? "#ede9fe"                     // selected splice = purple-100
-                                  : "white"
-                            }
-                            stroke={
-                              comp.isHighlighted
-                                ? "#ca8a04"                     // expanded = gold border
-                                : popupSplice?.spliceId === comp.id
-                                  ? "#2563eb"                    // selected splice = purple
-                                  : "black"
-                            }
-                            strokeWidth={
-                              comp.id === highlightedElementId ? 4 : (comp.isHighlighted ? 3 : (popupSplice?.spliceId === comp.id ? 2 : 1))
-                            }
-                            className={comp.id === highlightedElementId ? "element-highlighted" : ""}
-                          />
-                          <circle
-                            cx={safe(
-                              getXForComponent(comp) + getWidthForComponent(comp) / 2,
-                              padding
-                            )}
-                            cy={safe(getSpliceCenterY(comp), padding)}
-                            r={componentSize.height / 10}
-                            fill={
-                              comp.isHighlighted
-                                ? "yellow"                     // duplicate = red-300
-                                : popupSplice?.spliceId === comp.id
-                                  // ? "#8b5cf6"     
-                                  ? "#2563eb"              // selected = purple dot
-                                  : "black"
-                            }
-                          />
-                        </g>
-                      ) : (
-                        comp.shape === "rectangle" && (
+                      {(comp.componentType?.toLowerCase() === "splice" ||
+                        comp.label?.toLowerCase() === "splice")
+                        ? (
                           <g
                             onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedWires([]);
-
-                              // Select this component
-                              setSelectedComponentIds([comp.id]);
-
-                              // Close other popups and clear connector selection
-                              setPopupComponent(null);
-                              setPopupWire(null);
-                              setPopupConnector(null);
-                              setSelectedConnector(null); // Clear connector highlight
-                              setSelectedDTC(null);
-                              setPopupSplice(null);
-
-                              // Show popup only if it wasn't manually closed
-                              if (!popupClosedManually) {
-                                setPopupComponent(comp);
-                                setPopupPosition({
-                                  x:
-                                    getXForComponent(comp) +
-                                    getWidthForComponent(comp) +
-                                    900,
-                                  y:
-                                    getYForComponent(comp) +
-                                    componentSize.height +
-                                    100,
-                                });
+                              const spliceConnections = (data.connections || []).filter(
+                                (wire) =>
+                                  wire.from?.componentId === comp.id ||
+                                  wire.to?.componentId === comp.id
+                              );
+                              handleSpliceClick(e, comp, spliceConnections);
+                            }}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              if (onSpliceRightClick) {
+                                onSpliceRightClick(comp);
                               }
                             }}
+                            style={{ cursor: "pointer" }}
                           >
-                            <rect
-                              x={safe(getXForComponent(comp), padding)}
-                              y={safe(getYForComponent(comp), padding)}
-                              width={safe(getWidthForComponent(comp), 100)}
-                              height={componentSize.height}
-
-                              //  Dynamic fill
+                            <circle
+                              cx={safe(
+                                getXForComponent(comp) + getWidthForComponent(comp) / 2,
+                                padding
+                              )}
+                              cy={safe(getSpliceCenterY(comp), padding)}
+                              r={componentSize.height / 8} // adjust radius as needed
                               fill={
-                                selectedComponentIds.includes(comp.id) || comp.id === highlightedElementId
-                                  ? "#93c5fd"                     // selected/highlighted = blue-300
-                                  : comp.isHighlighted
-                                    ? "yellow"                     // duplicate = yellow
-                                    : "lightblue"
+                                comp.isHighlighted
+                                  ? "yellow"                      // highlighted/expanded = yellow
+                                  : popupSplice?.spliceId === comp.id
+                                    ? "#ede9fe"                     // selected splice = purple-100
+                                    : "white"
                               }
-
-                              //  Dynamic stroke
                               stroke={
                                 comp.isHighlighted
-                                  ? "#dc2626"                     // duplicate = strong red border
-                                  : (selectedComponentIds.includes(comp.id) || comp.id === highlightedElementId)
-                                    ? "#2563eb"                     // selected/highlighted = strong blue
+                                  ? "#ca8a04"                     // expanded = gold border
+                                  : popupSplice?.spliceId === comp.id
+                                    ? "#2563eb"                    // selected splice = purple
                                     : "black"
                               }
-
                               strokeWidth={
-                                comp.id === highlightedElementId ? 4 : (comp.isHighlighted ? 3 : 1)
+                                comp.id === highlightedElementId ? 4 : (comp.isHighlighted ? 3 : (popupSplice?.spliceId === comp.id ? 2 : 1))
                               }
                               className={comp.id === highlightedElementId ? "element-highlighted" : ""}
-
-                              strokeDasharray={
-                                componentIndex !== 0 ? "6,4" : undefined
+                            />
+                            <circle
+                              cx={safe(
+                                getXForComponent(comp) + getWidthForComponent(comp) / 2,
+                                padding
+                              )}
+                              cy={safe(getSpliceCenterY(comp), padding)}
+                              r={componentSize.height / 10}
+                              fill={
+                                comp.isHighlighted
+                                  ? "yellow"                     // duplicate = red-300
+                                  : popupSplice?.spliceId === comp.id
+                                    // ? "#8b5cf6"     
+                                    ? "#2563eb"              // selected = purple dot
+                                    : "black"
                               }
-
-                              style={{
-                                cursor: "pointer",
-                              }}
-
-                              onContextMenu={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                const pos = { x: e.clientX, y: e.clientY };
-
-                                setSelectedWires([]);
-                                setPopupComponent(null);
-                                setPopupWire(null);
-                                setPopupConnector(null);
-                                setSelectedConnector(null);
-                                setSelectedDTC(null);
-                                setPopupSplice(null);
-
-                                setContextMenu({ x: e.clientX, y: e.clientY, component: comp });
-                                if (onComponentRightClick) onComponentRightClick(comp, pos);
-                              }}
-
+                            />
+                          </g>
+                        ) : (
+                          comp.shape === "rectangle" && (
+                            <g
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedComponentIds([comp.id]);
                                 setSelectedWires([]);
 
+                                // Select this component
+                                setSelectedComponentIds([comp.id]);
+
+                                // Close other popups and clear connector selection
                                 setPopupComponent(null);
                                 setPopupWire(null);
                                 setPopupConnector(null);
-                                setSelectedConnector(null);
+                                setSelectedConnector(null); // Clear connector highlight
                                 setSelectedDTC(null);
                                 setPopupSplice(null);
 
-                                setPopupComponent(comp);
+                                // Show popup only if it wasn't manually closed
+                                if (!popupClosedManually) {
+                                  setPopupComponent(comp);
+                                  setPopupPosition({
+                                    x:
+                                      getXForComponent(comp) +
+                                      getWidthForComponent(comp) +
+                                      900,
+                                    y:
+                                      getYForComponent(comp) +
+                                      componentSize.height +
+                                      100,
+                                  });
+                                }
                               }}
-                            />
-                            {/* selection highlight handled at component group level */}
-
-                            {comp.category?.toLowerCase() === "sensor" && (
-                              <Sensor
-                                x={safe(getXForComponent(comp) + 20, 50)} // left of rectangle
-                                y={safe(getYForComponent(comp) + 15, 50)} // top of rectangle
-                                width={safe(getWidthForComponent(comp) / 20, 5)} // match rectangle width
-                                height={componentSize.height / 2} // match rectangle height
-                                stroke="var(--text-primary, black)"
-                                strokeWidth={1}
-                              />
-                            )}
-
-                            {comp.category?.toLowerCase() === "switch" && (
-                              <ElectricalSwitch
+                            >
+                              <rect
                                 x={safe(getXForComponent(comp), padding)}
                                 y={safe(getYForComponent(comp), padding)}
-                                sizeMultiplier={0.5}
-                                stroke="var(--text-primary, black)"
-                                strokeWidth={1}
-                              />
-                            )}
-
-                            {comp.category?.toLowerCase() === "transistor" && (
-                              <Transistor
-                                x={safe(
-                                  getXForComponent(comp) +
-                                  getWidthForComponent(comp) / 12,
-                                  padding
-                                )} // horizontal centering
-                                y={safe(getYForComponent(comp) + componentSize.height / 2, padding)} // vertical centering
-                                sizeMultiplier={0.3} // make smaller so it fits neatly inside
-                                stroke="var(--text-primary, black)"
-                                strokeWidth={5}
-                              />
-                            )}
-                            {comp.category?.toLowerCase() === "transformer" && (
-                              <Transformer
-                                x={safe(
-                                  getXForComponent(comp) +
-                                  getWidthForComponent(comp) / 16,
-                                  padding
-                                )} // horizontal centering
-                                y={safe(getYForComponent(comp) + componentSize.height / 6, padding)} // vertical centering
-                                sizeMultiplier={0.2} // scale it down to fit
-                                stroke="var(--text-primary, black)"
-                                strokeWidth={1}
-                                fill="var(--text-primary, black)"
-                              />
-                            )}
-                            {comp.category?.toLowerCase() === "motor" && (
-                              <MotorSymbol
-                                cx={safe(
-                                  getXForComponent(comp) +
-                                  getWidthForComponent(comp) / 5,
-                                  padding
-                                )} // center of rectangle
-                                cy={safe(getYForComponent(comp) + componentSize.height / 2, padding)} // center of rectangle
-                                size={safe(
-                                  Math.min(
-                                    getWidthForComponent(comp),
-                                    componentSize.height
-                                  ) * 0.5,
-                                  20
-                                )} // scale to fit rectangle
-                                color="var(--text-primary, black)"
-                                fill="#B0E0E6"
-                              />
-                            )}
-                            {comp.category?.toLowerCase() === "lamp" && (
-                              <LampSymbol
-                                cx={safe(
-                                  getXForComponent(comp) +
-                                  getWidthForComponent(comp) / 5,
-                                  padding
-                                )}
-                                cy={safe(getYForComponent(comp) + componentSize.height / 2, padding)}
-                                size={safe(
-                                  Math.min(
-                                    getWidthForComponent(comp),
-                                    componentSize.height
-                                  ) * 0.5,
-                                  20
-                                )}
-                                color="var(--text-primary, black)"
-                              />
-                            )}
-                            {comp.category?.toLowerCase() === "ground" && (
-                              <GroundSymbol
-                                x={safe(getXForComponent(comp), padding)} // adjust horizontal position
-                                y={safe(getYForComponent(comp) + 15, padding)} // adjust vertical position
-                                width={safe(getWidthForComponent(comp) / 2, 50)} // adjust width scaling
-                                height={safe(componentSize.height / 2, 30)} // adjust height scaling
-                                stroke="var(--text-primary, black)"
-                                strokeWidth={3}
-                              />
-                            )}
-                            {comp.category?.toLowerCase() === "resistor" && (
-                              <ResistorSymbol
-                                x={safe(getXForComponent(comp) - 50, padding)}
-                                y={safe(getYForComponent(comp) + 13, padding)}
                                 width={safe(getWidthForComponent(comp), 100)}
-                                height={40}
+                                height={componentSize.height}
+
+                                //  Dynamic fill
+                                fill={
+                                  selectedComponentIds.includes(comp.id) || comp.id === highlightedElementId
+                                    ? "#93c5fd"                     // selected/highlighted = blue-300
+                                    : comp.isHighlighted
+                                      ? "yellow"                     // duplicate = yellow
+                                      : "lightblue"
+                                }
+
+                                //  Dynamic stroke
+                                stroke={
+                                  comp.isHighlighted
+                                    ? "#dc2626"                     // duplicate = strong red border
+                                    : (selectedComponentIds.includes(comp.id) || comp.id === highlightedElementId)
+                                      ? "#2563eb"                     // selected/highlighted = strong blue
+                                      : "black"
+                                }
+
+                                strokeWidth={
+                                  comp.id === highlightedElementId ? 4 : (comp.isHighlighted ? 3 : 1)
+                                }
+                                className={comp.id === highlightedElementId ? "element-highlighted" : ""}
+
+                                strokeDasharray={
+                                  componentIndex !== 0 ? "6,4" : undefined
+                                }
+
+                                style={{
+                                  cursor: "pointer",
+                                }}
+
+                                onContextMenu={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  const pos = { x: e.clientX, y: e.clientY };
+
+                                  setSelectedWires([]);
+                                  setPopupComponent(null);
+                                  setPopupWire(null);
+                                  setPopupConnector(null);
+                                  setSelectedConnector(null);
+                                  setSelectedDTC(null);
+                                  setPopupSplice(null);
+
+                                  setContextMenu({ x: e.clientX, y: e.clientY, component: comp });
+                                  if (onComponentRightClick) onComponentRightClick(comp, pos);
+                                }}
+
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedComponentIds([comp.id]);
+                                  setSelectedWires([]);
+
+                                  setPopupComponent(null);
+                                  setPopupWire(null);
+                                  setPopupConnector(null);
+                                  setSelectedConnector(null);
+                                  setSelectedDTC(null);
+                                  setPopupSplice(null);
+
+                                  setPopupComponent(comp);
+                                }}
                               />
-                            )}
-                            {comp.category?.toLowerCase() === "battery" && (
-                              <Battery
-                                x={safe(getXForComponent(comp) + 10, padding)}
-                                y={safe(getYForComponent(comp) + 10, padding)}
-                                width={30}
-                                height={40}
-                                leadLength={5}
-                                centralLineRatio={3}
-                              />
-                            )}
-                          </g>
-                        )
-                      )}
-                    {(() => {
-                      return (
-                        <text
-                          vectorEffect="non-scaling-stroke"
-                          ref={(el) => {
-                            componentNameRefs.current[comp.id] = el;
-                          }}
-                          x={titleX}
-                          y={titleY}
-                          textAnchor={anchor}
-                          fontSize="20"
-                          fontWeight="bold"
-                          fill="var(--text-primary, black)"
-                          transform={rotation !== 0 ? `rotate(${-rotation} ${titleX} ${titleY})` : undefined}
-                        >
-                          {lines.map((line, i) => (
-                            <tspan
-                              key={i}
-                              x={titleX}
-                              dy={i === 0 ? -(totalTextHeight / 2) : lineHeight}
-                            >
-                              {line}
-                            </tspan>
-                          ))}
-                        </text>
-                      );
-                    })()}
-                    {(comp.connectors || []).map((conn) => (
-                      <g key={conn.id}>
-                        {/* render connector box only if component is not a splice */}
-                        {comp.componentType?.toLowerCase() !== "splice" && (
-                          <g>
-                            <rect
-                              x={safe(getXForConnector(conn, comp), padding)}
-                              y={safe(getYForConnector(conn, comp), padding)}
-                              width={safe(getWidthForConnector(conn, comp), 50)}
-                              height={connectorHeight}
-                              fill={
-                                selectedConnector?.id === conn.id
-                                  ? "#3390FF"
-                                  : "lightgreen"
-                              }
-                              stroke="var(--text-primary, black)"
-                              strokeWidth={conn.id === highlightedElementId ? 4 : 1}
-                              strokeDasharray={
-                                componentIndex !== 0 ? "6,4" : undefined
-                              }
-                              onClick={(e) => handleConnectorClick(e, conn, comp)}
-                              style={{ cursor: "pointer" }}
-                              className={conn.id === highlightedElementId ? "element-highlighted" : ""}
-                            />
-                            {selectedConnector?.id === conn.id && (
+                              {/* selection highlight handled at component group level */}
+
+                              {comp.category?.toLowerCase() === "sensor" && (
+                                <Sensor
+                                  x={safe(getXForComponent(comp) + 20, 50)} // left of rectangle
+                                  y={safe(getYForComponent(comp) + 15, 50)} // top of rectangle
+                                  width={safe(getWidthForComponent(comp) / 20, 5)} // match rectangle width
+                                  height={componentSize.height / 2} // match rectangle height
+                                  stroke="var(--text-primary, black)"
+                                  strokeWidth={1}
+                                />
+                              )}
+
+                              {comp.category?.toLowerCase() === "switch" && (
+                                <ElectricalSwitch
+                                  x={safe(getXForComponent(comp), padding)}
+                                  y={safe(getYForComponent(comp), padding)}
+                                  sizeMultiplier={0.5}
+                                  stroke="var(--text-primary, black)"
+                                  strokeWidth={1}
+                                />
+                              )}
+
+                              {comp.category?.toLowerCase() === "transistor" && (
+                                <Transistor
+                                  x={safe(
+                                    getXForComponent(comp) +
+                                    getWidthForComponent(comp) / 12,
+                                    padding
+                                  )} // horizontal centering
+                                  y={safe(getYForComponent(comp) + componentSize.height / 2, padding)} // vertical centering
+                                  sizeMultiplier={0.3} // make smaller so it fits neatly inside
+                                  stroke="var(--text-primary, black)"
+                                  strokeWidth={5}
+                                />
+                              )}
+                              {comp.category?.toLowerCase() === "transformer" && (
+                                <Transformer
+                                  x={safe(
+                                    getXForComponent(comp) +
+                                    getWidthForComponent(comp) / 16,
+                                    padding
+                                  )} // horizontal centering
+                                  y={safe(getYForComponent(comp) + componentSize.height / 6, padding)} // vertical centering
+                                  sizeMultiplier={0.2} // scale it down to fit
+                                  stroke="var(--text-primary, black)"
+                                  strokeWidth={1}
+                                  fill="var(--text-primary, black)"
+                                />
+                              )}
+                              {comp.category?.toLowerCase() === "motor" && (
+                                <MotorSymbol
+                                  cx={safe(
+                                    getXForComponent(comp) +
+                                    getWidthForComponent(comp) / 5,
+                                    padding
+                                  )} // center of rectangle
+                                  cy={safe(getYForComponent(comp) + componentSize.height / 2, padding)} // center of rectangle
+                                  size={safe(
+                                    Math.min(
+                                      getWidthForComponent(comp),
+                                      componentSize.height
+                                    ) * 0.5,
+                                    20
+                                  )} // scale to fit rectangle
+                                  color="var(--text-primary, black)"
+                                  fill="#B0E0E6"
+                                />
+                              )}
+                              {comp.category?.toLowerCase() === "lamp" && (
+                                <LampSymbol
+                                  cx={safe(
+                                    getXForComponent(comp) +
+                                    getWidthForComponent(comp) / 5,
+                                    padding
+                                  )}
+                                  cy={safe(getYForComponent(comp) + componentSize.height / 2, padding)}
+                                  size={safe(
+                                    Math.min(
+                                      getWidthForComponent(comp),
+                                      componentSize.height
+                                    ) * 0.5,
+                                    20
+                                  )}
+                                  color="var(--text-primary, black)"
+                                />
+                              )}
+                              {comp.category?.toLowerCase() === "ground" && (
+                                <GroundSymbol
+                                  x={safe(getXForComponent(comp), padding)} // adjust horizontal position
+                                  y={safe(getYForComponent(comp) + 15, padding)} // adjust vertical position
+                                  width={safe(getWidthForComponent(comp) / 2, 50)} // adjust width scaling
+                                  height={safe(componentSize.height / 2, 30)} // adjust height scaling
+                                  stroke="var(--text-primary, black)"
+                                  strokeWidth={3}
+                                />
+                              )}
+                              {comp.category?.toLowerCase() === "resistor" && (
+                                <ResistorSymbol
+                                  x={safe(getXForComponent(comp) - 50, padding)}
+                                  y={safe(getYForComponent(comp) + 13, padding)}
+                                  width={safe(getWidthForComponent(comp), 100)}
+                                  height={40}
+                                />
+                              )}
+                              {comp.category?.toLowerCase() === "battery" && (
+                                <Battery
+                                  x={safe(getXForComponent(comp) + 10, padding)}
+                                  y={safe(getYForComponent(comp) + 10, padding)}
+                                  width={30}
+                                  height={40}
+                                  leadLength={5}
+                                  centralLineRatio={3}
+                                />
+                              )}
+                            </g>
+                          )
+                        )}
+                      {(() => {
+                        return (
+                          <text
+                            vectorEffect="non-scaling-stroke"
+                            ref={(el) => {
+                              componentNameRefs.current[comp.id] = el;
+                            }}
+                            x={titleX}
+                            y={titleY}
+                            textAnchor={anchor}
+                            fontSize="20"
+                            fontWeight="bold"
+                            fill="var(--text-primary, black)"
+                            transform={rotation !== 0 ? `rotate(${-rotation} ${titleX} ${titleY})` : undefined}
+                          >
+                            {lines.map((line, i) => (
+                              <tspan
+                                key={i}
+                                x={titleX}
+                                dy={i === 0 ? -(totalTextHeight / 2) : lineHeight}
+                              >
+                                {line}
+                              </tspan>
+                            ))}
+                          </text>
+                        );
+                      })()}
+                      {(comp.connectors || []).map((conn) => (
+                        <g key={conn.id}>
+                          {/* render connector box only if component is not a splice */}
+                          {comp.componentType?.toLowerCase() !== "splice" && (
+                            <g>
                               <rect
                                 x={safe(getXForConnector(conn, comp), padding)}
                                 y={safe(getYForConnector(conn, comp), padding)}
                                 width={safe(getWidthForConnector(conn, comp), 50)}
                                 height={connectorHeight}
-                                fill="#3390FF"
-                                opacity={0.3}
-                                pointerEvents="none" // so the click still passes through to the base rect
+                                fill={
+                                  selectedConnector?.id === conn.id
+                                    ? "#3390FF"
+                                    : "lightgreen"
+                                }
+                                stroke="var(--text-primary, black)"
+                                strokeWidth={conn.id === highlightedElementId ? 4 : 1}
+                                strokeDasharray={
+                                  componentIndex !== 0 ? "6,4" : undefined
+                                }
+                                onClick={(e) => handleConnectorClick(e, conn, comp)}
+                                style={{ cursor: "pointer" }}
+                                className={conn.id === highlightedElementId ? "element-highlighted" : ""}
                               />
-                            )}
-                          </g>
-                        )}
+                              {selectedConnector?.id === conn.id && (
+                                <rect
+                                  x={safe(getXForConnector(conn, comp), padding)}
+                                  y={safe(getYForConnector(conn, comp), padding)}
+                                  width={safe(getWidthForConnector(conn, comp), 50)}
+                                  height={connectorHeight}
+                                  fill="#3390FF"
+                                  opacity={0.3}
+                                  pointerEvents="none" // so the click still passes through to the base rect
+                                />
+                              )}
+                            </g>
+                          )}
 
-                        {(() => {
-                          let labelX = 0;
-                          let labelY = 0;
-                          let textAnchor: "start" | "middle" | "end" = "end";
+                          {(() => {
+                            let labelX = 0;
+                            let labelY = 0;
+                            let textAnchor: "start" | "middle" | "end" = "end";
 
-                          const x_c = getXForConnector(conn, comp);
-                          const y_c = getYForConnector(conn, comp);
-                          const w_c = getWidthForConnector(conn, comp);
-                          const h_c = connectorHeight;
-                          const isMaster = smartMasterIds.has(comp.id);
-                          const isSplice = comp.componentType?.toLowerCase() === "splice";
+                            const x_c = getXForConnector(conn, comp);
+                            const y_c = getYForConnector(conn, comp);
+                            const w_c = getWidthForConnector(conn, comp);
+                            const h_c = connectorHeight;
+                            const isMaster = smartMasterIds.has(comp.id);
+                            const isSplice = comp.componentType?.toLowerCase() === "splice";
 
-                          if (isSplice) {
-                            labelX = x_c - (-10);
-                            labelY = y_c + 13;
-                            textAnchor = "end";
-                          } else if (rotation === 270) {
-                            // 270 degrees rotation (e.g. Master on Left, Regular on Right)
-                            // "XD01" (master): top-left corner of connector, starts at boundary
-                            // "XD-12" (regular): top-right corner of connector, ends at boundary
-                            if (isMaster) {
-                              labelX = x_c + w_c + 6;
-                              labelY = y_c + 4;
-                              textAnchor = "start";
+                            if (isSplice) {
+                              labelX = x_c - (-10);
+                              labelY = y_c + 13;
+                              textAnchor = "end";
+                            } else if (rotation === 270) {
+                              // 270 degrees rotation (e.g. Master on Left, Regular on Right)
+                              // "XD01" (master): top-left corner of connector, starts at boundary
+                              // "XD-12" (regular): top-right corner of connector, ends at boundary
+                              if (isMaster) {
+                                labelX = x_c + w_c + 6;
+                                labelY = y_c + 4;
+                                textAnchor = "start";
+                              } else {
+                                labelX = x_c + w_c + 6;
+                                labelY = (y_c + h_c) - 4;
+                                textAnchor = "end";
+                              }
+                            } else if (rotation === 90) {
+                              // 90 degrees rotation (e.g. Master on Right, Regular on Left)
+                              // Master: top-right corner of connector, ends at boundary
+                              // Regular: top-left corner of connector, starts at boundary
+                              if (isMaster) {
+                                labelX = x_c - 6;
+                                labelY = (y_c + h_c) - 4;
+                                textAnchor = "end";
+                              } else {
+                                labelX = x_c - 6;
+                                labelY = y_c + 4;
+                                textAnchor = "start";
+                              }
+                            } else if (rotation === 180) {
+                              labelX = x_c + w_c / 2;
+                              labelY = isMaster ? y_c - 6 : y_c + h_c + 12;
+                              textAnchor = "middle";
                             } else {
-                              labelX = x_c + w_c + 6;
-                              labelY = (y_c + h_c) - 4;
+                              // 0 degrees rotation (default layout)
+                              labelX = x_c - 1;
+                              labelY = y_c + 13;
                               textAnchor = "end";
                             }
-                          } else if (rotation === 90) {
-                            // 90 degrees rotation (e.g. Master on Right, Regular on Left)
-                            // Master: top-right corner of connector, ends at boundary
-                            // Regular: top-left corner of connector, starts at boundary
-                            if (isMaster) {
-                              labelX = x_c - 6;
-                              labelY = (y_c + h_c) - 4;
-                              textAnchor = "end";
-                            } else {
-                              labelX = x_c - 6;
-                              labelY = y_c + 4;
-                              textAnchor = "start";
-                            }
-                          } else if (rotation === 180) {
-                            labelX = x_c + w_c / 2;
-                            labelY = isMaster ? y_c - 6 : y_c + h_c + 12;
-                            textAnchor = "middle";
-                          } else {
-                            // 0 degrees rotation (default layout)
-                            labelX = x_c - 1;
-                            labelY = y_c + 13;
-                            textAnchor = "end";
-                          }
 
-                          labelX = safe(labelX, padding);
-                          labelY = safe(labelY, padding);
+                            labelX = safe(labelX, padding);
+                            labelY = safe(labelY, padding);
 
-                          return (
-                            <text
-                              ref={(el) => {
-                                connectorNameRefs.current[conn.id] = el;
-                              }}
-                              x={labelX}
-                              y={labelY}
-                              textAnchor={textAnchor}
-                              dominantBaseline="middle"
-                              fontSize="10"
-                              fill="var(--text-primary, black)"
-                              fontWeight="bold"
-                              transform={rotation !== 0 ? `rotate(${-rotation} ${labelX} ${labelY})` : undefined}
-                            >
-                              {conn.label}
-                            </text>
-                          );
-                        })()}
-                      </g>
-                    ))}
-                  </g>
-                )})}
+                            return (
+                              <text
+                                ref={(el) => {
+                                  connectorNameRefs.current[conn.id] = el;
+                                }}
+                                x={labelX}
+                                y={labelY}
+                                textAnchor={textAnchor}
+                                dominantBaseline="middle"
+                                fontSize="10"
+                                fill="var(--text-primary, black)"
+                                fontWeight="bold"
+                                transform={rotation !== 0 ? `rotate(${-rotation} ${labelX} ${labelY})` : undefined}
+                              >
+                                {conn.label}
+                              </text>
+                            );
+                          })()}
+                        </g>
+                      ))}
+                    </g>
+                  )
+                })}
 
                 {/* Pre-compute a single shared intermediate Y for ALL cross-row wires.
                *  This creates a clean single-bus topology: all wires travel vertically
@@ -2044,7 +2046,7 @@ export default function Schematic({
                       // to ensure absolutely no "touching" and maximum readability.
                       const slotHeight = 20;
                       const baseOffset = 60;
-                      
+
                       // If going from Top to Bottom, we start the waterfall with a clear gap below the connector
                       if (isFromMasterComponent) {
                         intermediateY = masterBusY + baseOffset + (slotHeight * trackIndex);
@@ -2187,6 +2189,8 @@ export default function Schematic({
                         )}
                         <g
                           key={i}
+                          onMouseEnter={() => setHoveredWire(i.toString())}
+                          onMouseLeave={() => setHoveredWire(null)}
                           onClick={(e) => {
                             e.stopPropagation(); // Prevent deselecting everything else
                             setSelectedComponentIds([]);
@@ -2236,16 +2240,28 @@ export default function Schematic({
                                   y2={ty}
                                   fill="none"
                                   stroke={selectedWires.includes(i.toString()) ? "#3390FF" : (wire.color === "RD" ? "red" : (wire.color === "BLK" ? "var(--text-primary, black)" : (wire.color === "WH" ? "#ccc" : wire.color)))}
-                                  strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
+                                  strokeWidth={
+                                    selectedWires.includes(i.toString())
+                                      ? 6
+                                      : hoveredWire === i.toString()
+                                        ? 8
+                                        : 4
+                                  }
                                   markerEnd="url(#arrowhead)"
                                   pointerEvents="stroke"
+                                  filter={
+                                    hoveredWire === i.toString() ||
+                                      selectedWires.includes(i.toString())
+                                      ? "url(#wire-glow)"
+                                      : undefined
+                                  }
                                 />
                               );
                             }
 
                             // Orthogonal path with rounded corners (Z-shape)
                             // Points: (fx, fy) -> (fx, iy) -> (tx, iy) -> (tx, ty)
-                            
+
                             // Direction from Y1 to IY
                             const dirY1 = iy > fy ? 1 : -1;
                             // Direction from FX to TX
@@ -2267,9 +2283,20 @@ export default function Schematic({
                                 d={d}
                                 fill="none"
                                 stroke={selectedWires.includes(i.toString()) ? "#3390FF" : (wire.color === "RD" ? "red" : (wire.color === "BLK" ? "var(--text-primary, black)" : (wire.color === "WH" ? "#ccc" : wire.color)))}
-                                strokeWidth={selectedWires.includes(i.toString()) ? 6 : 3}
-                                markerEnd="url(#arrowhead)"
+                                strokeWidth={
+                                  selectedWires.includes(i.toString())
+                                    ? 6
+                                    : hoveredWire === i.toString()
+                                      ? 8
+                                      : 4
+                                } markerEnd="url(#arrowhead)"
                                 pointerEvents="stroke"
+                                filter={
+                                  hoveredWire === i.toString() ||
+                                    selectedWires.includes(i.toString())
+                                    ? "url(#wire-glow)"
+                                    : undefined
+                                }
                               />
                             );
                           })()}
@@ -2485,8 +2512,8 @@ export default function Schematic({
                     const cx = (pos1.x + pos2.x) / 2;
                     // If pos1 is master, the connector is at the top, wire goes down. Place symbol below connector.
                     // If pos1 is regular, connector is at the bottom, wire goes up. Place symbol above connector.
-                    const cy = pos1.isMasterComponent 
-                      ? Math.max(pos1.y, pos2.y) + 25 
+                    const cy = pos1.isMasterComponent
+                      ? Math.max(pos1.y, pos2.y) + 25
                       : Math.min(pos1.y, pos2.y) - 25;
 
                     const width = Math.max(Math.abs(pos2.x - pos1.x), 10);
@@ -2494,13 +2521,13 @@ export default function Schematic({
                     const height = 12;
 
                     elements.push(
-                      <InfinitySymbol 
-                        key={`can-pair-${i}`} 
-                        cx={cx} 
-                        cy={cy} 
-                        width={width} 
-                        height={height} 
-                        color="var(--text-primary, black)" 
+                      <InfinitySymbol
+                        key={`can-pair-${i}`}
+                        cx={cx}
+                        cy={cy}
+                        width={width}
+                        height={height}
+                        color="var(--text-primary, black)"
                       />
                     );
                   }

@@ -2,6 +2,7 @@
   padding: 20px 24px;
   background: var(--bg-primary);
   min-height: 100vh;
+  position: relative;
 }
 
 .dashboard-header {

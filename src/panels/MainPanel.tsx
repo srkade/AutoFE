@@ -168,8 +168,8 @@ export default function MainPanel({ selectedItem, activeTab, isMultipleComponent
             key={isMultipleComponents ? "merged-view" : selectedItem.code} // Stabilize key during merges to prevent unwanted view resets
             data={selectedItem.schematicData}
             activeTab={activeTab}
-            dtcCode={selectedItem.type === 'DTC' ? selectedItem.code : undefined}
-            onComponentRightClick={onComponentRightClick} // NOW IT IS PASSED CORRECTLY
+            dtcCode={selectedItem.dtcCode || (selectedItem.type === 'DTC' ? selectedItem.code : undefined)}
+            onComponentRightClick={onComponentRightClick}
             onSpliceRightClick={onSpliceRightClick}
             highlightedElementId={highlightedElementId}
           />

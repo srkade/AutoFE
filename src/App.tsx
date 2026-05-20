@@ -29,6 +29,9 @@ export type DashboardItem = {
   voltage?: string;
   description: string;
   schematicData: SchematicData;
+  dtcCode?: string;
+  originalDtcCode?: string;
+  originalType?: string;
 };
 import AuthorDashboard from "./pages/AuthorDashboard";
 import AuthorNavigationTabs, { AuthorTopbar } from "./pages/AuthorNavigationTabs";
@@ -212,7 +215,10 @@ function AppContent() {
       components: [],
       connections: [],
       name: d.name
-    }
+    },
+    dtcCode: d.code,
+    originalDtcCode: d.code,
+    originalType: "DTC"
   }));
 
   const systemsItem: DashboardItem[] = systemsList.map((s) => ({
@@ -479,7 +485,7 @@ function AppContent() {
 
           const normalized = normalizeSchematic(data);
           // Add source type information to the normalized data
-          return { ...normalized, sourceType };
+          return { ...normalized, sourceType, dtcCode: dashboardItem?.type === 'DTC' ? dashboardItem.code : undefined };
         })
       );
 
@@ -770,6 +776,9 @@ function AppContent() {
                         voltage: "12V",
                         description: "Merged API schematic view",
                         schematicData: mergedSchematic as SchematicData,
+                        dtcCode: (activeTab === 'DTC' && selectedCodes.length > 0) ? selectedCodes[0] : selectedItem?.dtcCode,
+                        originalDtcCode: (activeTab === 'DTC' && selectedCodes.length > 0) ? selectedCodes[0] : selectedItem?.originalDtcCode,
+                        originalType: activeTab === 'DTC' ? 'DTC' : selectedItem?.originalType
                       }
                       : selectedItem
                   }
@@ -926,6 +935,9 @@ function AppContent() {
                                 voltage: "12V",
                                 description: "Merged API schematic view",
                                 schematicData: mergedSchematic as SchematicData,
+                                dtcCode: (schematicTab === 'DTC' && selectedCodes.length > 0) ? selectedCodes[0] : selectedItem?.dtcCode,
+                                originalDtcCode: (schematicTab === 'DTC' && selectedCodes.length > 0) ? selectedCodes[0] : selectedItem?.originalDtcCode,
+                                originalType: schematicTab === 'DTC' ? 'DTC' : selectedItem?.originalType
                               }
                               : selectedItem
                           }

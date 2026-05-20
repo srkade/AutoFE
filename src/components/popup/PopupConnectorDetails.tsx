@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { PopupConnectorType } from "../Schematic/SchematicTypes";
+import { Plug } from "lucide-react";
 
 import { DTC_STEPS_DATA } from "../../utils/DtcStepsData";
 import { API_BASE_URL as CONFIG_API_BASE_URL } from "../../config";
@@ -24,6 +25,7 @@ export default function PopupConnectorDetails({
 }: PopupConnectorDetailsProps) {
   const [activeTab, setActiveTab] = useState<"connection" | "dtc">("connection");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (selectedTab === "DTC") {
@@ -35,9 +37,10 @@ export default function PopupConnectorDetails({
 
   useEffect(() => {
     if (!popupConnector?.connectorCode) return;
-    
-    // Reset image while fetching
+
+    // Reset image and error while fetching
     setImageUrl(null);
+    setImageError(false);
     const defaultUrl = `/images/connectors/${popupConnector.connectorCode}.png`;
 
     fetch(`${API_BASE_URL}/assets/images/code/${popupConnector.connectorCode}`, {
@@ -229,20 +232,71 @@ export default function PopupConnectorDetails({
       </div>
 
       {/* Popup Connector Image */}
-      <div style={{ marginTop: '16px', textAlign: 'center' }}>
-        <img
-          src={imageUrl || `/images/connectors/${popupConnector.connectorCode}.png`}
-          alt={popupConnector.connectorCode}
-          style={{ maxWidth: '160px', width: '100%', borderRadius: '8px', minHeight: '100px', objectFit: 'contain' }}
-          onError={(e) => {
-            const target = e.currentTarget;
-            if (target.src.endsWith('.png') && target.src.includes('/images/')) {
-              target.src = target.src.replace('.png', '.jpg');
-            } else if (target.src.endsWith('.jpg') && target.src.includes('/images/')) {
-              target.src = target.src.replace('.jpg', '.jpeg');
-            }
-          }}
-        />
+      <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        {!imageError ? (
+          <img
+            src={imageUrl || `/images/connectors/${popupConnector.connectorCode}.png`}
+            alt={popupConnector.connectorCode}
+            title="Click to open full image"
+            style={{
+              maxWidth: '160px',
+              width: '100%',
+              borderRadius: '8px',
+              minHeight: '100px',
+              objectFit: 'contain',
+              cursor: 'pointer',
+              border: '1px solid var(--border-color)',
+              transition: 'transform 0.2s ease',
+              display: 'block',
+              margin: '0 auto'
+            }}
+            onClick={() => {
+              window.open(
+                imageUrl || `/images/connectors/${popupConnector.connectorCode}.png`,
+                "_blank"
+              );
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            onError={(e) => {
+              const target = e.currentTarget;
+
+              if (
+                target.src.endsWith('.png') &&
+                target.src.includes('/images/')
+              ) {
+                target.src = target.src.replace('.png', '.jpg');
+              } else if (
+                target.src.endsWith('.jpg') &&
+                target.src.includes('/images/')
+              ) {
+                target.src = target.src.replace('.jpg', '.jpeg');
+              } else {
+                setImageError(true);
+              }
+            }}
+          />
+        ) : (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '160px',
+            height: '120px',
+            borderRadius: '8px',
+            border: '1px dashed var(--border-color)',
+            backgroundColor: 'var(--bg-primary)',
+            color: 'var(--text-secondary)'
+          }}>
+            <Plug size={48} style={{ strokeWidth: 1.5, marginBottom: '8px', color: 'var(--text-secondary)' }} />
+            <span style={{ fontSize: '11px', fontWeight: 500 }}>No Image Available</span>
+          </div>
+        )}
       </div>
 
 
@@ -333,7 +387,7 @@ export default function PopupConnectorDetails({
             if (dtcCode || (selectedDTC && (selectedDTC.code || selectedDTC.dtcCode))) {
               const code = dtcCode || selectedDTC.code || selectedDTC.dtcCode;
               return (
-                <DtcStepsSection 
+                <DtcStepsSection
                   dtcCode={code}
                   contextData={{
                     componentCode: popupConnector.componentCode,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ComponentType } from "../Schematic/SchematicTypes";
 import { API_BASE_URL as CONFIG_API_BASE_URL } from "../../config";
+import { Cpu } from "lucide-react";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || CONFIG_API_BASE_URL;
 
@@ -18,12 +19,14 @@ export default function PopupComponentDetails({
   dtcCode,
 }: PopupComponentDetailsProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (!popupComponent?.id) return;
-    
-    // Reset image while fetching
+
+    // Reset image and error while fetching
     setImageUrl(null);
+    setImageError(false);
     const defaultUrl = `/images/components/${popupComponent.id}.png`;
 
     fetch(`${API_BASE_URL}/assets/images/code/${popupComponent.id}`, {
@@ -66,7 +69,7 @@ export default function PopupComponentDetails({
         fontFamily: "'Segoe UI', Arial, sans-serif",
         display: "flex",
         flexDirection: "column",
-        
+
       }}
     >
 
@@ -124,20 +127,56 @@ export default function PopupComponentDetails({
           padding: "20px",
         }}
       >
-        <div style={{ marginTop: '16px', textAlign: 'center' }}>
-          <img
-            src={imageUrl || `/images/components/${popupComponent.id}.png`}
-            alt={popupComponent.label}
-            style={{ maxWidth: '160px', width: '100%', borderRadius: '8px', minHeight: '100px', objectFit: 'contain' }}
-            onError={(e) => {
-              const target = e.currentTarget;
-              if (target.src.endsWith('.png') && target.src.includes('/images/')) {
-                target.src = target.src.replace('.png', '.jpg');
-              } else if (target.src.endsWith('.jpg') && target.src.includes('/images/')) {
-                target.src = target.src.replace('.jpg', '.jpeg');
-              }
-            }}
-          />
+        <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          {!imageError ? (
+            <img
+              src={imageUrl || `/images/components/${popupComponent.id}.png`}
+              alt={popupComponent.label}
+              style={{
+                maxWidth: '160px',
+                width: '100%',
+                borderRadius: '8px',
+                minHeight: '100px',
+                objectFit: 'contain',
+                cursor: 'pointer',
+                border: '1px solid var(--border-color)',
+                display: 'block',
+                margin: '0 auto'
+              }}
+              onClick={() => {
+                window.open(
+                  imageUrl || `/images/components/${popupComponent.id}.png`,
+                  "_blank"
+                );
+              }}
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src.endsWith('.png') && target.src.includes('/images/')) {
+                  target.src = target.src.replace('.png', '.jpg');
+                } else if (target.src.endsWith('.jpg') && target.src.includes('/images/')) {
+                  target.src = target.src.replace('.jpg', '.jpeg');
+                } else {
+                  setImageError(true);
+                }
+              }}
+            />
+          ) : (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '160px',
+              height: '120px',
+              borderRadius: '8px',
+              border: '1px dashed var(--border-color)',
+              backgroundColor: 'var(--bg-primary)',
+              color: 'var(--text-secondary)'
+            }}>
+              <Cpu size={48} style={{ strokeWidth: 1.5, marginBottom: '8px', color: 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '11px', fontWeight: 500 }}>No Image Available</span>
+            </div>
+          )}
         </div>
         <table
           style={{
@@ -442,9 +481,9 @@ export default function PopupComponentDetails({
               )}
           </tbody>
         </table>
-        
+
         {dtcCode && (
-          <DtcStepsSection 
+          <DtcStepsSection
             dtcCode={dtcCode}
             contextData={{
               componentCode: popupComponent.id,
@@ -454,9 +493,6 @@ export default function PopupComponentDetails({
             }}
           />
         )}
-
-        <img src="" alt="" />
-
       </div>
     </div>
   );

@@ -2421,30 +2421,12 @@ export default function Schematic({
                             )}
                           </>
                         )}
-                        {/* Cavity labels and gender near connectors */}
+                        {/* Cavity labels near connectors */}
                         {(() => {
                           const fX = safe(fromX + 18, 0); // Shift further right to avoid trident
                           const fY = safe(fromLabelY, 0);
                           const tX = safe(toX + 18, 0); // Shift further right to avoid trident
                           const tY = safe(toLabelY, 0);
-                          
-                          const renderGenderShape = (gender: string | undefined, x: number, y: number, rot: number) => {
-                            if (!gender) return null;
-                            const isFemale = gender.toLowerCase() === "female" || gender.toLowerCase() === "f";
-                            const isMale = gender.toLowerCase() === "male" || gender.toLowerCase() === "m";
-                            if (!isFemale && !isMale) return null;
-                            
-                            const shapeX = x + 18; // offset from text
-                            return (
-                               <g transform={rot !== 0 ? `rotate(${-rot} ${x} ${y})` : undefined}>
-                                {isFemale ? (
-                                  <circle cx={shapeX} cy={y} r={3} fill="none" stroke="var(--text-primary, black)" strokeWidth="1.5" />
-                                ) : (
-                                  <rect x={shapeX - 3} y={y - 3} width={6} height={6} fill="var(--text-primary, black)" />
-                                )}
-                               </g>
-                            );
-                          };
 
                           return (
                             <>
@@ -2463,7 +2445,6 @@ export default function Schematic({
                               >
                                 {wire.from.cavity}
                               </text>
-                              {renderGenderShape(wire.from.gender || from?.gender || fromComponent?.gender, fX, fY, rotation)}
                               
                               <text
                                 x={tX}
@@ -2480,7 +2461,6 @@ export default function Schematic({
                               >
                                 {wire.to.cavity}
                               </text>
-                              {renderGenderShape(wire.to.gender || to?.gender || toComponent?.gender, tX, tY, rotation)}
                             </>
                           );
                         })()}

@@ -7,7 +7,7 @@ const SearchBar: React.FC = () => {
   return (
     <div 
       className="persistent-search-bar"
-      title="Search components, DTC codes, connectors... (Ctrl+K)"
+      title="Search components, SPN/FMIs, connectors... (Ctrl+K)"
       onClick={() => {
         // Dispatch event to open global search
         const event = new CustomEvent('openGlobalSearch');
@@ -16,7 +16,7 @@ const SearchBar: React.FC = () => {
     >
       <FiSearch style={{ color: "#6c757d", flexShrink: 0 }} />
       <span className="search-bar-text">
-        Search components, DTC codes, connectors...
+        Search components, SPN/FMIs, connectors...
       </span>
       <span className="search-bar-shortcut">
         Ctrl+K

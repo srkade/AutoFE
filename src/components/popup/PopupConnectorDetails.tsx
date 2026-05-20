@@ -207,7 +207,7 @@ export default function PopupConnectorDetails({
                 style={tabButtonStyle(activeTab === "dtc")}
                 onClick={() => setActiveTab("dtc")}
               >
-                DTC Steps
+                SPN/FMI Steps
               </button>
             )}
           </div>
@@ -347,7 +347,7 @@ export default function PopupConnectorDetails({
             // No DTC selected
             return (
               <p style={{ color: "#999" }}>
-                No DTC selected.
+                No SPN/FMI selected.
               </p>
             );
           })()}

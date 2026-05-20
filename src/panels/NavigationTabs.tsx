@@ -38,7 +38,7 @@ const tabs = [
   { id: "controllers", label: "Control Unit", icon: Cpu },
   { id: "systems", label: "Systems", icon: Layers },
   { id: "voltage", label: "Supply", icon: Zap },
-  { id: "DTC", label: "Trouble Code", icon: AlertTriangle },
+  { id: "DTC", label: "SPN/FMI", icon: AlertTriangle },
   { id: "wire", label: "Wires", icon: Cable },
   { id: "harnesses", label: "Harnesses", icon: Cable },
 ];

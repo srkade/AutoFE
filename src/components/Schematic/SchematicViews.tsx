@@ -45,25 +45,7 @@ export const handleWheel = (
     setViewBox: React.Dispatch<React.SetStateAction<{ x: number; y: number; w: number; h: number }>>,
     rotation: number = 0
 ) => {
-    // If rotation is active, perform scrolling instead of zooming as per user request
-    if (rotation !== 0) {
-        const delta = (e as any).deltaY * (viewBox.h / 800);
-        setViewBox(prev => {
-            const newBox = { ...prev };
-            if (rotation === 90) {
-                newBox.x += delta;
-            } else if (rotation === 180) {
-                newBox.y -= delta;
-            } else if (rotation === 270) {
-                newBox.x -= delta;
-            } else {
-                newBox.y += delta;
-            }
-            return newBox;
-        });
-        return;
-    }
-
+    // Standard zoom behavior applies to all rotation angles.
     const scaleFactor = 1.1;
     
     // Get the position of the mouse relative to the SVG

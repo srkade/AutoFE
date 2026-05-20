@@ -74,10 +74,10 @@ class SchematicExportManager {
 
       return await new Promise<string>((resolve, reject) => {
         img.onload = () => {
-          const MAX_PX = 8000;
+          const MAX_PX = 16000; // Allow much larger sizes for extreme clarity (was 8000)
 
-          let renderWidth = fullWidth;
-          let renderHeight = fullHeight;
+          let renderWidth = fullWidth * scale;
+          let renderHeight = fullHeight * scale;
 
           if (renderWidth > MAX_PX || renderHeight > MAX_PX) {
             const scaleDown = MAX_PX / Math.max(renderWidth, renderHeight);

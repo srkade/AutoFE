@@ -64,6 +64,7 @@ import {
   Maximize,
   Minimize,
   Download,
+  Palette,
 } from "lucide-react";
 import { schematicExportManager } from "./SchematicExport";
 
@@ -139,6 +140,7 @@ export default function Schematic({
   const [connectorNameWidths, setConnectorNameWidths] = useState<{ [id: string]: number }>({});
   const [connectorConnectionCount, setConnectorConnectionCount] = useState<{ [id: string]: number }>({});
   const [hoveredWire, setHoveredWire] = useState<string | null>(null);
+  const [useStandardColors, setUseStandardColors] = useState(false);
 
   const smartMasterIds = useMemo(() => {
     const seeds = new Set(data.masterComponents || []);
@@ -1046,6 +1048,17 @@ export default function Schematic({
               <RefreshCw size={18} />
             </button>
             <button
+              onClick={() => setUseStandardColors(!useStandardColors)}
+              title={useStandardColors ? "Revert to Original Colors" : "Standardize Colors (Power=Red, Ground=Black, Signal=Blue)"}
+              className={`schematic-toolbar-btn ${useStandardColors ? 'active-tool' : ''}`}
+              style={{
+                background: useStandardColors ? "var(--accent-primary)" : "transparent",
+                color: useStandardColors ? "var(--text-on-accent)" : "inherit"
+              }}
+            >
+              <Palette size={18} />
+            </button>
+            <button
               onClick={() => zoom("in", viewBox, setViewBox)}
               className="schematic-toolbar-btn"
             >
@@ -1175,13 +1188,35 @@ export default function Schematic({
           <div id="export" style={{ width: "100%", height: "100%" }}>
             <svg
               ref={svgRef}
-              onClick={(e) => {
-                setContextMenu(null)
-                // Only deselect if click is on the SVG itself, not on components
+              onDoubleClick={(e) => {
                 if ((e.target as SVGElement).tagName === "svg") {
                   setSelectedComponentIds([]);
                   setSelectedWires([]);
                   setSelectedConnector(null);
+                  setPopupComponent(null);
+                  setPopupConnector(null);
+                  setPopupWire(null);
+                  setPopupClosedManually(false);
+                }
+              }}
+              onContextMenu={(e) => {
+                // We let the current context menu logic run, but also clear selection if it's on the background
+                if ((e.target as SVGElement).tagName === "svg") {
+                  e.preventDefault();
+                  setSelectedComponentIds([]);
+                  setSelectedWires([]);
+                  setSelectedConnector(null);
+                  setPopupComponent(null);
+                  setPopupConnector(null);
+                  setPopupWire(null);
+                  setPopupClosedManually(false);
+                }
+              }}
+              onClick={(e) => {
+                setContextMenu(null);
+                // Do not clear wire selections here anymore. Panning uses single click/drag.
+                // Left click on background will just clear popups but leave highlights intact.
+                if ((e.target as SVGElement).tagName === "svg") {
                   setPopupComponent(null);
                   setPopupConnector(null);
                   setPopupWire(null);
@@ -1252,7 +1287,28 @@ export default function Schematic({
                   `}
                 </style>
               </defs>
-              <g transform={`rotate(${rotation} ${viewBox.x + viewBox.w / 2} ${viewBox.y + viewBox.h / 2})`}>
+              
+              {(() => {
+                const getWireColor = (wire: any, iStr: string) => {
+                  if (selectedWires.includes(iStr)) return "#39FF14"; // Fluorescent green
+                  if (selectedWires.length > 0) return "#cbd5e1"; // Dim grey when another is selected
+                  if (useStandardColors) {
+                    const toComp = (data.components || []).find((c) => c.id === wire.to?.componentId);
+                    const toCategory = toComp?.category?.toLowerCase() || "";
+                    const toLabel = toComp?.label?.toLowerCase() || "";
+                    if (toCategory === "supply" || toCategory === "battery" || toLabel.includes("fuse") || toLabel.includes("power")) return "red";
+                    if (toCategory === "ground" || toLabel.includes("ground") || toLabel.includes("gnd") || toLabel.includes("earth")) return "black";
+                    return "#3b82f6"; // Blue for signal/other
+                  }
+                  // Original Colors
+                  if (wire.color === "RD") return "red";
+                  if (wire.color === "BLK") return "var(--text-primary, black)";
+                  if (wire.color === "WH") return "#ccc";
+                  return wire.color || "var(--text-primary, black)";
+                };
+
+                return (
+                  <g transform={`rotate(${rotation} ${viewBox.x + viewBox.w / 2} ${viewBox.y + viewBox.h / 2})`}>
 
                 {(data.components || []).map((comp, componentIndex) => {
                   const compX = safe(getXForComponent(comp), padding);
@@ -2194,8 +2250,13 @@ export default function Schematic({
                           onClick={(e) => {
                             e.stopPropagation(); // Prevent deselecting everything else
                             setSelectedComponentIds([]);
-                            // Select only this wire
-                            setSelectedWires([i.toString()]);
+                            
+                            // Toggle this wire in selection
+                            setSelectedWires(prev => 
+                              prev.includes(i.toString()) 
+                                ? prev.filter(w => w !== i.toString())
+                                : [...prev, i.toString()]
+                            );
 
                             // Close other popups and clear connector selection
                             setPopupComponent(null);
@@ -2239,7 +2300,8 @@ export default function Schematic({
                                   x2={tx}
                                   y2={ty}
                                   fill="none"
-                                  stroke={selectedWires.includes(i.toString()) ? "#3390FF" : (wire.color === "RD" ? "red" : (wire.color === "BLK" ? "var(--text-primary, black)" : (wire.color === "WH" ? "#ccc" : wire.color)))}
+                                  opacity={selectedWires.length > 0 && !selectedWires.includes(i.toString()) ? 0.3 : 1}
+                                  stroke={getWireColor(wire, i.toString())}
                                   strokeWidth={
                                     selectedWires.includes(i.toString())
                                       ? 6
@@ -2282,7 +2344,8 @@ export default function Schematic({
                               <path
                                 d={d}
                                 fill="none"
-                                stroke={selectedWires.includes(i.toString()) ? "#3390FF" : (wire.color === "RD" ? "red" : (wire.color === "BLK" ? "var(--text-primary, black)" : (wire.color === "WH" ? "#ccc" : wire.color)))}
+                                opacity={selectedWires.length > 0 && !selectedWires.includes(i.toString()) ? 0.3 : 1}
+                                stroke={getWireColor(wire, i.toString())}
                                 strokeWidth={
                                   selectedWires.includes(i.toString())
                                     ? 6
@@ -2358,12 +2421,31 @@ export default function Schematic({
                             )}
                           </>
                         )}
-                        {/* Cavity labels near connectors */}
+                        {/* Cavity labels and gender near connectors */}
                         {(() => {
                           const fX = safe(fromX + 18, 0); // Shift further right to avoid trident
                           const fY = safe(fromLabelY, 0);
                           const tX = safe(toX + 18, 0); // Shift further right to avoid trident
                           const tY = safe(toLabelY, 0);
+                          
+                          const renderGenderShape = (gender: string | undefined, x: number, y: number, rot: number) => {
+                            if (!gender) return null;
+                            const isFemale = gender.toLowerCase() === "female" || gender.toLowerCase() === "f";
+                            const isMale = gender.toLowerCase() === "male" || gender.toLowerCase() === "m";
+                            if (!isFemale && !isMale) return null;
+                            
+                            const shapeX = x + 18; // offset from text
+                            return (
+                               <g transform={rot !== 0 ? `rotate(${-rot} ${x} ${y})` : undefined}>
+                                {isFemale ? (
+                                  <circle cx={shapeX} cy={y} r={3} fill="none" stroke="var(--text-primary, black)" strokeWidth="1.5" />
+                                ) : (
+                                  <rect x={shapeX - 3} y={y - 3} width={6} height={6} fill="var(--text-primary, black)" />
+                                )}
+                               </g>
+                            );
+                          };
+
                           return (
                             <>
                               <text
@@ -2373,11 +2455,16 @@ export default function Schematic({
                                 fontSize="10"
                                 alignmentBaseline="middle"
                                 fill="var(--text-primary, black)"
+                                stroke="var(--bg-secondary, white)"
+                                strokeWidth="3px"
+                                paintOrder="stroke fill"
                                 fontWeight="bold"
                                 transform={rotation !== 0 ? `rotate(${-rotation} ${fX} ${fY})` : undefined}
                               >
                                 {wire.from.cavity}
                               </text>
+                              {renderGenderShape(wire.from.gender || from?.gender || fromComponent?.gender, fX, fY, rotation)}
+                              
                               <text
                                 x={tX}
                                 y={tY}
@@ -2385,11 +2472,15 @@ export default function Schematic({
                                 fontSize="10"
                                 alignmentBaseline="middle"
                                 fill="var(--text-primary, black)"
+                                stroke="var(--bg-secondary, white)"
+                                strokeWidth="3px"
+                                paintOrder="stroke fill"
                                 fontWeight="bold"
                                 transform={rotation !== 0 ? `rotate(${-rotation} ${tX} ${tY})` : undefined}
                               >
                                 {wire.to.cavity}
                               </text>
+                              {renderGenderShape(wire.to.gender || to?.gender || toComponent?.gender, tX, tY, rotation)}
                             </>
                           );
                         })()}
@@ -2535,7 +2626,25 @@ export default function Schematic({
                   return elements;
                 })()}
 
-              </g>
+                </g>
+              );
+            })()}
+
+              {useStandardColors && (
+                <g transform={`translate(${viewBox.x + 20}, ${viewBox.y + 20})`}>
+                  <rect x="0" y="0" width="160" height="90" fill="var(--bg-secondary, white)" opacity="0.9" rx="8" stroke="var(--border-color, #ccc)" />
+                  <text x="10" y="20" fontSize="12" fontWeight="bold" fill="var(--text-primary, black)">Functional Colors</text>
+                  
+                  <line x1="10" y1="35" x2="30" y2="35" stroke="red" strokeWidth="4" />
+                  <text x="40" y="39" fontSize="11" fill="var(--text-primary, black)">Power / Supply</text>
+                  
+                  <line x1="10" y1="55" x2="30" y2="55" stroke="black" strokeWidth="4" />
+                  <text x="40" y="59" fontSize="11" fill="var(--text-primary, black)">Ground / Earth</text>
+                  
+                  <line x1="10" y1="75" x2="30" y2="75" stroke="#3b82f6" strokeWidth="4" />
+                  <text x="40" y="79" fontSize="11" fill="var(--text-primary, black)">Signal / Bus / Other</text>
+                </g>
+              )}
             </svg>
             {/* 3. THE CONTEXT MENU UI */}
             {contextMenu && (

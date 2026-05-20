@@ -144,13 +144,13 @@ export default function LeftPanel({
             textTransform: "capitalize",
           }}
         >
-          {activeTab.replace(/([A-Z])/g, " $1").trim()}
+          {activeTab === "DTC" ? "SPN/FMI" : activeTab.replace(/([A-Z])/g, " $1").trim()}
         </h2>
 
         <div style={{ position: "relative" }}>
           <input
             type="text"
-            placeholder={`Search ${activeTab}...`}
+            placeholder={activeTab === "DTC" ? "Search SPN/FMI..." : `Search ${activeTab}...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{

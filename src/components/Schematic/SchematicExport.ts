@@ -44,14 +44,24 @@ class SchematicExportManager {
           height: svgElement.scrollHeight || svgElement.clientHeight || 1200
         };
       }
-      const fullWidth = bbox.width + Math.abs(bbox.x);
-      const fullHeight = bbox.height + Math.abs(bbox.y);
+      const padding = 80;
+
+      const exportWidth = bbox.width + padding * 2;
+        const exportHeight = bbox.height + padding * 2;
+        console.log('Capture dimensions:', { exportWidth, exportHeight, padding, bbox });
+        const viewBoxX = bbox.x - padding;
+        const viewBoxY = bbox.y - padding;
+        console.log('ViewBox params:', { viewBoxX, viewBoxY, exportWidth, exportHeight });
 
       // Clone the SVG to safely modify it
       const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
-      clonedSvg.setAttribute("width", `${fullWidth}`);
-      clonedSvg.setAttribute("height", `${fullHeight}`);
-      clonedSvg.setAttribute("viewBox", `${bbox.x} ${bbox.y} ${fullWidth} ${fullHeight}`);
+      clonedSvg.setAttribute("width", `${exportWidth}`);
+      clonedSvg.setAttribute("height", `${exportHeight}`);
+
+      clonedSvg.setAttribute(
+        "viewBox",
+        `${bbox.x - padding} ${bbox.y - padding} ${exportWidth} ${exportHeight}`
+      );
 
       // Serialize the cloned SVG
       const serializer = new XMLSerializer();
@@ -62,8 +72,8 @@ class SchematicExportManager {
       // Prepare the canvas
       const scale = (resolution / 96) * zoom;
       const canvas = document.createElement("canvas");
-      canvas.width = fullWidth * scale;
-      canvas.height = fullHeight * scale;
+      canvas.width = Math.max(1, Math.round(exportWidth * scale));
+      canvas.height = Math.max(1, Math.round(exportHeight * scale));
 
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Could not get 2D context");
@@ -76,8 +86,8 @@ class SchematicExportManager {
         img.onload = () => {
           const MAX_PX = 16000; // Allow much larger sizes for extreme clarity (was 8000)
 
-          let renderWidth = fullWidth * scale;
-          let renderHeight = fullHeight * scale;
+          let renderWidth = exportWidth * scale;
+          let renderHeight = exportHeight * scale;
 
           if (renderWidth > MAX_PX || renderHeight > MAX_PX) {
             const scaleDown = MAX_PX / Math.max(renderWidth, renderHeight);
@@ -611,15 +621,18 @@ class SchematicExportManager {
         if (!svg) throw new Error("SVG not found inside #export div");
 
         let bbox;
-        try { bbox = svg.getBBox(); }
-        catch (e) { bbox = { x: 0, y: 0, width: svg.clientWidth, height: svg.clientHeight }; }
-        const fullWidth = bbox.width + Math.abs(bbox.x);
-        const fullHeight = bbox.height + Math.abs(bbox.y);
-
+        try { bbox = svg.getBBox(); } catch (e) { bbox = { x: 0, y: 0, width: svg.clientWidth, height: svg.clientHeight }; }
+        const padding = 80; // extra space around schematic
+        // Compute full dimensions including any negative offsets
+        const exportWidth = bbox.width + padding * 2;
+        const exportHeight = bbox.height + padding * 2;
+        console.log('Capture dimensions:', { exportWidth, exportHeight, padding, bbox });
+        const viewBoxX = bbox.x - padding;
+        const viewBoxY = bbox.y - padding;
         const clonedSvg = svg.cloneNode(true) as SVGSVGElement;
-        clonedSvg.setAttribute("width", `${fullWidth}`);
-        clonedSvg.setAttribute("height", `${fullHeight}`);
-        clonedSvg.setAttribute("viewBox", `${bbox.x} ${bbox.y} ${fullWidth} ${fullHeight}`);
+        clonedSvg.setAttribute("width", `${exportWidth}`);
+        clonedSvg.setAttribute("height", `${exportHeight}`);
+        clonedSvg.setAttribute("viewBox", `${viewBoxX} ${viewBoxY} ${exportWidth} ${exportHeight}`);
 
         const serializer = new XMLSerializer();
         const svgString = serializer.serializeToString(clonedSvg);
@@ -637,10 +650,13 @@ class SchematicExportManager {
 
         const scale = (resolution / 96) * zoom;
         const canvas = document.createElement("canvas");
-        canvas.width = fullWidth * scale;
-        canvas.height = fullHeight * scale;
+        canvas.width = Math.max(1, Math.round(exportWidth * scale));
+        canvas.height = Math.max(1, Math.round(exportHeight * scale));
         const ctx = canvas.getContext("2d");
         if (!ctx) throw new Error("Could not get 2D context");
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         URL.revokeObjectURL(url);
@@ -661,13 +677,18 @@ class SchematicExportManager {
       inlineComputedStyles(svgWithImages);
 
       // Compute bounding box (use original svg's bbox for consistency)
-      let bbox;
-      try { bbox = svg.getBBox(); } catch (e) { bbox = { x: 0, y: 0, width: svg.clientWidth || 1000, height: svg.clientHeight || 800 }; }
-      const fullWidth = bbox.width + Math.abs(bbox.x);
-      const fullHeight = bbox.height + Math.abs(bbox.y);
-      svgWithImages.setAttribute("width", `${fullWidth}`);
-      svgWithImages.setAttribute("height", `${fullHeight}`);
-      svgWithImages.setAttribute("viewBox", `${bbox.x} ${bbox.y} ${fullWidth} ${fullHeight}`);
+        let bbox;
+        try { bbox = svg.getBBox(); } catch (e) { bbox = { x: 0, y: 0, width: svg.clientWidth || 1000, height: svg.clientHeight || 800 }; }
+        const padding = 80; // extra space around schematic
+        // Compute full dimensions including any negative offsets
+        const exportWidth = bbox.width + padding * 2;
+        const exportHeight = bbox.height + padding * 2;
+        const viewBoxX = bbox.x - padding;
+        const viewBoxY = bbox.y - padding;
+        // Apply padded dimensions and viewBox
+        svgWithImages.setAttribute("width", `${exportWidth}`);
+        svgWithImages.setAttribute("height", `${exportHeight}`);
+        svgWithImages.setAttribute("viewBox", `${viewBoxX} ${viewBoxY} ${exportWidth} ${exportHeight}`);
 
       // serialize and load into image
       const svgUrl = svgToDataUrl(svgWithImages);
@@ -683,8 +704,8 @@ class SchematicExportManager {
       // draw to canvas
       const scale = (resolution / 96) * zoom;
       const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(fullWidth * scale));
-      canvas.height = Math.max(1, Math.round(fullHeight * scale));
+      canvas.width = Math.max(1, Math.round(exportWidth * scale));
+      canvas.height = Math.max(1, Math.round(exportHeight * scale));
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Could not get 2D context");
 

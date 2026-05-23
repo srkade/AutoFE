@@ -94,6 +94,7 @@ export default function Schematic({
   onComponentRightClick,
   onSpliceRightClick,
   highlightedElementId,
+  isExportMode = false,
 }: {
   data: SchematicData;
   scale?: number;
@@ -102,6 +103,7 @@ export default function Schematic({
   onComponentRightClick?: (component: ComponentType, pos: { x: number; y: number }) => void;
   onSpliceRightClick?: (splice: ComponentType) => void;
   highlightedElementId?: string | null;
+  isExportMode?: boolean;
 }) {
   const { theme } = useTheme();
   const svgWrapperRef = useRef<HTMLDivElement>(null);
@@ -1076,6 +1078,7 @@ export default function Schematic({
         }}
       >
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
+          {!isExportMode && (
           <div
             className="schematic-toolbar"
             style={{
@@ -1245,6 +1248,7 @@ export default function Schematic({
               )}
             </div>
           </div>
+          )}
           <div id="export" style={{ width: "100%", height: "100%" }}>
             <svg
               ref={svgRef}

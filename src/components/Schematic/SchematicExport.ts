@@ -17,7 +17,7 @@ import {
 } from "./SchematicTypes";
 import logoImage from '../../assets/Images/logo.png';
 class SchematicExportManager {
-  private async captureSchematicDiv(
+  public async captureSchematicDiv(
     resolution: number = 300,
     zoom: number = 1
   ): Promise<string> {
@@ -84,7 +84,7 @@ class SchematicExportManager {
 
       return await new Promise<string>((resolve, reject) => {
         img.onload = () => {
-          const MAX_PX = 16000; // Allow much larger sizes for extreme clarity (was 8000)
+          const MAX_PX = 32767; // Increased limit for better quality (max canvas dimension)
 
           let renderWidth = exportWidth * scale;
           let renderHeight = exportHeight * scale;
@@ -97,11 +97,17 @@ class SchematicExportManager {
           // Use resized dimensions
           canvas.width = renderWidth;
           canvas.height = renderHeight;
+          // Enable high-quality scaling
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
           // Draw final scaled image
           ctx.drawImage(img, 0, 0, renderWidth, renderHeight);
           URL.revokeObjectURL(url);
-          // Export JPEG (MUCH smaller, prevents RangeError)
-          const imageData = canvas.toDataURL("image/jpeg", 0.92);
+          
+          // Use JPEG for large images to avoid RangeError in jsPDF, PNG for smaller images
+          const totalPixels = renderWidth * renderHeight;
+          const useJPEG = totalPixels > 25000000; // Use JPEG if image is very large
+          const imageData = canvas.toDataURL(useJPEG ? "image/jpeg" : "image/png", useJPEG ? 0.95 : 1.0);
           resolve(imageData);
         };
 
@@ -296,12 +302,35 @@ class SchematicExportManager {
       );
       yPosition += 10;
 
-      // Add schematic image
+      // Add schematic image with preserved aspect ratio
       const imgWidth = pageWidth - 2 * margin;
-      const imgHeight = (imgWidth / 16) * 9; // 16:9 aspect ratio
+      
+      // Calculate image dimensions based on actual schematic aspect ratio
+      const schematicImg = new Image();
+      schematicImg.src = schematicImage;
+      
+      await new Promise<void>((resolve) => {
+        schematicImg.onload = () => resolve();
+        schematicImg.onerror = () => resolve(); // Continue even if image fails to load
+      });
+      
+      const aspectRatio = schematicImg.width / schematicImg.height;
+      const imgHeight = imgWidth / aspectRatio;
+      
+      // Ensure image fits within page bounds
+      const maxHeight = pageHeight - yPosition - margin;
+      let finalImgWidth = imgWidth;
+      let finalImgHeight = imgHeight;
+      
+      if (finalImgHeight > maxHeight) {
+        finalImgHeight = maxHeight;
+        finalImgWidth = finalImgHeight * aspectRatio;
+      }
 
       try {
-        pdf.addImage(schematicImage, "PNG", margin, yPosition, imgWidth, imgHeight);
+        // Center-align the image
+        const xPosition = (pageWidth - finalImgWidth) / 2;
+        pdf.addImage(schematicImage, "PNG", xPosition, yPosition, finalImgWidth, finalImgHeight);
       } catch (imgError) {
         console.warn("Warning: Could not add image to PDF:", imgError);
       }
@@ -649,14 +678,29 @@ class SchematicExportManager {
         });
 
         const scale = (resolution / 96) * zoom;
+        const MAX_PX = 32767; // Increased limit for better quality
+        
+        let renderWidth = exportWidth * scale;
+        let renderHeight = exportHeight * scale;
+        
+        if (renderWidth > MAX_PX || renderHeight > MAX_PX) {
+          const scaleDown = MAX_PX / Math.max(renderWidth, renderHeight);
+          renderWidth = Math.floor(renderWidth * scaleDown);
+          renderHeight = Math.floor(renderHeight * scaleDown);
+        }
+        
         const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(exportWidth * scale));
-        canvas.height = Math.max(1, Math.round(exportHeight * scale));
+        canvas.width = Math.max(1, renderWidth);
+        canvas.height = Math.max(1, renderHeight);
         const ctx = canvas.getContext("2d");
         if (!ctx) throw new Error("Could not get 2D context");
 
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Enable high-quality scaling
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
 
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         URL.revokeObjectURL(url);
@@ -703,12 +747,27 @@ class SchematicExportManager {
 
       // draw to canvas
       const scale = (resolution / 96) * zoom;
+      const MAX_PX = 32767; // Increased limit for better quality
+      
+      let renderWidth = exportWidth * scale;
+      let renderHeight = exportHeight * scale;
+      
+      if (renderWidth > MAX_PX || renderHeight > MAX_PX) {
+        const scaleDown = MAX_PX / Math.max(renderWidth, renderHeight);
+        renderWidth = Math.floor(renderWidth * scaleDown);
+        renderHeight = Math.floor(renderHeight * scaleDown);
+      }
+      
       const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(exportWidth * scale));
-      canvas.height = Math.max(1, Math.round(exportHeight * scale));
+      canvas.width = Math.max(1, renderWidth);
+      canvas.height = Math.max(1, renderHeight);
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Could not get 2D context");
 
+      // Enable high-quality scaling
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
       // draw
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(svgUrl);

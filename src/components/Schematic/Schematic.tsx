@@ -712,6 +712,15 @@ export default function Schematic({
     const masterComps = (data.components || []).filter(c => smartMasterIds.has(c.id));
     const regularComps = (data.components || []).filter(c => !smartMasterIds.has(c.id));
 
+    // --- Single master component: width spans all regular components ---
+    if (masterComps.length === 1 && isMaster && regularComps.length > 0) {
+      let totalRegularWidth = padding;
+      regularComps.forEach(rc => {
+        totalRegularWidth += getNaturalWidthForComponent(rc) + padding;
+      });
+      return Math.max(totalRegularWidth, 100);
+    }
+
     // --- Equal-width layout: 2 master + 1 regular → single regular spans the full master row width ---
     if (masterComps.length === 2 && regularComps.length === 1 && !isMaster) {
       let totalMaster = padding;
@@ -720,6 +729,14 @@ export default function Schematic({
       });
       // Return total master row width minus one padding (for symmetry)
       return Math.max(totalMaster - padding, 100);
+    }
+
+    // --- Equal-width layout: 1 master + 1 regular → both components have the same width ---
+    if (masterComps.length === 1 && regularComps.length === 1) {
+      const masterWidth = getNaturalWidthForComponent(masterComps[0]);
+      const regularWidth = getNaturalWidthForComponent(regularComps[0]);
+      // Both components get the maximum of their natural widths
+      return Math.max(masterWidth, regularWidth, 100);
     }
 
     return getNaturalWidthForComponent(component);
@@ -809,12 +826,30 @@ export default function Schematic({
     component: ComponentType
   ): number {
     let x = getXForComponent(component);
+    const isMaster = smartMasterIds.has(component.id);
+    const masterComps = (data.components || []).filter(c => smartMasterIds.has(c.id));
+    
     if (component.shape === "rectangle") {
       // Use sorted connectors for positioning
       const sortedConns = getSortedConnectors(component);
       let connectorCount = sortedConns.length;
       let index = sortedConns.findIndex((c) => c.id === connector.id);
       var connWidth = 0;
+      
+      // --- Single master component: expand connectors to fill width ---
+      if (masterComps.length === 1 && isMaster && connectorCount > 0) {
+        const componentWidth = getWidthForComponent(component);
+        const totalConnectorSpacing = (connectorCount + 1) * connectorSpacing;
+        const availableWidth = componentWidth - totalConnectorSpacing;
+        const expandedConnectorWidth = availableWidth / connectorCount;
+        
+        connWidth = connectorSpacing;
+        for (var i = 0; i < index; i++) {
+          connWidth += expandedConnectorWidth + connectorSpacing;
+        }
+        return x + connWidth;
+      }
+      
       if (connectorCount > 1) {
         connWidth += connectorSpacing;
         for (var i = 0; i < index; i++) {
@@ -874,6 +909,31 @@ export default function Schematic({
   function getWidthForConnector(conn: ConnectorType, comp: ComponentType): number {
     let connections = getConnectionsForConnector(conn, data);
     let originalWidth: number;
+
+    const isMaster = smartMasterIds.has(comp.id);
+    const masterComps = (data.components || []).filter(c => smartMasterIds.has(c.id));
+    const sortedConns = getSortedConnectors(comp);
+    const connectorCount = sortedConns.length;
+
+    // --- Single master component: expand connector width to fill available space ---
+    if (masterComps.length === 1 && isMaster && connectorCount > 0 && comp.shape === "rectangle") {
+      const componentWidth = getWidthForComponent(comp);
+      const totalConnectorSpacing = (connectorCount + 1) * connectorSpacing;
+      const availableWidth = componentWidth - totalConnectorSpacing;
+      const expandedConnectorWidth = availableWidth / connectorCount;
+      
+      let interConnectionSpacing = 60;
+      let connectionsBasedWidth =
+        (connections.length + 1) * interConnectionSpacing;
+      originalWidth = Math.max(
+        connectionsBasedWidth,
+        (connectorNameWidths[conn.id] ?? 50) + connectorNamePadding,
+        100
+      );
+      
+      // Return the expanded width, but ensure it's at least the original width
+      return Math.max(expandedConnectorWidth, originalWidth);
+    }
 
     if (comp.shape === "rectangle") {
       let interConnectionSpacing = 60;

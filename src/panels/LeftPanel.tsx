@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, XCircle } from "lucide-react";
+import { Search, XCircle, Download, FileText, FileImage } from "lucide-react";
 
 import { DashboardItem } from "../App";
 
@@ -20,6 +20,8 @@ interface LeftPanelProps {
   traceMode?: boolean;
   schematicData?: SchematicData | null;
   onHighlightElement?: (id: string | null) => void;
+  onExportPDF?: (codes: string[]) => void;
+  onExportImages?: (codes: string[]) => void;
 }
 
 export default function LeftPanel({
@@ -34,10 +36,14 @@ export default function LeftPanel({
   traceMode = false,
   schematicData,
   onHighlightElement,
+  onExportPDF,
+  onExportImages,
 }: LeftPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activePanelTab, setActivePanelTab] = useState<"index" | "legend">("index");
   const [highlightedLegendId, setHighlightedLegendId] = useState<string | null>(null);
+  const [exportQueue, setExportQueue] = useState<Set<string>>(new Set());
+  const [showExportMode, setShowExportMode] = useState(false);
 
   const search = searchTerm.trim().toLowerCase();
 
@@ -114,6 +120,38 @@ export default function LeftPanel({
     onViewSchematic(newSelectedCodes);
   };
 
+  const handleExportCheckboxChange = (item: DashboardItem) => {
+    const code = item.code;
+    const newExportQueue = new Set(exportQueue);
+    
+    if (newExportQueue.has(code)) {
+      newExportQueue.delete(code);
+    } else {
+      newExportQueue.add(code);
+    }
+    
+    setExportQueue(newExportQueue);
+  };
+
+  const handleExportPDF = () => {
+    if (exportQueue.size > 0 && onExportPDF) {
+      onExportPDF(Array.from(exportQueue));
+    }
+  };
+
+  const handleExportImages = () => {
+    if (exportQueue.size > 0 && onExportImages) {
+      onExportImages(Array.from(exportQueue));
+    }
+  };
+
+  const toggleExportMode = () => {
+    setShowExportMode(!showExportMode);
+    if (!showExportMode) {
+      setExportQueue(new Set());
+    }
+  };
+
   const showCheckbox =
     activeTab === "components" ||
     activeTab === "DTC" ||
@@ -135,17 +173,41 @@ export default function LeftPanel({
 
       {/* Header */}
       <div style={{ padding: "20px", borderBottom: "1px solid #e9ecef" }}>
-        <h2
-          style={{
-            margin: "0 0 16px 0",
-            color: "#212529",
-            fontSize: "18px",
-            fontWeight: "600",
-            textTransform: "capitalize",
-          }}
-        >
-          {activeTab === "DTC" ? "SPN/FMI" : activeTab.replace(/([A-Z])/g, " $1").trim()}
-        </h2>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+          <h2
+            style={{
+              margin: 0,
+              color: "#212529",
+              fontSize: "18px",
+              fontWeight: "600",
+              textTransform: "capitalize",
+            }}
+          >
+            {showExportMode ? "Export Mode" : (activeTab === "DTC" ? "SPN/FMI" : activeTab.replace(/([A-Z])/g, " $1").trim())}
+          </h2>
+          <button
+            onClick={toggleExportMode}
+            style={{
+              padding: "8px 12px",
+              background: showExportMode ? "#28a745" : "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "12px",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "background 0.2s"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = showExportMode ? "#218838" : "#0056b3"}
+            onMouseLeave={(e) => e.currentTarget.style.background = showExportMode ? "#28a745" : "#007bff"}
+          >
+            <Download size={14} />
+            {showExportMode ? "Exit Export" : "Export Mode"}
+          </button>
+        </div>
 
         <div style={{ position: "relative" }}>
           <input
@@ -177,7 +239,7 @@ export default function LeftPanel({
           />
         </div>
 
-        {selectedCodes.length > 0 && (
+        {selectedCodes.length > 0 && !showExportMode && (
           <div style={{ marginTop: "16px" }}>
             <button
               onClick={() => {
@@ -244,6 +306,59 @@ export default function LeftPanel({
             )}
           </div>
         )}
+
+        {showExportMode && exportQueue.size > 0 && (
+          <div style={{ marginTop: "16px", display: "flex", gap: "8px" }}>
+            <button
+              onClick={handleExportPDF}
+              style={{
+                flex: 1,
+                padding: "10px 12px",
+                background: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: "10px",
+                cursor: "pointer",
+                fontSize: "14px",
+                fontWeight: "600",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                transition: "background 0.2s",
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "#0056b3"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "#007bff"}
+            >
+              <FileText size={16} />
+              Export PDF ({exportQueue.size})
+            </button>
+            <button
+              onClick={handleExportImages}
+              style={{
+                flex: 1,
+                padding: "10px 12px",
+                background: "#28a745",
+                color: "white",
+                border: "none",
+                borderRadius: "10px",
+                cursor: "pointer",
+                fontSize: "14px",
+                fontWeight: "600",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                transition: "background 0.2s",
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "#218838"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "#28a745"}
+            >
+              <FileImage size={16} />
+              Export Images ({exportQueue.size})
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Items List */}
@@ -260,6 +375,7 @@ export default function LeftPanel({
         {checkedData.map((item) => {
           const isSelected = selectedItem?.code === item.code;
           const isChecked = true; // They are in checkedData
+          const isExportChecked = exportQueue.has(item.code);
 
           return (
             <div key={item.code} style={{ marginBottom: "12px" }}>
@@ -269,13 +385,13 @@ export default function LeftPanel({
                   border: `2px solid ${isSelected ? "#007bff" : "#007bff"}`,
                   borderRadius: "12px",
                   background: isSelected ? "#f0f8ff" : "#cce5ff",
-                  cursor: "pointer",
+                  cursor: showExportMode ? "default" : "pointer",
                   transition: "all 0.2s ease",
                   position: "relative",
                 }}
-                onClick={() => handleItemClick(item)}
+                onClick={() => !showExportMode && handleItemClick(item)}
               >
-                {showCheckbox && (
+                {showCheckbox && !showExportMode && (
                   <input
                     type="checkbox"
                     checked={isChecked}
@@ -292,7 +408,25 @@ export default function LeftPanel({
                   />
                 )}
 
-                <div style={{ marginLeft: showCheckbox ? "24px" : "0px" }}>
+                {showExportMode && (
+                  <input
+                    type="checkbox"
+                    checked={isExportChecked}
+                    onChange={() => handleExportCheckboxChange(item)}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      width: "18px",
+                      height: "18px",
+                      cursor: "pointer",
+                      position: "absolute",
+                      top: "12px",
+                      left: "12px",
+                      accentColor: "#28a745",
+                    }}
+                  />
+                )}
+
+                <div style={{ marginLeft: (showCheckbox && !showExportMode) || showExportMode ? "24px" : "0px" }}>
                   <span style={{
                     fontSize: "14px",
                     fontWeight: "600",
@@ -391,6 +525,7 @@ export default function LeftPanel({
               unCheckedData.map((item) => {
                 const isSelected = selectedItem?.code === item.code;
                 const isChecked = false;
+                const isExportChecked = exportQueue.has(item.code);
 
                 return (
                   <div key={item.code} style={{ marginBottom: "12px" }}>
@@ -400,13 +535,13 @@ export default function LeftPanel({
                         border: `2px solid ${isSelected ? "#007bff" : "#e9ecef"}`,
                         borderRadius: "12px",
                         background: isSelected ? "#f0f8ff" : "white",
-                        cursor: "pointer",
+                        cursor: showExportMode ? "default" : "pointer",
                         transition: "all 0.2s ease",
                         position: "relative",
                       }}
-                      onClick={() => handleItemClick(item)}
+                      onClick={() => !showExportMode && handleItemClick(item)}
                     >
-                      {showCheckbox && (
+                      {showCheckbox && !showExportMode && (
                         <input
                           type="checkbox"
                           checked={isChecked}
@@ -423,7 +558,25 @@ export default function LeftPanel({
                         />
                       )}
 
-                      <div style={{ marginLeft: showCheckbox ? "24px" : "0px" }}>
+                      {showExportMode && (
+                        <input
+                          type="checkbox"
+                          checked={isExportChecked}
+                          onChange={() => handleExportCheckboxChange(item)}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            cursor: "pointer",
+                            position: "absolute",
+                            top: "12px",
+                            left: "12px",
+                            accentColor: "#28a745",
+                          }}
+                        />
+                      )}
+
+                      <div style={{ marginLeft: (showCheckbox && !showExportMode) || showExportMode ? "24px" : "0px" }}>
                         <span style={{
                           fontSize: "14px",
                           fontWeight: "600",

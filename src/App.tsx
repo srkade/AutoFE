@@ -20,6 +20,8 @@ import RegisterForm from "./pages/RegistrationForm";
 import { useTraceNavigation } from './hooks/useTraceNavigation';
 import PasswordResetPage from './pages/PasswordResetPage';
 import DemoVideoModal from "./components/DemoVideoModal";
+import ExportProgressModal from "./components/Export/ExportProgressModal";
+import { exportQueueManager, ExportProgress } from "./components/Export/ExportQueueManager";
 
 export type DashboardItem = {
   code: string;
@@ -64,6 +66,10 @@ function AppContent() {
   } | null>(null);
   const [modelCount, setModelCount] = useState<number | null>(null);
   const [showDemoModal, setShowDemoModal] = useState(false);
+
+  // Export state
+  const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
 
 
@@ -640,10 +646,159 @@ function AppContent() {
     setMergedSchematic(null);
     setSelectedCodes([]);
     setHighlightedElementId(null);
-    
+
     // Optional: Only refresh if you really want to try loading same codes in new model
     // but usually it's safer to just clear it.
   }, []);
+
+  // Export handlers
+  const handleExportPDF = useCallback(async (codes: string[]) => {
+    try {
+      // Build export queue from selected codes - fetch schematic data for each item
+      const exportItems = await Promise.all(codes.map(async (code) => {
+        const item = dashboardItems.find(d => d.code === code);
+        if (!item) return null;
+
+        let schematicData = item.schematicData;
+
+        // Fetch schematic data if not already loaded or if it's empty
+        if (!schematicData.components || schematicData.components.length === 0) {
+          try {
+            let rawData;
+            if (item.type === "Harness") {
+              rawData = await getHarnessSchematic(code, selectedModelId || undefined);
+            } else if (item.type === "System") {
+              rawData = await getSystemFormula(code, selectedModelId || undefined);
+            } else if (item.type === "Supply") {
+              rawData = await getSupplyFormula(code, selectedModelId || undefined);
+            } else if (item.type === "DTC") {
+              rawData = await getDtcSchematic(code, selectedModelId || undefined);
+            } else if (item.type === "wire") {
+              rawData = await getWireDetailsByWireCode(code, selectedModelId || undefined);
+              rawData = { name: `Wire ${code}`, wires: rawData };
+            } else {
+              rawData = await getComponentSchematic(code, selectedModelId || undefined);
+            }
+
+            schematicData = normalizeSchematic(rawData);
+          } catch (err) {
+            console.error(`Failed to fetch schematic for ${code}:`, err);
+            return null;
+          }
+        }
+
+        return {
+          id: item.code,
+          code: item.code,
+          name: item.name,
+          type: item.type,
+          schematicData: schematicData,
+          activeTab: activeTab,
+          dtcCode: item.dtcCode
+        };
+      }));
+
+      const validItems = exportItems.filter(Boolean) as any[];
+
+      if (validItems.length === 0) {
+        alert('No items to export');
+        return;
+      }
+
+      exportQueueManager.clearQueue();
+      exportQueueManager.addToQueue(validItems);
+      exportQueueManager.setProgressCallback(setExportProgress);
+      setIsExportModalOpen(true);
+
+      await exportQueueManager.processQueue('pdf', 300, 1);
+
+      // Auto-close modal after successful export
+      setTimeout(() => {
+        setIsExportModalOpen(false);
+        setExportProgress(null);
+      }, 2000);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    }
+  }, [dashboardItems, activeTab, selectedModelId]);
+
+  const handleExportImages = useCallback(async (codes: string[]) => {
+    try {
+      // Build export queue from selected codes - fetch schematic data for each item
+      const exportItems = await Promise.all(codes.map(async (code) => {
+        const item = dashboardItems.find(d => d.code === code);
+        if (!item) return null;
+
+        let schematicData = item.schematicData;
+
+        // Fetch schematic data if not already loaded or if it's empty
+        if (!schematicData.components || schematicData.components.length === 0) {
+          try {
+            let rawData;
+            if (item.type === "Harness") {
+              rawData = await getHarnessSchematic(code, selectedModelId || undefined);
+            } else if (item.type === "System") {
+              rawData = await getSystemFormula(code, selectedModelId || undefined);
+            } else if (item.type === "Supply") {
+              rawData = await getSupplyFormula(code, selectedModelId || undefined);
+            } else if (item.type === "DTC") {
+              rawData = await getDtcSchematic(code, selectedModelId || undefined);
+            } else if (item.type === "wire") {
+              rawData = await getWireDetailsByWireCode(code, selectedModelId || undefined);
+              rawData = { name: `Wire ${code}`, wires: rawData };
+            } else {
+              rawData = await getComponentSchematic(code, selectedModelId || undefined);
+            }
+
+            schematicData = normalizeSchematic(rawData);
+          } catch (err) {
+            console.error(`Failed to fetch schematic for ${code}:`, err);
+            return null;
+          }
+        }
+
+        return {
+          id: item.code,
+          code: item.code,
+          name: item.name,
+          type: item.type,
+          schematicData: schematicData,
+          activeTab: activeTab,
+          dtcCode: item.dtcCode
+        };
+      }));
+
+      const validItems = exportItems.filter(Boolean) as any[];
+
+      if (validItems.length === 0) {
+        alert('No items to export');
+        return;
+      }
+
+      exportQueueManager.clearQueue();
+      exportQueueManager.addToQueue(validItems);
+      exportQueueManager.setProgressCallback(setExportProgress);
+      setIsExportModalOpen(true);
+
+      await exportQueueManager.processQueue('images', 300, 1);
+
+      // Auto-close modal after successful export
+      setTimeout(() => {
+        setIsExportModalOpen(false);
+        setExportProgress(null);
+      }, 2000);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    }
+  }, [dashboardItems, activeTab, selectedModelId]);
+
+  const handleCloseExportModal = () => {
+    setIsExportModalOpen(false);
+    setExportProgress(null);
+    exportQueueManager.abort();
+  };
 
   return (
     <div>
@@ -755,6 +910,8 @@ function AppContent() {
                   isMobile={isMobile}
                   schematicData={mergedSchematic || selectedItem?.schematicData}
                   onHighlightElement={setHighlightedElementId}
+                  onExportPDF={handleExportPDF}
+                  onExportImages={handleExportImages}
                 />
               </div>
 
@@ -920,6 +1077,8 @@ function AppContent() {
                           isMobile={isMobile}
                           schematicData={mergedSchematic || selectedItem?.schematicData}
                           onHighlightElement={setHighlightedElementId}
+                          onExportPDF={handleExportPDF}
+                          onExportImages={handleExportImages}
                         />
                       </div>
 
@@ -991,14 +1150,20 @@ function AppContent() {
         }}
       />
       <AuditLogViewer currentUserEmail={currentUser?.email} />
-      <DemoVideoModal 
-        isOpen={showDemoModal} 
+      <DemoVideoModal
+        isOpen={showDemoModal}
         onClose={() => {
           setShowDemoModal(false);
           if (currentUser) {
               localStorage.setItem(`hasSeenDemo_${currentUser.email}`, "true");
           }
-        }} 
+        }}
+      />
+      <ExportProgressModal
+        isOpen={isExportModalOpen}
+        progress={exportProgress}
+        onClose={handleCloseExportModal}
+        onAbort={handleCloseExportModal}
       />
     </div>
   );

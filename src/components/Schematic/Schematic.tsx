@@ -140,7 +140,6 @@ export default function Schematic({
   const [connectorNameWidths, setConnectorNameWidths] = useState<{ [id: string]: number }>({});
   const [connectorConnectionCount, setConnectorConnectionCount] = useState<{ [id: string]: number }>({});
   const [hoveredWire, setHoveredWire] = useState<string | null>(null);
-  const [useStandardColors, setUseStandardColors] = useState(false);
 
   const smartMasterIds = useMemo(() => {
     const seeds = new Set(data.masterComponents || []);
@@ -1048,17 +1047,6 @@ export default function Schematic({
               <RefreshCw size={18} />
             </button>
             <button
-              onClick={() => setUseStandardColors(!useStandardColors)}
-              title={useStandardColors ? "Revert to Original Colors" : "Standardize Colors (Power=Red, Ground=Black, Signal=Blue)"}
-              className={`schematic-toolbar-btn ${useStandardColors ? 'active-tool' : ''}`}
-              style={{
-                background: useStandardColors ? "var(--accent-primary)" : "transparent",
-                color: useStandardColors ? "var(--text-on-accent)" : "inherit"
-              }}
-            >
-              <Palette size={18} />
-            </button>
-            <button
               onClick={() => zoom("in", viewBox, setViewBox)}
               className="schematic-toolbar-btn"
             >
@@ -1292,14 +1280,6 @@ export default function Schematic({
                 const getWireColor = (wire: any, iStr: string) => {
                   if (selectedWires.includes(iStr)) return "#39FF14"; // Fluorescent green
                   if (selectedWires.length > 0) return "#cbd5e1"; // Dim grey when another is selected
-                  if (useStandardColors) {
-                    const toComp = (data.components || []).find((c) => c.id === wire.to?.componentId);
-                    const toCategory = toComp?.category?.toLowerCase() || "";
-                    const toLabel = toComp?.label?.toLowerCase() || "";
-                    if (toCategory === "supply" || toCategory === "battery" || toLabel.includes("fuse") || toLabel.includes("power")) return "red";
-                    if (toCategory === "ground" || toLabel.includes("ground") || toLabel.includes("gnd") || toLabel.includes("earth")) return "black";
-                    return "#3b82f6"; // Blue for signal/other
-                  }
                   // Original Colors
                   if (wire.color === "RD") return "red";
                   if (wire.color === "BLK") return "var(--text-primary, black)";
@@ -1875,7 +1855,11 @@ export default function Schematic({
                   // Shared horizontal bus: midpoint of the gap between rows
                   const sharedCrossRowY = Math.round((masterBusY + regularBusY) / 2);
 
-                  return (data.connections ?? []).map((wire, i) => {
+                  const wireElements: JSX.Element[] = [];
+                  const labelElements: JSX.Element[] = [];
+                  const placedLabels: {x: number, y: number, w: number, h: number}[] = [];
+
+                  (data.connections ?? []).forEach((wire, i) => {
                     const fromConn = wire.from;
                     const toConn = wire.to;
 
@@ -2464,65 +2448,84 @@ export default function Schematic({
                             </>
                           );
                         })()}
-                        {/* Wire identity label: circuit number centered on the wire */}
-                        {wire.wireDetails?.circuitNumber && (
-                          <g transform={rotation !== 0 ? `rotate(${-rotation} ${(() => {
-                            const isStraight = Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5;
-                            return isStraight ? safe(fromX, 0) : safe((fromX + toX) / 2, 0);
-                          })()} ${(() => {
-                            const isStraight = Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5;
-                            return isStraight ? safe((fromY + toY) / 2, 0) : safe(intermediateY, 0);
-                          })()})` : undefined}>
-                            {(() => {
-                              const isStraight = Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5;
-                              // Both straight and Z-shape: center label on the wire
-                              const labelX = isStraight
-                                ? safe(fromX, 0)                           // center on vertical line
-                                : safe((fromX + toX) / 2, 0);              // center of horizontal segment
-                              const labelY = isStraight
-                                ? safe((fromY + toY) / 2, 0)               // vertical midpoint
-                                : safe(intermediateY, 0);                   // horizontal segment level
-
-                              const labelText = wire.wireDetails.circuitNumber || "";
-                              const labelWidth = Math.max(40, labelText.length * 6 + 12);
-
-                              return (
-                                <>
-                                  <rect
-                                    x={labelX - labelWidth / 2}
-                                    y={labelY - 7}
-                                    width={labelWidth}
-                                    height={14}
-                                    rx={3}
-                                    fill="white"
-                                    stroke={wire.color}
-                                    strokeWidth={1}
-                                    opacity={0.92}
-                                  />
-                                  <text
-                                    x={labelX}
-                                    y={labelY + 1}
-                                    textAnchor="middle"
-                                    fontSize="9"
-                                    alignmentBaseline="middle"
-                                    fill={
-                                      ["white", "#fff", "#ffffff", "yellow", "#ffff00"].includes(wire.color?.toLowerCase() ?? "")
-                                        ? "#333"
-                                        : wire.color
-                                    }
-                                    fontWeight="bold"
-                                  >
-                                    {labelText}
-                                  </text>
-                                </>
-                              );
-                            })()}
-                          </g>
-                        )}
+                        {/* Wire identity label: circuit number centered on the wire (Extracted) */}
                       </g>
                     );
-                    return <g key={i}>{wireElement}</g>;
+                    wireElements.push(<g key={`wire-${i}`}>{wireElement}</g>);
+
+                    if (wire.wireDetails?.circuitNumber) {
+                      const isStraight = Math.abs(safe(fromX, 0) - safe(toX, 0)) < 5;
+                      let labelX = isStraight
+                        ? safe(fromX, 0)
+                        : safe((fromX + toX) / 2, 0);
+                      let labelY = isStraight
+                        ? safe((fromY + toY) / 2, 0)
+                        : safe(intermediateY, 0);
+
+                      const labelText = wire.wireDetails.circuitNumber || "";
+                      const labelWidth = Math.max(40, labelText.length * 6 + 12);
+                      const labelHeight = 14;
+
+                      let hasCollision = true;
+                      let iterations = 0;
+                      while (hasCollision && iterations < 10) {
+                        hasCollision = false;
+                        for (const placed of placedLabels) {
+                          const overlapX = Math.abs(labelX - placed.x) < (labelWidth + placed.w) / 2 + 5;
+                          const overlapY = Math.abs(labelY - placed.y) < (labelHeight + placed.h) / 2 + 2;
+                          if (overlapX && overlapY) {
+                            hasCollision = true;
+                            if (isStraight) {
+                              labelY += 16;
+                            } else {
+                              labelX += labelWidth + 5;
+                            }
+                            break;
+                          }
+                        }
+                        iterations++;
+                      }
+                      placedLabels.push({x: labelX, y: labelY, w: labelWidth, h: labelHeight});
+
+                      labelElements.push(
+                        <g key={`label-${i}`} transform={rotation !== 0 ? `rotate(${-rotation} ${labelX} ${labelY})` : undefined}>
+                          <rect
+                            x={labelX - labelWidth / 2}
+                            y={labelY - 7}
+                            width={labelWidth}
+                            height={14}
+                            rx={3}
+                            fill="white"
+                            stroke={wire.color}
+                            strokeWidth={1}
+                            opacity={0.92}
+                          />
+                          <text
+                            x={labelX}
+                            y={labelY + 1}
+                            textAnchor="middle"
+                            fontSize="9"
+                            alignmentBaseline="middle"
+                            fill={
+                              ["white", "#fff", "#ffffff", "yellow", "#ffff00"].includes(wire.color?.toLowerCase() ?? "")
+                                ? "#333"
+                                : wire.color
+                            }
+                            fontWeight="bold"
+                          >
+                            {labelText}
+                          </text>
+                        </g>
+                      );
+                    }
                   });
+
+                  return (
+                    <>
+                      {wireElements}
+                      {labelElements}
+                    </>
+                  );
                 })()}
 
                 {/* Render Infinity Symbols for CAN wire pairs sequentially */}
@@ -2610,21 +2613,6 @@ export default function Schematic({
               );
             })()}
 
-              {useStandardColors && (
-                <g transform={`translate(${viewBox.x + 20}, ${viewBox.y + 20})`}>
-                  <rect x="0" y="0" width="160" height="90" fill="var(--bg-secondary, white)" opacity="0.9" rx="8" stroke="var(--border-color, #ccc)" />
-                  <text x="10" y="20" fontSize="12" fontWeight="bold" fill="var(--text-primary, black)">Functional Colors</text>
-                  
-                  <line x1="10" y1="35" x2="30" y2="35" stroke="red" strokeWidth="4" />
-                  <text x="40" y="39" fontSize="11" fill="var(--text-primary, black)">Power / Supply</text>
-                  
-                  <line x1="10" y1="55" x2="30" y2="55" stroke="black" strokeWidth="4" />
-                  <text x="40" y="59" fontSize="11" fill="var(--text-primary, black)">Ground / Earth</text>
-                  
-                  <line x1="10" y1="75" x2="30" y2="75" stroke="#3b82f6" strokeWidth="4" />
-                  <text x="40" y="79" fontSize="11" fill="var(--text-primary, black)">Signal / Bus / Other</text>
-                </g>
-              )}
             </svg>
             {/* 3. THE CONTEXT MENU UI */}
             {contextMenu && (

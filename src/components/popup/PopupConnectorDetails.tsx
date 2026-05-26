@@ -5,6 +5,7 @@ import { Plug } from "lucide-react";
 import { DTC_STEPS_DATA } from "../../utils/DtcStepsData";
 import { API_BASE_URL as CONFIG_API_BASE_URL } from "../../config";
 import DtcStepsSection from "./DtcStepsSection";
+import LocationImageTab from "./LocationImageTab";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || CONFIG_API_BASE_URL;
 
@@ -23,7 +24,7 @@ export default function PopupConnectorDetails({
   dtcCode,
   selectedDTC,
 }: PopupConnectorDetailsProps) {
-  const [activeTab, setActiveTab] = useState<"connection" | "dtc">("connection");
+  const [activeTab, setActiveTab] = useState<"connection" | "dtc" | "location">("connection");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
@@ -203,6 +204,13 @@ export default function PopupConnectorDetails({
               onClick={() => setActiveTab("connection")}
             >
               Connection Details
+            </button>
+
+            <button
+              style={tabButtonStyle(activeTab === "location")}
+              onClick={() => setActiveTab("location")}
+            >
+              Connector Location
             </button>
 
             {selectedTab === "DTC" && (
@@ -406,6 +414,14 @@ export default function PopupConnectorDetails({
             );
           })()}
         </div>
+      )}
+
+      {activeTab === "location" && (
+        <LocationImageTab
+          itemId={popupConnector.connectorCode || null}
+          itemType="connector"
+          isActive={activeTab === "location"}
+        />
       )}
 
 

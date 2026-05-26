@@ -6,6 +6,7 @@ import { Cpu } from "lucide-react";
 const API_BASE_URL = process.env.REACT_APP_API_URL || CONFIG_API_BASE_URL;
 
 import DtcStepsSection from "./DtcStepsSection";
+import LocationImageTab from "./LocationImageTab";
 
 interface PopupComponentDetailsProps {
   popupComponent: ComponentType | null;
@@ -18,6 +19,7 @@ export default function PopupComponentDetails({
   onClose,
   dtcCode,
 }: PopupComponentDetailsProps) {
+  const [activeTab, setActiveTab] = useState<"details" | "location">("details");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
@@ -80,43 +82,91 @@ export default function PopupComponentDetails({
           background: "var(--bg-secondary)",
           borderBottom: "3px solid var(--accent-primary)",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "10px 16px",
+          flexDirection: "column",
           zIndex: 20,
         }}
       >
-        <h3
+        <div
           style={{
-            margin: 0,
-            color: "var(--text-primary)",
-            fontSize: "20px",
-            textAlign: "center",
-            flexGrow: 1,
-          }}
-        >
-          Component Details
-        </h3>
-
-        <span
-          onClick={onClose}
-          style={{
-            color: "var(--text-primary)",
-            fontSize: "22px",
-            fontWeight: "bold",
-            cursor: "pointer",
-            marginLeft: "12px",
-            userSelect: "none",
-            width: "30px",
-            height: "30px",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "space-between",
+            padding: "10px 16px",
           }}
-          title="Close"
         >
-          ×
-        </span>
+          <h3
+            style={{
+              margin: 0,
+              color: "var(--text-primary)",
+              fontSize: "20px",
+              textAlign: "center",
+              flexGrow: 1,
+            }}
+          >
+            Component Details
+          </h3>
+
+          <span
+            onClick={onClose}
+            style={{
+              color: "var(--text-primary)",
+              fontSize: "22px",
+              fontWeight: "bold",
+              cursor: "pointer",
+              marginLeft: "12px",
+              userSelect: "none",
+              width: "30px",
+              height: "30px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            title="Close"
+          >
+            ×
+          </span>
+        </div>
+
+        {/* Tab Buttons */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "8px",
+            padding: "0 16px 10px 16px",
+          }}
+        >
+          <button
+            style={{
+              padding: "6px 12px",
+              cursor: "pointer",
+              background: activeTab === "details" ? "var(--accent-primary)" : "var(--bg-primary)",
+              color: activeTab === "details" ? "var(--accent-primary-text, #fff)" : "var(--text-secondary)",
+              border: "none",
+              borderRadius: "6px",
+              fontWeight: 600,
+              transition: "all 0.3s ease",
+            }}
+            onClick={() => setActiveTab("details")}
+          >
+            Details
+          </button>
+          <button
+            style={{
+              padding: "6px 12px",
+              cursor: "pointer",
+              background: activeTab === "location" ? "var(--accent-primary)" : "var(--bg-primary)",
+              color: activeTab === "location" ? "var(--accent-primary-text, #fff)" : "var(--text-secondary)",
+              border: "none",
+              borderRadius: "6px",
+              fontWeight: 600,
+              transition: "all 0.3s ease",
+            }}
+            onClick={() => setActiveTab("location")}
+          >
+            Component Location
+          </button>
+        </div>
       </div>
 
 
@@ -127,57 +177,59 @@ export default function PopupComponentDetails({
           padding: "20px",
         }}
       >
-        <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          {!imageError ? (
-            <img
-              src={imageUrl || `/images/components/${popupComponent.id}.png`}
-              alt={popupComponent.label}
-              style={{
-                maxWidth: '160px',
-                width: '100%',
-                borderRadius: '8px',
-                minHeight: '100px',
-                objectFit: 'contain',
-                cursor: 'pointer',
-                border: '1px solid var(--border-color)',
-                display: 'block',
-                margin: '0 auto'
-              }}
-              onClick={() => {
-                window.open(
-                  imageUrl || `/images/components/${popupComponent.id}.png`,
-                  "_blank"
-                );
-              }}
-              onError={(e) => {
-                const target = e.currentTarget;
-                if (target.src.endsWith('.png') && target.src.includes('/images/')) {
-                  target.src = target.src.replace('.png', '.jpg');
-                } else if (target.src.endsWith('.jpg') && target.src.includes('/images/')) {
-                  target.src = target.src.replace('.jpg', '.jpeg');
-                } else {
-                  setImageError(true);
-                }
-              }}
-            />
-          ) : (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '160px',
-              height: '120px',
-              borderRadius: '8px',
-              border: '1px dashed var(--border-color)',
-              backgroundColor: 'var(--bg-primary)',
-              color: 'var(--text-secondary)'
-            }}>
-              <Cpu size={48} style={{ strokeWidth: 1.5, marginBottom: '8px', color: 'var(--text-secondary)' }} />
-              <span style={{ fontSize: '11px', fontWeight: 500 }}>No Image Available</span>
+        {activeTab === "details" && (
+          <>
+            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              {!imageError ? (
+                <img
+                  src={imageUrl || `/images/components/${popupComponent.id}.png`}
+                  alt={popupComponent.label}
+                  style={{
+                    maxWidth: '160px',
+                    width: '100%',
+                    borderRadius: '8px',
+                    minHeight: '100px',
+                    objectFit: 'contain',
+                    cursor: 'pointer',
+                    border: '1px solid var(--border-color)',
+                    display: 'block',
+                    margin: '0 auto'
+                  }}
+                  onClick={() => {
+                    window.open(
+                      imageUrl || `/images/components/${popupComponent.id}.png`,
+                      "_blank"
+                    );
+                  }}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src.endsWith('.png') && target.src.includes('/images/')) {
+                      target.src = target.src.replace('.png', '.jpg');
+                    } else if (target.src.endsWith('.jpg') && target.src.includes('/images/')) {
+                      target.src = target.src.replace('.jpg', '.jpeg');
+                    } else {
+                      setImageError(true);
+                    }
+                  }}
+                />
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '160px',
+                  height: '120px',
+                  borderRadius: '8px',
+                  border: '1px dashed var(--border-color)',
+                  backgroundColor: 'var(--bg-primary)',
+                  color: 'var(--text-secondary)'
+                }}>
+                  <Cpu size={48} style={{ strokeWidth: 1.5, marginBottom: '8px', color: 'var(--text-secondary)' }} />
+                  <span style={{ fontSize: '11px', fontWeight: 500 }}>No Image Available</span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
         <table
           style={{
             width: "100%",
@@ -491,6 +543,16 @@ export default function PopupComponentDetails({
               harnessName: popupComponent.harness_name,
               connectorCode: popupComponent.connectors?.map(c => c.label).join(", ")
             }}
+          />
+        )}
+          </>
+        )}
+
+        {activeTab === "location" && (
+          <LocationImageTab
+            itemId={popupComponent.id}
+            itemType="component"
+            isActive={activeTab === "location"}
           />
         )}
       </div>

@@ -51,7 +51,7 @@ class SchematicExportManager {
         console.log('Capture dimensions:', { exportWidth, exportHeight, padding, bbox });
         const viewBoxX = bbox.x - padding;
         const viewBoxY = bbox.y - padding;
-        console.log('ViewBox params:', { viewBoxX, viewBoxY, exportWidth, exportHeight });
+        //console.log('ViewBox params:', { viewBoxX, viewBoxY, exportWidth, exportHeight });
 
       // Clone the SVG to safely modify it
       const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
@@ -655,7 +655,7 @@ class SchematicExportManager {
         // Compute full dimensions including any negative offsets
         const exportWidth = bbox.width + padding * 2;
         const exportHeight = bbox.height + padding * 2;
-        console.log('Capture dimensions:', { exportWidth, exportHeight, padding, bbox });
+        //console.log('Capture dimensions:', { exportWidth, exportHeight, padding, bbox });
         const viewBoxX = bbox.x - padding;
         const viewBoxY = bbox.y - padding;
         const clonedSvg = svg.cloneNode(true) as SVGSVGElement;

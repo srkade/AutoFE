@@ -9,7 +9,7 @@ import {
 
 export function spaceForWires(data: SchematicData) {
     let connectionsCount = data.connections?.length ?? 0;
-    return connectionsCount * 20 + 40; // 20px per connection + padding
+    return connectionsCount * 20 + 48; // 20px per connection + padding
 }
 
 export function connectionPointKey(point: ConnectionPoint): string {
@@ -115,10 +115,10 @@ export function getConnectionPointsForConnector(conn: ConnectorType, data: Schem
         const getTargetIndices = (p: { wire: ConnectionType; side: "from" | "to" }) => {
             const targetCompId = p.side === "from" ? p.wire.to.componentId : p.wire.from.componentId;
             const targetConnId = p.side === "from" ? p.wire.to.connectorId : p.wire.from.connectorId;
-            
-            const isMaster = masterIds 
-              ? masterIds.has(targetCompId)
-              : (data.masterComponents || []).includes(targetCompId);
+
+            const isMaster = masterIds
+                ? masterIds.has(targetCompId)
+                : (data.masterComponents || []).includes(targetCompId);
 
             const sameRowComponents = (data.components || []).filter(c => {
                 const cIsMaster = masterIds ? masterIds.has(c.id) : (data.masterComponents || []).includes(c.id);
@@ -128,7 +128,7 @@ export function getConnectionPointsForConnector(conn: ConnectorType, data: Schem
             const compIdx = sameRowComponents.findIndex(c => c.id === targetCompId);
             const comp = sameRowComponents[compIdx];
             const connIdx = comp ? (comp.connectors || []).findIndex(c => c.id === targetConnId) : 0;
-            
+
             // Return a tuple of indices to sort by
             return { compIdx: compIdx >= 0 ? compIdx : 9999, connIdx: connIdx >= 0 ? connIdx : 9999 };
         };
@@ -138,7 +138,7 @@ export function getConnectionPointsForConnector(conn: ConnectorType, data: Schem
 
         if (targetA.compIdx !== targetB.compIdx) return targetA.compIdx - targetB.compIdx;
         if (targetA.connIdx !== targetB.connIdx) return targetA.connIdx - targetB.connIdx;
-        
+
         // As a final tie-breaker, both ends MUST sort these wires in the IDENTICAL order.
         // We use an intrinsic property of the wire ('wire.from.cavity') rather than property of the target.
         // This ensures identical sequences and prevents lines from crossing.
@@ -153,51 +153,51 @@ export function getConnectionPointsForConnector(conn: ConnectorType, data: Schem
  * Merges two SchematicData objects, deduplicating components and connections.
  */
 export function mergeSchematics(base: SchematicData, extra: SchematicData): SchematicData {
-  // Merge components
-  const mergedComponentsMap = new Map<string, ComponentType>();
-  base.components.forEach(c => mergedComponentsMap.set(c.id, c));
-  
-  extra.components.forEach(c => {
-    if (!mergedComponentsMap.has(c.id)) {
-      mergedComponentsMap.set(c.id, c);
-    } else {
-      // Merge connectors for existing components
-      const existing = mergedComponentsMap.get(c.id)!;
-      const existingConnectorIds = new Set(existing.connectors.map(conn => conn.id));
-      c.connectors.forEach(conn => {
-        if (!existingConnectorIds.has(conn.id)) {
-          existing.connectors.push(conn);
+    // Merge components
+    const mergedComponentsMap = new Map<string, ComponentType>();
+    base.components.forEach(c => mergedComponentsMap.set(c.id, c));
+
+    extra.components.forEach(c => {
+        if (!mergedComponentsMap.has(c.id)) {
+            mergedComponentsMap.set(c.id, c);
+        } else {
+            // Merge connectors for existing components
+            const existing = mergedComponentsMap.get(c.id)!;
+            const existingConnectorIds = new Set(existing.connectors.map(conn => conn.id));
+            c.connectors.forEach(conn => {
+                if (!existingConnectorIds.has(conn.id)) {
+                    existing.connectors.push(conn);
+                }
+            });
         }
-      });
-    }
-  });
+    });
 
-  // Merge connections
-  const mergedConnectionsMap = new Map<string, ConnectionType>();
-  const getConnectionKey = (c: ConnectionType) => {
-    const wire = c.wireDetails;
-    if (wire) {
-      return `${wire.circuitNumber}|${wire.from.connectorNumber}|${wire.from.cavity}|${wire.to.connectorNumber}|${wire.to.cavity}`;
-    }
-    // Fallback key
-    return `${c.from.componentId}_${c.from.connectorId}_${c.from.cavity}_${c.to.componentId}_${c.to.connectorId}_${c.to.cavity}`;
-  };
+    // Merge connections
+    const mergedConnectionsMap = new Map<string, ConnectionType>();
+    const getConnectionKey = (c: ConnectionType) => {
+        const wire = c.wireDetails;
+        if (wire) {
+            return `${wire.circuitNumber}|${wire.from.connectorNumber}|${wire.from.cavity}|${wire.to.connectorNumber}|${wire.to.cavity}`;
+        }
+        // Fallback key
+        return `${c.from.componentId}_${c.from.connectorId}_${c.from.cavity}_${c.to.componentId}_${c.to.connectorId}_${c.to.cavity}`;
+    };
 
-  base.connections.forEach(c => mergedConnectionsMap.set(getConnectionKey(c), c));
-  extra.connections.forEach(c => {
-    const key = getConnectionKey(c);
-    if (!mergedConnectionsMap.has(key)) {
-      mergedConnectionsMap.set(key, c);
-    }
-  });
+    base.connections.forEach(c => mergedConnectionsMap.set(getConnectionKey(c), c));
+    extra.connections.forEach(c => {
+        const key = getConnectionKey(c);
+        if (!mergedConnectionsMap.has(key)) {
+            mergedConnectionsMap.set(key, c);
+        }
+    });
 
-  // Merge master components (unique list)
-  const masterComponents = Array.from(new Set([...base.masterComponents, ...extra.masterComponents]));
+    // Merge master components (unique list)
+    const masterComponents = Array.from(new Set([...base.masterComponents, ...extra.masterComponents]));
 
-  return {
-    name: base.name || extra.name,
-    masterComponents,
-    components: Array.from(mergedComponentsMap.values()),
-    connections: Array.from(mergedConnectionsMap.values()),
-  };
+    return {
+        name: base.name || extra.name,
+        masterComponents,
+        components: Array.from(mergedComponentsMap.values()),
+        connections: Array.from(mergedConnectionsMap.values()),
+    };
 }

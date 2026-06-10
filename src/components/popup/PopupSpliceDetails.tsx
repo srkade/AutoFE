@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { SplicePopupType } from "../Schematic/SchematicTypes";
+import LocationImageTab from "./LocationImageTab";
 
 interface PopupSpliceDetailsProps {
   popupSplice: SplicePopupType | null;
@@ -14,6 +15,8 @@ export default function PopupSpliceDetails({
   error,
   onClose,
 }: PopupSpliceDetailsProps) {
+  const [activeTab, setActiveTab] = useState<"details" | "location">("details");
+
   if (!popupSplice && !isLoading) return null;
 
   // ---------- Internal CSS Styles (Matching other popups) ----------
@@ -47,6 +50,17 @@ export default function PopupSpliceDetails({
     fontSize: "18px",
     color: "var(--text-primary)",
   };
+
+  const tabButtonStyle = (active: boolean): React.CSSProperties => ({
+    padding: "6px 12px",
+    cursor: "pointer",
+    background: active ? "var(--accent-primary)" : "var(--bg-primary)",
+    color: active ? "var(--accent-primary-text, #fff)" : "var(--text-secondary)",
+    border: "none",
+    borderRadius: "6px",
+    fontWeight: 600,
+    transition: "all 0.3s ease",
+  });
 
   const tableStyle: React.CSSProperties = {
     width: "100%",
@@ -112,6 +126,28 @@ export default function PopupSpliceDetails({
         {/* Fixed Header */}
         <div style={headerWrapperStyle}>
           <div style={{ marginBottom: "10px" }}>Splice Information</div>
+          {/* Tab Buttons */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "8px",
+              marginTop: "10px",
+            }}
+          >
+            <button
+              style={tabButtonStyle(activeTab === "details")}
+              onClick={() => setActiveTab("details")}
+            >
+              Details
+            </button>
+            <button
+              style={tabButtonStyle(activeTab === "location")}
+              onClick={() => setActiveTab("location")}
+            >
+              Splice Location
+            </button>
+          </div>
         </div>
 
         {/* Loading State */}
@@ -142,66 +178,78 @@ export default function PopupSpliceDetails({
         {/* Content */}
         {popupSplice && !isLoading && (
           <div style={{ marginTop: "20px" }}>
-            <table style={tableStyle}>
-              <tbody>
-                <tr>
-                  <td style={tdLabelStyle}>Splice Code</td>
-                  <td style={{ ...tdValueStyle, fontWeight: "bold" }}>
-                    {popupSplice.spliceId}
-                  </td>
-                </tr>
-                {popupSplice.label && (
-                  <tr>
-                    <td style={tdLabelStyle}>Label</td>
-                    <td style={tdValueStyle}>{popupSplice.label}</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-
-            {/* Connected Wires */}
-            {popupSplice.connections && popupSplice.connections.length > 0 ? (
+            {activeTab === "details" && (
               <>
-                <div style={{ fontWeight: "bold", marginBottom: "10px", color: "var(--text-primary)", fontSize: "16px" }}>
-                  Connected Wires ({popupSplice.connections.length})
-                </div>
                 <table style={tableStyle}>
-                  <thead>
-                    <tr>
-                      <th style={{...thStyle, padding: "8px 6px", fontSize: "12px"}}>Color</th>
-                      <th style={{...thStyle, padding: "8px 6px", fontSize: "12px"}}>From</th>
-                      <th style={{...thStyle, padding: "8px 6px", fontSize: "12px"}}>To</th>
-                      <th style={{...thStyle, padding: "8px 6px", fontSize: "12px"}}>Cavity</th>
-                    </tr>
-                  </thead>
                   <tbody>
-                    {popupSplice.connections.map((conn, idx) => (
-                      <tr key={idx}>
-                        <td style={{...tdValueStyle, textAlign: "center", fontSize: "12px"}}>
-                          {conn.wireColor || "—"}
-                        </td>
-                        <td style={{...tdValueStyle, fontSize: "12px"}}>
-                          <strong>{conn.fromComponentLabel || conn.fromComponentId || "—"}</strong>
-                          <br/>
-                          <span style={{ color: "var(--text-secondary)" }}>{conn.fromConnectorId}</span>
-                        </td>
-                        <td style={{...tdValueStyle, fontSize: "12px"}}>
-                          <strong>{conn.toComponentLabel || conn.toComponentId || "—"}</strong>
-                          <br/>
-                          <span style={{ color: "var(--text-secondary)" }}>{conn.toConnectorId}</span>
-                        </td>
-                        <td style={{...tdValueStyle, textAlign: "center", fontSize: "12px"}}>
-                          {conn.fromCavity || "—"} → {conn.toCavity || "—"}
-                        </td>
+                    <tr>
+                      <td style={tdLabelStyle}>Splice Code</td>
+                      <td style={{ ...tdValueStyle, fontWeight: "bold" }}>
+                        {popupSplice.spliceId}
+                      </td>
+                    </tr>
+                    {popupSplice.label && (
+                      <tr>
+                        <td style={tdLabelStyle}>Label</td>
+                        <td style={tdValueStyle}>{popupSplice.label}</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
+
+                {/* Connected Wires */}
+                {popupSplice.connections && popupSplice.connections.length > 0 ? (
+                  <>
+                    <div style={{ fontWeight: "bold", marginBottom: "10px", color: "var(--text-primary)", fontSize: "16px" }}>
+                      Connected Wires ({popupSplice.connections.length})
+                    </div>
+                    <table style={tableStyle}>
+                      <thead>
+                        <tr>
+                          <th style={{...thStyle, padding: "8px 6px", fontSize: "12px"}}>Color</th>
+                          <th style={{...thStyle, padding: "8px 6px", fontSize: "12px"}}>From</th>
+                          <th style={{...thStyle, padding: "8px 6px", fontSize: "12px"}}>To</th>
+                          <th style={{...thStyle, padding: "8px 6px", fontSize: "12px"}}>Cavity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {popupSplice.connections.map((conn, idx) => (
+                          <tr key={idx}>
+                            <td style={{...tdValueStyle, textAlign: "center", fontSize: "12px"}}>
+                              {conn.wireColor || "—"}
+                            </td>
+                            <td style={{...tdValueStyle, fontSize: "12px"}}>
+                              <strong>{conn.fromComponentLabel || conn.fromComponentId || "—"}</strong>
+                              <br/>
+                              <span style={{ color: "var(--text-secondary)" }}>{conn.fromConnectorId}</span>
+                            </td>
+                            <td style={{...tdValueStyle, fontSize: "12px"}}>
+                              <strong>{conn.toComponentLabel || conn.toComponentId || "—"}</strong>
+                              <br/>
+                              <span style={{ color: "var(--text-secondary)" }}>{conn.toConnectorId}</span>
+                            </td>
+                            <td style={{...tdValueStyle, textAlign: "center", fontSize: "12px"}}>
+                              {conn.fromCavity || "—"} → {conn.toCavity || "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "20px", color: "var(--text-secondary)" }}>
+                    No connection details available.
+                  </div>
+                )}
               </>
-            ) : (
-              <div style={{ textAlign: "center", padding: "20px", color: "var(--text-secondary)" }}>
-                No connection details available.
-              </div>
+            )}
+
+            {activeTab === "location" && (
+              <LocationImageTab
+                itemId={popupSplice.spliceId}
+                itemType="splice"
+                isActive={activeTab === "location"}
+              />
             )}
           </div>
         )}

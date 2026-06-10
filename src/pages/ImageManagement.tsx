@@ -3,6 +3,7 @@ import { FiSearch, FiFilter, FiTrash2, FiUpload, FiDownload } from "react-icons/
 import * as XLSX from "xlsx";
 import "../Styles/ImageManagement.css";
 import { API_BASE_URL as CONFIG_API_BASE_URL } from "../config";
+import LocationImageManagement from "../components/LocationImageManagement";
 
 interface ImageAsset {
   id: string;
@@ -41,6 +42,7 @@ const DIRECTORY_API = process.env.REACT_APP_DIRECTORY_API || CONFIG_API_BASE_URL
 
 export default function ImageManagement() {
   // ==================== STATE MANAGEMENT ====================
+  const [activeTab, setActiveTab] = useState<"code" | "location">("code");
   const [imageAssets, setImageAssets] = useState<ImageAsset[]>([]);
   const [filteredAssets, setFilteredAssets] = useState<ImageAsset[]>([]);
   const [loading, setLoading] = useState(false);
@@ -538,34 +540,53 @@ export default function ImageManagement() {
         <p className="subtitle">Manage component and connector images for schematic rendering</p>
       </div>
 
-      {/* Messages */}
-      {error && (
-        <div className="im-alert im-alert-error">
-          <span><strong>Error:</strong> {error}</span>
-          <button
-            onClick={() => setError(null)}
-            className="im-alert-close"
-            aria-label="Close error"
-          >
-            ×
-          </button>
-        </div>
-      )}
+      {/* Tab Navigation */}
+      <div className="im-tab-navigation">
+        <button
+          className={`im-tab-btn ${activeTab === "code" ? "active" : ""}`}
+          onClick={() => setActiveTab("code")}
+        >
+          Code Images
+        </button>
+        <button
+          className={`im-tab-btn ${activeTab === "location" ? "active" : ""}`}
+          onClick={() => setActiveTab("location")}
+        >
+          Location Images
+        </button>
+      </div>
 
-      {successMessage && (
-        <div className="im-alert im-alert-success">
-          <span><strong>Success:</strong> {successMessage}</span>
-          <button
-            onClick={() => setSuccessMessage(null)}
-            className="im-alert-close"
-            aria-label="Close success"
-          >
-            ×
-          </button>
-        </div>
-      )}
+      {/* Render appropriate tab content */}
+      {activeTab === "code" ? (
+        <>
+          {/* Messages */}
+          {error && (
+            <div className="im-alert im-alert-error">
+              <span><strong>Error:</strong> {error}</span>
+              <button
+                onClick={() => setError(null)}
+                className="im-alert-close"
+                aria-label="Close error"
+              >
+                ×
+              </button>
+            </div>
+          )}
 
-      {/* Upload Panels */}
+          {successMessage && (
+            <div className="im-alert im-alert-success">
+              <span><strong>Success:</strong> {successMessage}</span>
+              <button
+                onClick={() => setSuccessMessage(null)}
+                className="im-alert-close"
+                aria-label="Close success"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Upload Panels */}
       <div className="im-upload-section">
         {/* Bulk Upload Card */}
         <div className="im-card im-bulk-upload">
@@ -869,6 +890,10 @@ export default function ImageManagement() {
             </div>
           </div>
         </div>
+      )}
+        </>
+      ) : (
+        <LocationImageManagement />
       )}
     </div>
   );

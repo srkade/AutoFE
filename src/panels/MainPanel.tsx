@@ -1,7 +1,8 @@
 import React from "react";
 import Schematic from "../components/Schematic/Schematic";
 import { DashboardItem } from "../App";
-
+import { FiDownload } from "react-icons/fi";
+import { offlineStorageService } from "../services/offlineStorageService";
 
 interface MainPanelProps {
   selectedItem: DashboardItem | null;
@@ -24,11 +25,25 @@ export default function MainPanel({ selectedItem, activeTab, isMultipleComponent
   onMobileBack,
   highlightedElementId }: MainPanelProps) {
 
+  const handleSaveOffline = async () => {
+    if (!selectedItem) return;
+    try {
+      const saveName = selectedItem.name;
+      const saveId = selectedItem.code + '_' + Date.now();
+      await offlineStorageService.saveSchematic(saveId, saveName, selectedItem.schematicData);
+      alert("Schematic saved offline successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save schematic offline.");
+    }
+  };
+
   const placeholderMessages: Record<string, string> = {
     Components: "Choose a component from the left panel to view its schematic diagram with interactive controls.",
     System: "Choose a system from the left panel to view system formula and details.",
     voltage: "Choose a voltage supply/fuse from the left panel to view fuse connections.",
     Wire: "Choose a wire from the left panel to view wire details.",
+    offline: "Choose an offline schematic from the left panel to view it.",
   };
 
   if (!selectedItem) {
@@ -164,15 +179,18 @@ export default function MainPanel({ selectedItem, activeTab, isMultipleComponent
             <p style={{ margin: 0 }}>This component has no wiring connections in the database.</p>
           </div>
         ) : (
-          <Schematic
-            key={isMultipleComponents ? "merged-view" : selectedItem.code} // Stabilize key during merges to prevent unwanted view resets
-            data={selectedItem.schematicData}
-            activeTab={activeTab}
-            dtcCode={selectedItem.dtcCode || (selectedItem.type === 'DTC' ? selectedItem.code : undefined)}
-            onComponentRightClick={onComponentRightClick}
-            onSpliceRightClick={onSpliceRightClick}
-            highlightedElementId={highlightedElementId}
-          />
+          <>
+            <Schematic
+              key={isMultipleComponents ? "merged-view" : selectedItem.code} // Stabilize key during merges to prevent unwanted view resets
+              data={selectedItem.schematicData}
+              activeTab={activeTab}
+              dtcCode={selectedItem.dtcCode || (selectedItem.type === 'DTC' ? selectedItem.code : undefined)}
+              onComponentRightClick={onComponentRightClick}
+              onSpliceRightClick={onSpliceRightClick}
+              highlightedElementId={highlightedElementId}
+              onSaveOffline={handleSaveOffline}
+            />
+          </>
         )}
       </div>
     </div>

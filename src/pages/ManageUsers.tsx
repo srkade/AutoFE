@@ -37,7 +37,8 @@ export default function ManageUsersModern() {
           lastName: u.lastName || "",
           email: u.email || "",
           status: u.status || "Pending", // Default to Pending if null
-          role: u.role || "User"         // Default to User if null
+          role: u.role || "User",         // Default to User if null
+          allowOffline: !!u.allowOffline
         }));
 
         // Sort users by joined date (optional, newest first)
@@ -228,6 +229,15 @@ export default function ManageUsersModern() {
     }
   };
 
+  const handleOfflineChange = async (id: string, allowOffline: boolean) => {
+    try {
+      await updateUser(id, { allowOffline });
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, allowOffline } : u));
+    } catch (err: any) {
+      console.error("Offline access update failed:", err);
+      alert("Failed to update offline access: " + (err.response?.data?.message || err.message));
+    }
+  };
 
   const filteredUsers = users.filter(u => {
     //  FIX: Use (field || "") to prevent crashes during search
@@ -392,6 +402,7 @@ export default function ManageUsersModern() {
               <th>Role</th>
               <th className="hide-mobile">Joined</th>
               <th className="hide-mobile">Last Active</th>
+              <th>Offline Access</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -475,6 +486,15 @@ export default function ManageUsersModern() {
                 </td>
                 <td className="hide-mobile">{u.joined ? new Date(u.joined).toLocaleDateString() : "-"}</td>
                 <td className="hide-mobile">{u.lastActive ? new Date(u.lastActive).toLocaleDateString() : "-"}</td>
+                <td style={{ textAlign: 'center' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={!!u.allowOffline} 
+                    onChange={(e) => handleOfflineChange(u.id, e.target.checked)} 
+                    style={{ cursor: "pointer", width: "18px", height: "18px" }}
+                    title={u.allowOffline ? "Revoke offline access" : "Grant offline access"}
+                  />
+                </td>
                 <td className="actions">
                   <div className="actions-cell">
                     <FiEdit2 className="edit-icon" onClick={() => editUser(u)} title="Edit user" />

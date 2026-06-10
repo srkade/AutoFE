@@ -243,6 +243,7 @@ export async function updateUser(id: string, payload: {
   password?: string;
   role?: string;
   status?: string;
+  allowOffline?: boolean;
 }) {
   try {
     const token = sessionStorage.getItem("token") || "";

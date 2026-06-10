@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../Styles/AuthorNavigationTabs.css";
-import { FiUsers, FiUpload, FiCpu, FiUser, FiImage, FiMenu, FiX, FiLogOut, FiSun, FiMoon, FiDroplet, FiBriefcase, FiEye, FiLock, FiEyeOff, FiCheck, FiPlay } from "react-icons/fi";
+import { FiUsers, FiUpload, FiCpu, FiUser, FiImage, FiMenu, FiX, FiLogOut, FiSun, FiMoon, FiDroplet, FiBriefcase, FiEye, FiLock, FiEyeOff, FiCheck, FiPlay, FiSave } from "react-icons/fi";
 import SearchBar from "../components/SearchBar";
 import ModelSelector from "../components/ModelSelector";
 import { useTheme } from "../components/ThemeContext";
@@ -225,7 +225,8 @@ export function AuthorTopbar({
   setIsMenuOpen,
   token,
   hideSearch,
-  onShowDemo
+  onShowDemo,
+  onOfflineClick
 }: {
   onLogout: () => void;
   user: any;
@@ -237,6 +238,7 @@ export function AuthorTopbar({
   token?: string | null;
   hideSearch?: boolean;
   onShowDemo?: () => void;
+  onOfflineClick?: () => void;
 }) {
   const { theme, setTheme, logo } = useTheme();
   const [showPopup, setShowPopup] = useState(false);
@@ -433,6 +435,19 @@ export function AuthorTopbar({
                 }}
               >
                 <FiLock size={14} /> Change Password
+              </button>
+
+              {/* Offline Schematics button */}
+              <button
+                onClick={(e) => { e.stopPropagation(); onOfflineClick?.(); setShowPopup(false); }}
+                style={{
+                  width: "100%", padding: "9px", background: "var(--bg-primary)", color: "var(--text-primary)",
+                  border: "1px solid var(--border-color)", borderRadius: "8px", cursor: "pointer",
+                  fontWeight: "600", fontSize: "13px", display: "flex", alignItems: "center",
+                  justifyContent: "center", gap: "8px", transition: "background 0.2s ease", marginBottom: "12px"
+                }}
+              >
+                <FiSave size={14} /> Offline Schematics
               </button>
 
               <div style={{ marginBottom: "16px" }}>

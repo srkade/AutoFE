@@ -18,13 +18,14 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  border-radius: 12px;
+  border-radius: 0;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   height: 48px;
   justify-content: center;
   outline: none;
   user-select: none;
-  border: 1px solid transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
 }
 
 .nav-tab:hover {
@@ -34,15 +35,17 @@
 }
 
 .nav-tab.active {
-  background: var(--accent-primary);
-  color: var(--text-on-accent);
-  border-color: var(--accent-primary);
-  box-shadow: 0 4px 12px rgba(var(--accent-rgb, 59, 130, 246), 0.3);
+  background: transparent;
+  color: var(--accent-primary);
+  border-color: transparent;
+  box-shadow: none;
   transform: translateY(0);
+  border-bottom: 2px solid var(--accent-primary);
+  border-radius: 0;
 }
 
 .nav-tab.active span {
-  color: var(--text-on-accent) !important;
+  color: var(--accent-primary) !important;
 }
 
 

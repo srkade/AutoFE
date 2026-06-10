@@ -22,6 +22,7 @@ import PasswordResetPage from './pages/PasswordResetPage';
 import DemoVideoModal from "./components/DemoVideoModal";
 import ExportProgressModal from "./components/Export/ExportProgressModal";
 import { exportQueueManager, ExportProgress } from "./components/Export/ExportQueueManager";
+import { offlineStorageService } from "./services/offlineStorageService";
 
 export type DashboardItem = {
   code: string;
@@ -63,6 +64,7 @@ function AppContent() {
     name: string;
     email: string;
     role: "superadmin" | "author" | "user";
+    allowOffline?: boolean;
   } | null>(null);
   const [modelCount, setModelCount] = useState<number | null>(null);
   const [showDemoModal, setShowDemoModal] = useState(false);
@@ -70,6 +72,9 @@ function AppContent() {
   // Export state
   const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [offlineItems, setOfflineItems] = useState<any[]>([]);
+  const [offlineItemToLoad, setOfflineItemToLoad] = useState<DashboardItem | null>(null);
+  const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
 
 
 
@@ -79,6 +84,7 @@ function AppContent() {
       name: `${user.firstName} ${user.lastName}`,
       email: user.email,
       role: loggedInRole,
+      allowOffline: user.allowOffline,
     };
 
     setCurrentUser(userData);
@@ -384,6 +390,72 @@ function AppContent() {
       );
     }
   }, [apiSchematics, dtcList, wireList, harnessesList, systemsList, supplyList]);
+
+  useEffect(() => {
+    if (activeTab === "offline" || schematicTab === "offline") {
+      offlineStorageService.getStoredSchematics().then(items => {
+        setOfflineItems(items);
+      });
+    }
+  }, [activeTab, schematicTab]);
+
+  const handleSaveOfflineBulk = async (codes: string[]) => {
+    try {
+      let savedCount = 0;
+      let errorCount = 0;
+      for (const code of codes) {
+        const item = dashboardItems.find(i => i.code === code);
+        if (!item) {
+          errorCount++;
+          continue;
+        }
+        
+        try {
+          let schematicData;
+          if (item.type === "Harness") {
+            schematicData = await getHarnessSchematic(item.code, selectedModelId || undefined);
+          } else if (item.type === "System") {
+            schematicData = await getSystemFormula(item.code, selectedModelId || undefined);
+          } else if (item.type === "Supply") {
+            schematicData = await getSupplyFormula(item.code, selectedModelId || undefined);
+          } else if (item.type === "DTC") {
+            schematicData = await getDtcSchematic(item.code, selectedModelId || undefined);
+          } else if (item.type === "wire") {
+            const wireDetails = await getWireDetailsByWireCode(item.code, selectedModelId || undefined);
+            schematicData = { name: `Wire ${item.code}`, wires: wireDetails };
+          } else {
+            schematicData = await getComponentSchematic(item.code, selectedModelId || undefined);
+          }
+
+          const converted = normalizeSchematic(schematicData);
+          await offlineStorageService.saveSchematic(item.code, item.name, converted);
+          savedCount++;
+        } catch (e) {
+          console.error("Failed to save", item.code, e);
+          errorCount++;
+        }
+      }
+      
+      // Update the offline list immediately
+      const updatedItems = await offlineStorageService.getStoredSchematics();
+      setOfflineItems(updatedItems);
+      
+      alert(`Successfully saved ${savedCount} schematic(s) offline!${errorCount > 0 ? ` Failed to save ${errorCount}.` : ""}`);
+    } catch (err: any) {
+      alert(`Error saving offline: ${err.message}`);
+    }
+  };
+
+  const offlineDashboardItems: DashboardItem[] = offlineItems.map(item => ({
+    code: item.id,
+    name: item.name,
+    type: "Offline",
+    status: "Active",
+    voltage: "N/A",
+    description: `Saved on ${new Date(item.date).toLocaleString()}`,
+    schematicData: { components: [], connections: [], masterComponents: [], name: item.name } // placeholder
+  }));
+
   const dashboardItems: DashboardItem[] = [
 
     // Components
@@ -411,8 +483,9 @@ function AppContent() {
     //voltage supply
     ...supplyItems,
     //wires
-    ...wiresItems
-
+    ...wiresItems,
+    // Offline Items
+    ...offlineDashboardItems
   ];
 
   async function handleViewSchematic(codes: string[]) {
@@ -566,6 +639,15 @@ function AppContent() {
 
   const handleItemSelection = useCallback(async (item: DashboardItem) => {
     try {
+      if (item.type === "Offline") {
+        try {
+          const schematicData = await offlineStorageService.loadSchematic(item.code);
+          setSelectedItem({ ...item, schematicData });
+        } catch (err: any) {
+          alert(err.message);
+        }
+        return;
+      }
 
       setMergedSchematic(null);
       setShowWelcome(false);
@@ -631,6 +713,8 @@ function AppContent() {
         return item.type === "wire";
       case "harnesses":
         return item.type === "Harness";
+      case "offline":
+        return item.type === "Offline";
       default:
         return true;
     }
@@ -912,6 +996,7 @@ function AppContent() {
                   onHighlightElement={setHighlightedElementId}
                   onExportPDF={handleExportPDF}
                   onExportImages={handleExportImages}
+                  onSaveOffline={handleSaveOfflineBulk}
                 />
               </div>
 
@@ -998,6 +1083,10 @@ function AppContent() {
               setIsMenuOpen={setIsAuthorMenuOpen}
               hideSearch={authorTab === "view-schematic"}
               onShowDemo={() => setShowDemoModal(true)}
+              onOfflineClick={() => {
+                setAuthorTab("view-schematic");
+                setSchematicTab("offline");
+              }}
             />
 
 
@@ -1079,6 +1168,7 @@ function AppContent() {
                           onHighlightElement={setHighlightedElementId}
                           onExportPDF={handleExportPDF}
                           onExportImages={handleExportImages}
+                          onSaveOffline={handleSaveOfflineBulk}
                         />
                       </div>
 

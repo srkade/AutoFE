@@ -95,6 +95,7 @@ export default function Schematic({
   onSpliceRightClick,
   highlightedElementId,
   isExportMode = false,
+  onSaveOffline,
 }: {
   data: SchematicData;
   scale?: number;
@@ -104,6 +105,7 @@ export default function Schematic({
   onSpliceRightClick?: (splice: ComponentType) => void;
   highlightedElementId?: string | null;
   isExportMode?: boolean;
+  onSaveOffline?: () => void;
 }) {
   const { theme } = useTheme();
   const svgWrapperRef = useRef<HTMLDivElement>(null);
@@ -1186,6 +1188,21 @@ export default function Schematic({
                   >
                     🖼️ Export as PNG
                   </button>
+                  {onSaveOffline && (
+                    <>
+                      <hr className="schematic-export-menu-hr" />
+                      <button
+                        onClick={() => {
+                          onSaveOffline();
+                          const menu = document.getElementById("export-menu");
+                          if (menu) menu.style.display = "none";
+                        }}
+                        className="schematic-export-menu-btn"
+                      >
+                        💾 Save Offline
+                      </button>
+                    </>
+                  )}
                   <hr className="schematic-export-menu-hr" />
                 </div>
               </div>
@@ -1867,9 +1884,9 @@ export default function Schematic({
                               textAnchor = "middle";
                             } else {
                               // 0 degrees rotation (default layout)
-                              labelX = x_c - 1;
+                              labelX = x_c + 2;
                               labelY = y_c + 13;
-                              textAnchor = "end";
+                              textAnchor = "start";
                             }
 
                             labelX = safe(labelX, padding);

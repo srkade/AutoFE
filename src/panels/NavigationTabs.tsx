@@ -10,7 +10,7 @@ import {
   AlertTriangle,
   Cable
 } from "lucide-react";
-import { FiLogOut, FiSun, FiMoon, FiDroplet, FiBriefcase, FiEye, FiPlay } from "react-icons/fi";
+import { FiLogOut, FiSun, FiMoon, FiDroplet, FiBriefcase, FiEye, FiPlay, FiSave } from "react-icons/fi";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useTheme } from "../components/ThemeContext";
 
@@ -279,6 +279,33 @@ export default function NavigationTabs({
                       {user?.role?.toUpperCase() || "USER"}
                     </span>
                   </div>
+                </div>
+
+                <div style={{ marginBottom: "8px" }}>
+                  <button
+                    onClick={() => {
+                      onTabChange("offline");
+                      setUserMenuOpen(false);
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      background: "var(--bg-primary)",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      fontSize: "13px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <FiSave size={16} /> Offline Schematics
+                  </button>
                 </div>
 
                 {onShowDemo && (

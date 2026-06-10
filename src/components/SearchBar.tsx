@@ -1,12 +1,12 @@
-// Persistent Search Bar Component
+// Persistent Search Bar Component (Icon Only)
 import React from 'react';
 import { FiSearch } from 'react-icons/fi';
 import './SearchBar.css';
 
 const SearchBar: React.FC = () => {
   return (
-    <div 
-      className="persistent-search-bar"
+    <button 
+      className="search-icon-button"
       title="Search components, SPN/FMIs, connectors... (Ctrl+K)"
       onClick={() => {
         // Dispatch event to open global search
@@ -14,14 +14,8 @@ const SearchBar: React.FC = () => {
         window.dispatchEvent(event);
       }}
     >
-      <FiSearch style={{ color: "#6c757d", flexShrink: 0 }} />
-      <span className="search-bar-text">
-        Search components, SPN/FMIs, connectors...
-      </span>
-      <span className="search-bar-shortcut">
-        Ctrl+K
-      </span>
-    </div>
+      <FiSearch size={20} />
+    </button>
   );
 };
 

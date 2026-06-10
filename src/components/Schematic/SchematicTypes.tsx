@@ -260,4 +260,5 @@ export interface User {
   role: "Super Admin" | "User" | "Author";
   joined: string;
   lastActive: string;
+  allowOffline?: boolean;
 }

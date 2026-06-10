@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, XCircle, Download, FileText, FileImage } from "lucide-react";
+import { Search, XCircle, Download, FileText, FileImage, Save } from "lucide-react";
 
 import { DashboardItem } from "../App";
 
@@ -22,6 +22,7 @@ interface LeftPanelProps {
   onHighlightElement?: (id: string | null) => void;
   onExportPDF?: (codes: string[]) => void;
   onExportImages?: (codes: string[]) => void;
+  onSaveOffline?: (codes: string[]) => Promise<void>;
 }
 
 export default function LeftPanel({
@@ -38,12 +39,14 @@ export default function LeftPanel({
   onHighlightElement,
   onExportPDF,
   onExportImages,
+  onSaveOffline,
 }: LeftPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activePanelTab, setActivePanelTab] = useState<"index" | "legend">("index");
   const [highlightedLegendId, setHighlightedLegendId] = useState<string | null>(null);
   const [exportQueue, setExportQueue] = useState<Set<string>>(new Set());
   const [showExportMode, setShowExportMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const search = searchTerm.trim().toLowerCase();
 
@@ -142,6 +145,30 @@ export default function LeftPanel({
   const handleExportImages = () => {
     if (exportQueue.size > 0 && onExportImages) {
       onExportImages(Array.from(exportQueue));
+    }
+  };
+
+  const handleSaveOffline = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (exportQueue.size === 0) {
+      alert("No items selected!");
+      return;
+    }
+    if (!onSaveOffline) {
+      alert("onSaveOffline is not provided!");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await onSaveOffline(Array.from(exportQueue));
+      setExportQueue(new Set());
+      setShowExportMode(false);
+    } catch (err: any) {
+      alert(`Save Offline Failed in LeftPanel: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -308,55 +335,88 @@ export default function LeftPanel({
         )}
 
         {showExportMode && exportQueue.size > 0 && (
-          <div style={{ marginTop: "16px", display: "flex", gap: "8px" }}>
-            <button
-              onClick={handleExportPDF}
-              style={{
-                flex: 1,
-                padding: "10px 12px",
-                background: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: "10px",
-                cursor: "pointer",
-                fontSize: "14px",
-                fontWeight: "600",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "#0056b3"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "#007bff"}
-            >
-              <FileText size={16} />
-              Export PDF ({exportQueue.size})
-            </button>
-            <button
-              onClick={handleExportImages}
-              style={{
-                flex: 1,
-                padding: "10px 12px",
-                background: "#28a745",
-                color: "white",
-                border: "none",
-                borderRadius: "10px",
-                cursor: "pointer",
-                fontSize: "14px",
-                fontWeight: "600",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "#218838"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "#28a745"}
-            >
-              <FileImage size={16} />
-              Export Images ({exportQueue.size})
-            </button>
+          <div style={{ marginTop: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                type="button"
+                onClick={handleExportPDF}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  background: "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  transition: "background 0.2s",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#0056b3"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "#007bff"}
+              >
+                <FileText size={16} />
+                Export PDF ({exportQueue.size})
+              </button>
+              <button
+                type="button"
+                onClick={handleExportImages}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  background: "#28a745",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  transition: "background 0.2s",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#218838"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "#28a745"}
+              >
+                <FileImage size={16} />
+                Export Images ({exportQueue.size})
+              </button>
+            </div>
+            {onSaveOffline && (
+              <button
+                type="button"
+                onClick={handleSaveOffline}
+                disabled={isSaving}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  background: isSaving ? "#6c757d" : "#17a2b8",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "10px",
+                  cursor: isSaving ? "not-allowed" : "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  transition: "background 0.2s",
+                  opacity: isSaving ? 0.7 : 1,
+                }}
+                onMouseEnter={(e) => !isSaving && (e.currentTarget.style.background = "#138496")}
+                onMouseLeave={(e) => !isSaving && (e.currentTarget.style.background = "#17a2b8")}
+              >
+                <Save size={16} />
+                {isSaving ? "Saving..." : `Save Offline (${exportQueue.size})`}
+              </button>
+            )}
           </div>
         )}
       </div>

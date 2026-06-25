@@ -126,6 +126,7 @@ export type WireDetailsType = {
     termPartNo: string;
     sealPartNo: string;
     cavity: string;
+    gender?: string;
   };
   to: {
     connectorNumber: string;
@@ -134,6 +135,7 @@ export type WireDetailsType = {
     termPartNo: string;
     sealPartNo: string;
     cavity: string;
+    gender?: string;
   };
 };
 export type PopupConnectorType = {

@@ -8,6 +8,7 @@ interface LocationImageTabProps {
   itemId: string | null;
   itemType: "component" | "connector" | "splice";
   isActive: boolean;
+  entityImageUrl?: string | null;
 }
 
 // Simple cache for location images
@@ -17,6 +18,7 @@ export default function LocationImageTab({
   itemId,
   itemType,
   isActive,
+  entityImageUrl,
 }: LocationImageTabProps) {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,17 +43,9 @@ export default function LocationImageTab({
       }
 
       try {
-        // Map itemType to entity type for API
-        const entityTypeMap: Record<string, string> = {
-          component: "COMPONENT",
-          connector: "CONNECTOR",
-          splice: "SPLICE",
-        };
-        const entityType = entityTypeMap[itemType];
-
-        // Try to fetch location images from new API
+        // Fetch location images from new API mapping to _LOCATION code
         const response = await fetch(
-          `${API_BASE_URL}/location-images/entity/${itemId}/${entityType}`,
+          `${API_BASE_URL}/assets/images/code/${itemId}_LOCATION`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
@@ -61,10 +55,9 @@ export default function LocationImageTab({
 
         if (response.ok) {
           const data = await response.json();
-          if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-            const imageUrls = data.data.map((img: any) => img.imageUrl);
-            setImages(imageUrls);
-            locationImageCache.set(cacheKey, imageUrls);
+          if (data.data && data.data.imageUrl) {
+            setImages([data.data.imageUrl]);
+            locationImageCache.set(cacheKey, [data.data.imageUrl]);
           } else {
             // Fallback to default location image path
             const defaultPath = `/images/location/${itemType}s/${itemId}.png`;
@@ -169,7 +162,95 @@ export default function LocationImageTab({
         gap: "16px",
       }}
     >
-      {images.length === 1 ? (
+      {entityImageUrl && (
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: images.length > 1 ? "16px" : "0" }}>
+          {images.length === 1 ? (
+            <div style={{ display: "flex", gap: "12px", width: "100%", alignItems: "flex-start" }}>
+              <div style={{ flex: 1, textAlign: "center" }}>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "8px" }}>
+                  {itemType.charAt(0).toUpperCase() + itemType.slice(1)} Image
+                </div>
+                <img
+                  src={entityImageUrl}
+                  alt={`${itemType}`}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "150px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-color)",
+                    cursor: "pointer",
+                    objectFit: "contain",
+                  }}
+                  onClick={() => window.open(entityImageUrl, "_blank")}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src.endsWith(".png")) {
+                      target.src = target.src.replace(".png", ".jpg");
+                    } else if (target.src.endsWith(".jpg")) {
+                      target.src = target.src.replace(".jpg", ".jpeg");
+                    }
+                  }}
+                />
+              </div>
+              <div style={{ flex: 1, textAlign: "center" }}>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "8px" }}>
+                  Location Image
+                </div>
+                <img
+                  src={images[0]}
+                  alt={`${itemType} location`}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "150px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-color)",
+                    cursor: "pointer",
+                    objectFit: "contain",
+                  }}
+                  onClick={() => window.open(images[0], "_blank")}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src.endsWith(".png")) {
+                      target.src = target.src.replace(".png", ".jpg");
+                    } else if (target.src.endsWith(".jpg")) {
+                      target.src = target.src.replace(".jpg", ".jpeg");
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div style={{ textAlign: "center", width: "100%" }}>
+              <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "8px" }}>
+                {itemType.charAt(0).toUpperCase() + itemType.slice(1)} Image
+              </div>
+              <img
+                src={entityImageUrl}
+                alt={`${itemType}`}
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "150px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--border-color)",
+                  cursor: "pointer",
+                  objectFit: "contain",
+                }}
+                onClick={() => window.open(entityImageUrl, "_blank")}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src.endsWith(".png")) {
+                    target.src = target.src.replace(".png", ".jpg");
+                  } else if (target.src.endsWith(".jpg")) {
+                    target.src = target.src.replace(".jpg", ".jpeg");
+                  }
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {!entityImageUrl && images.length === 1 ? (
         // Single image display
         <div
           style={{
@@ -209,7 +290,7 @@ export default function LocationImageTab({
             }}
           />
         </div>
-      ) : (
+      ) : images.length > 1 ? (
         // Multiple images display as thumbnails
         <>
           <div
@@ -289,7 +370,7 @@ export default function LocationImageTab({
             ))}
           </div>
         </>
-      )}
+      ) : null}
       <div
         style={{
           fontSize: "12px",

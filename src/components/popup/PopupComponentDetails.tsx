@@ -553,6 +553,7 @@ export default function PopupComponentDetails({
             itemId={popupComponent.id}
             itemType="component"
             isActive={activeTab === "location"}
+            entityImageUrl={imageUrl || `/images/components/${popupComponent.id}.png`}
           />
         )}
       </div>

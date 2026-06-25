@@ -60,6 +60,7 @@ export default function ImageManagement() {
   );
   const [bulkFiles, setBulkFiles] = useState<File[]>([]);
   const [bulkUploading, setBulkUploading] = useState(false);
+  const [isBulkLocationImage, setIsBulkLocationImage] = useState(false);
 
   // Specific Upload State
   const [specificType, setSpecificType] = useState<"COMPONENT" | "CONNECTOR">(
@@ -69,6 +70,7 @@ export default function ImageManagement() {
   const [specificName, setSpecificName] = useState(""); // Store selected name
   const [specificFile, setSpecificFile] = useState<File | null>(null);
   const [specificUploading, setSpecificUploading] = useState(false);
+  const [isLocationImage, setIsLocationImage] = useState(false);
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
@@ -233,7 +235,19 @@ export default function ImageManagement() {
 
     const formData = new FormData();
     bulkFiles.forEach((file) => {
-      formData.append("files", file);
+      let finalFile = file;
+      if (isBulkLocationImage) {
+        // Append _LOCATION to the filename before the extension
+        const lastDot = file.name.lastIndexOf(".");
+        let namePart = lastDot !== -1 ? file.name.substring(0, lastDot) : file.name;
+        const extPart = lastDot !== -1 ? file.name.substring(lastDot) : "";
+        if (!namePart.toUpperCase().endsWith("_LOCATION")) {
+          namePart = `${namePart}_LOCATION`;
+        }
+        const newName = `${namePart}${extPart}`;
+        finalFile = new File([file], newName, { type: file.type });
+      }
+      formData.append("files", finalFile);
     });
     formData.append("entityType", bulkUploadType);
 
@@ -294,7 +308,8 @@ export default function ImageManagement() {
 
     const formData = new FormData();
     formData.append("file", specificFile);
-    formData.append("entityCode", specificCode.toUpperCase());
+    const finalCode = isLocationImage ? `${specificCode}_LOCATION` : specificCode;
+    formData.append("entityCode", finalCode.toUpperCase());
     formData.append("entityType", specificType);
 
     try {
@@ -646,6 +661,20 @@ export default function ImageManagement() {
               </div>
             )}
 
+            <div className="im-form-group" style={{ marginTop: "12px", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <input
+                type="checkbox"
+                id="isBulkLocationImage"
+                checked={isBulkLocationImage}
+                onChange={(e) => setIsBulkLocationImage(e.target.checked)}
+                disabled={bulkUploading}
+                style={{ width: "16px", height: "16px", cursor: "pointer" }}
+              />
+              <label htmlFor="isBulkLocationImage" style={{ cursor: "pointer", fontSize: "14px", color: "var(--text-secondary)" }}>
+                Upload as Location Images (auto-appends _LOCATION to all codes)
+              </label>
+            </div>
+
             <button
               className="im-btn im-btn-primary im-btn-full"
               onClick={handleBulkUpload}
@@ -729,6 +758,20 @@ export default function ImageManagement() {
             {specificFile && (
               <p className="im-selected-file">{specificFile.name}</p>
             )}
+
+            <div className="im-form-group" style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <input
+                type="checkbox"
+                id="isLocationImage"
+                checked={isLocationImage}
+                onChange={(e) => setIsLocationImage(e.target.checked)}
+                disabled={specificUploading}
+                style={{ width: "16px", height: "16px", cursor: "pointer" }}
+              />
+              <label htmlFor="isLocationImage" style={{ cursor: "pointer", fontSize: "14px", color: "var(--text-secondary)" }}>
+                Upload as Location Image
+              </label>
+            </div>
 
             <button
               className="im-btn im-btn-primary im-btn-full"

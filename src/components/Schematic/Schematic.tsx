@@ -7,6 +7,7 @@ import React, {
   useMemo,
 } from "react";
 import TridentShape from "../symbols/TridentShape";
+import FemaleConnectorShape from "../symbols/FemaleConnectorShape";
 import FuseSymbol from "../symbols/FuseSymbol";
 import Sensor from "../symbols/Sensor";
 import ElectricalSwitch from "../symbols/ElectricalSwitch";
@@ -2194,6 +2195,9 @@ export default function Schematic({
                     const fromCavity = Number(wire.from.cavity); // get cavity of "from" connector
                     const toCavity = Number(wire.to.cavity); // get cavity of "to" connector
 
+                    const fromGender = from?.gender || wire.from?.gender || wire.wireDetails?.from?.gender;
+                    const toGender = to?.gender || wire.to?.gender || wire.wireDetails?.to?.gender;
+
                     let wireElement;
                     wireElement = (
                       <g>
@@ -2201,13 +2205,22 @@ export default function Schematic({
                           <>
                             {isFromTop ? (
                               <>
-                                {/* top component → trident points UP */}
-                                <TridentShape
-                                  cx={safe(fromX, 0)}
-                                  cy={safe(fromY - 15, 0)}
-                                  color={wire.color}
-                                  size={10}
-                                />
+                                {/* top component → connector points UP */}
+                                {fromGender?.toLowerCase() === 'female' ? (
+                                  <FemaleConnectorShape
+                                    cx={safe(fromX, 0)}
+                                    cy={safe(fromY - 15, 0)}
+                                    color={wire.color}
+                                    size={10}
+                                  />
+                                ) : (
+                                  <TridentShape
+                                    cx={safe(fromX, 0)}
+                                    cy={safe(fromY - 15, 0)}
+                                    color={wire.color}
+                                    size={10}
+                                  />
+                                )}
                                 {(fromComponent?.category?.toLowerCase() === "supply" || fromComponent?.label?.toLowerCase().includes("load center") || fromComponent?.label?.toLowerCase().includes("fuse") || fromComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && fromComponent?.label?.toLowerCase().includes("load center"))) &&
                                   wire.wireDetails?.fuse && (
                                     <g transform={`translate(${safe(fromX, 0)}, ${safe(fromY - 45, 0)}) ${rotation !== 0 ? `rotate(${-rotation})` : ""}`}>
@@ -2252,17 +2265,26 @@ export default function Schematic({
                               </>
                             ) : (
                               <>
-                                {/* bottom component → trident points DOWN */}
+                                {/* bottom component → connector points DOWN */}
                                 <g
                                   transform={`translate(${safe(fromX, 0)}, ${safe(fromY + 15, 0)
                                     }) scale(1, -1)`}
                                 >
-                                  <TridentShape
-                                    cx={0}
-                                    cy={0}
-                                    color={wire.color}
-                                    size={10}
-                                  />
+                                  {fromGender?.toLowerCase() === 'female' ? (
+                                    <FemaleConnectorShape
+                                      cx={0}
+                                      cy={0}
+                                      color={wire.color}
+                                      size={10}
+                                    />
+                                  ) : (
+                                    <TridentShape
+                                      cx={0}
+                                      cy={0}
+                                      color={wire.color}
+                                      size={10}
+                                    />
+                                  )}
                                 </g>
 
                                 {/* Fuse Code + Symbol + Amp (Bottom Side, normal orientation) */}
@@ -2434,12 +2456,21 @@ export default function Schematic({
                           <>
                             {isToTop ? (
                               <>
-                                <TridentShape
-                                  cx={safe(toX, 0)}
-                                  cy={safe(toY - 15, 0)}
-                                  color={wire.color}
-                                  size={10}
-                                />
+                                {toGender?.toLowerCase() === 'female' ? (
+                                  <FemaleConnectorShape
+                                    cx={safe(toX, 0)}
+                                    cy={safe(toY - 15, 0)}
+                                    color={wire.color}
+                                    size={10}
+                                  />
+                                ) : (
+                                  <TridentShape
+                                    cx={safe(toX, 0)}
+                                    cy={safe(toY - 15, 0)}
+                                    color={wire.color}
+                                    size={10}
+                                  />
+                                )}
 
                                 {/* Fuse flipped when trident on top */}
                                 {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && toComponent?.label?.toLowerCase().includes("load center"))) &&
@@ -2463,12 +2494,21 @@ export default function Schematic({
                                   transform={`translate(${safe(toX, 0)}, ${safe(toY + 15, 0)
                                     }) scale(1, -1)`}
                                 >
-                                  <TridentShape
-                                    cx={0}
-                                    cy={0}
-                                    color={wire.color}
-                                    size={10}
-                                  />
+                                  {toGender?.toLowerCase() === 'female' ? (
+                                    <FemaleConnectorShape
+                                      cx={0}
+                                      cy={0}
+                                      color={wire.color}
+                                      size={10}
+                                    />
+                                  ) : (
+                                    <TridentShape
+                                      cx={0}
+                                      cy={0}
+                                      color={wire.color}
+                                      size={10}
+                                    />
+                                  )}
                                 </g>
 
                                 {(toComponent?.category?.toLowerCase() === "supply" || toComponent?.label?.toLowerCase().includes("load center") || toComponent?.label?.toLowerCase().includes("fuse") || toComponent?.label?.toLowerCase().includes("transformator") || ((activeTab === "systems" || activeTab === "harnesses") && toComponent?.label?.toLowerCase().includes("load center"))) &&

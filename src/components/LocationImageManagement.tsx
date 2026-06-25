@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { FiSearch, FiFilter, FiTrash2, FiUpload, FiEdit2, FiX } from "react-icons/fi";
+import { FiSearch, FiFilter, FiTrash2, FiUpload, FiEdit2, FiX, FiDownload } from "react-icons/fi";
+import * as XLSX from "xlsx";
 import "../Styles/ImageManagement.css";
 import { API_BASE_URL as CONFIG_API_BASE_URL } from "../config";
 
@@ -43,7 +44,7 @@ export default function LocationImageManagement() {
   const [spliceList, setSpliceList] = useState<ComponentListItem[]>([]);
   const [loadingLists, setLoadingLists] = useState(false);
 
-  // Upload State
+  // Upload State (Specific)
   const [uploadType, setUploadType] = useState<"COMPONENT" | "CONNECTOR" | "SPLICE">("COMPONENT");
   const [uploadCode, setUploadCode] = useState("");
   const [uploadName, setUploadName] = useState("");
@@ -53,17 +54,12 @@ export default function LocationImageManagement() {
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Edit State
-  const [editingImage, setEditingImage] = useState<LocationImageAsset | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editTags, setEditTags] = useState("");
-  const [showEditModal, setShowEditModal] = useState(false);
+  // Bulk Upload State
+  const [bulkUploadType, setBulkUploadType] = useState<"COMPONENT" | "CONNECTOR" | "SPLICE">("COMPONENT");
+  const [bulkFiles, setBulkFiles] = useState<File[]>([]);
+  const [bulkUploading, setBulkUploading] = useState(false);
 
-  // Replace State
-  const [replacingImage, setReplacingImage] = useState<LocationImageAsset | null>(null);
-  const [replaceFile, setReplaceFile] = useState<File | null>(null);
-  const [showReplaceModal, setShowReplaceModal] = useState(false);
-  const [replacing, setReplacing] = useState(false);
+
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
@@ -144,7 +140,7 @@ export default function LocationImageManagement() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/location-images`, {
+      const response = await fetch(`${API_BASE_URL}/assets/images`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
         },
@@ -155,7 +151,7 @@ export default function LocationImageManagement() {
       }
 
       const json = await response.json();
-      const assets = json.data.content;
+      const assets = json.data.content.filter((asset: any) => asset.entityCode.endsWith('_LOCATION'));
 
       setLocationImages(assets);
       applyFilters(assets, searchQuery, filterType);
@@ -205,6 +201,143 @@ export default function LocationImageManagement() {
   };
 
   // ==================== UPLOAD ====================
+  const handleExportToExcel = async () => {
+    try {
+      let modelName = "All_Models";
+      const modelId = sessionStorage.getItem("selectedModelId");
+      if (modelId) {
+        try {
+          const modelsRes = await fetch(`${API_BASE_URL}/models`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("authToken") || ""}` }
+          });
+          if (modelsRes.ok) {
+            const models = await modelsRes.json();
+            const found = models.find((m: any) => m.id === modelId);
+            if (found) modelName = found.name;
+          }
+        } catch (e) {
+          console.error("Failed to fetch model name", e);
+        }
+      }
+
+      // Prepare data
+      const dataToExport: any[] = [];
+
+      // Add Components
+      componentList.forEach((comp) => {
+        dataToExport.push({
+          "component name": comp.name || "",
+          "component code": comp.code || "",
+          "connector code": "",
+          "splice code": ""
+        });
+      });
+
+      // Add Connectors
+      connectorList.forEach((conn) => {
+        dataToExport.push({
+          "component name": conn.name || "",
+          "component code": "",
+          "connector code": conn.code || "",
+          "splice code": ""
+        });
+      });
+
+      // Add Splices
+      spliceList.forEach((splice) => {
+        dataToExport.push({
+          "component name": splice.name || "",
+          "component code": "",
+          "connector code": "",
+          "splice code": splice.code || ""
+        });
+      });
+
+      // Create a new workbook and add the worksheet
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Location Asset Codes");
+
+      // Generate Excel file and trigger download
+      const safeModelName = modelName.replace(/[^a-z0-9]/gi, '_');
+      const fileName = `${safeModelName}_locations.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+
+      setSuccessMessage("Exported to Excel successfully");
+    } catch (err) {
+      setError("Failed to export to Excel");
+      console.error("Export error:", err);
+    }
+  };
+
+  const handleBulkFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.currentTarget.files;
+    if (files) {
+      setBulkFiles(Array.from(files));
+    }
+  };
+
+  const handleBulkUpload = async () => {
+    if (bulkFiles.length === 0) {
+      setError("Please select at least one file");
+      return;
+    }
+
+    setBulkUploading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    const formData = new FormData();
+    bulkFiles.forEach((file) => {
+      // Append _LOCATION to the filename before the extension for location images
+      const lastDot = file.name.lastIndexOf(".");
+      let namePart = lastDot !== -1 ? file.name.substring(0, lastDot) : file.name;
+      const extPart = lastDot !== -1 ? file.name.substring(lastDot) : "";
+      
+      if (!namePart.toUpperCase().endsWith("_LOCATION")) {
+        namePart = `${namePart}_LOCATION`;
+      }
+      
+      const newName = `${namePart}${extPart}`;
+      const finalFile = new File([file], newName, { type: file.type });
+      formData.append("files", finalFile);
+    });
+    formData.append("entityType", bulkUploadType);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/assets/bulk-upload`, {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData: ApiError = await response.json();
+        throw new Error(errorData.details || errorData.message || `Upload failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      setSuccessMessage(
+        `Successfully uploaded ${result.length || result.data?.length || 0} location images for ${bulkUploadType}`
+      );
+      setBulkFiles([]);
+      fetchLocationImages();
+
+      const bulkInput = document.getElementById(
+        "bulk-location-file-input"
+      ) as HTMLInputElement;
+      if (bulkInput) bulkInput.value = "";
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Bulk upload failed";
+      setError(errorMessage);
+      console.error("Bulk upload error:", err);
+    } finally {
+      setBulkUploading(false);
+    }
+  };
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.currentTarget.files;
     if (files) {
@@ -245,15 +378,11 @@ export default function LocationImageManagement() {
 
     try {
       const formData = new FormData();
-      uploadFiles.forEach((file) => {
-        formData.append("files", file);
-      });
-      formData.append("entityCode", uploadCode.toUpperCase());
+      formData.append("file", uploadFiles[0]); // Only one file supported per entityCode
+      formData.append("entityCode", `${uploadCode.toUpperCase()}_LOCATION`);
       formData.append("entityType", uploadType);
-      if (uploadTitle) formData.append("title", uploadTitle);
-      if (uploadTags) formData.append("tags", uploadTags);
 
-      const response = await fetch(`${API_BASE_URL}/location-images/bulk-upload`, {
+      const response = await fetch(`${API_BASE_URL}/assets/upload`, {
         method: "POST",
         body: formData,
         headers: {
@@ -266,13 +395,10 @@ export default function LocationImageManagement() {
         throw new Error(errorData.details || errorData.message || `Upload failed: ${response.statusText}`);
       }
 
-      const result = await response.json();
-      setSuccessMessage(`Successfully uploaded ${result.data.length} location images`);
+      setSuccessMessage("Successfully uploaded location image");
       setUploadFiles([]);
       setUploadCode("");
       setUploadName("");
-      setUploadTitle("");
-      setUploadTags("");
       fetchLocationImages();
 
       const fileInput = document.getElementById("location-file-input") as HTMLInputElement;
@@ -286,101 +412,7 @@ export default function LocationImageManagement() {
     }
   };
 
-  // ==================== EDIT ====================
-  const handleEditClick = (image: LocationImageAsset) => {
-    setEditingImage(image);
-    setEditTitle(image.title || "");
-    setEditTags(image.tags || "");
-    setShowEditModal(true);
-  };
 
-  const handleEditSave = async () => {
-    if (!editingImage) return;
-
-    setLoading(true);
-    setError(null);
-    setSuccessMessage(null);
-
-    try {
-      const formData = new FormData();
-      formData.append("title", editTitle);
-      formData.append("tags", editTags);
-
-      const response = await fetch(`${API_BASE_URL}/location-images/${editingImage.id}`, {
-        method: "PUT",
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Update failed: ${response.statusText}`);
-      }
-
-      setSuccessMessage("Location image updated successfully");
-      setShowEditModal(false);
-      setEditingImage(null);
-      fetchLocationImages();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Update failed";
-      setError(errorMessage);
-      console.error("Update error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ==================== REPLACE ====================
-  const handleReplaceClick = (image: LocationImageAsset) => {
-    setReplacingImage(image);
-    setReplaceFile(null);
-    setShowReplaceModal(true);
-  };
-
-  const handleReplaceFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files?.[0];
-    if (file) {
-      setReplaceFile(file);
-    }
-  };
-
-  const handleReplaceSave = async () => {
-    if (!replacingImage || !replaceFile) return;
-
-    setReplacing(true);
-    setError(null);
-    setSuccessMessage(null);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", replaceFile);
-
-      const response = await fetch(`${API_BASE_URL}/location-images/${replacingImage.id}/replace`, {
-        method: "PUT",
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Replace failed: ${response.statusText}`);
-      }
-
-      setSuccessMessage("Location image replaced successfully");
-      setShowReplaceModal(false);
-      setReplacingImage(null);
-      setReplaceFile(null);
-      fetchLocationImages();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Replace failed";
-      setError(errorMessage);
-      console.error("Replace error:", err);
-    } finally {
-      setReplacing(false);
-    }
-  };
 
   // ==================== DELETE ====================
   const toggleSelectForDelete = (id: string) => {
@@ -415,7 +447,7 @@ export default function LocationImageManagement() {
     const idsToDelete = Array.from(selectedForDelete);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/location-images/delete-bulk`, {
+      const response = await fetch(`${API_BASE_URL}/assets/delete-bulk`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -450,7 +482,7 @@ export default function LocationImageManagement() {
     setSuccessMessage(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/location-images/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/assets/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
@@ -556,8 +588,84 @@ export default function LocationImageManagement() {
         </div>
       )}
 
-      {/* Upload Panel */}
+      {/* Upload Panels */}
       <div className="im-upload-section">
+        {/* Bulk Upload Card */}
+        <div className="im-card im-bulk-upload">
+          <div className="im-card-header">
+            <h2>Bulk Location Image Upload</h2>
+            <div className="im-type-toggles">
+              <button
+                className={`im-toggle ${bulkUploadType === "COMPONENT" ? "active" : ""}`}
+                onClick={() => setBulkUploadType("COMPONENT")}
+              >
+                Component
+              </button>
+              <button
+                className={`im-toggle ${bulkUploadType === "CONNECTOR" ? "active" : ""}`}
+                onClick={() => setBulkUploadType("CONNECTOR")}
+              >
+                Connector
+              </button>
+              <button
+                className={`im-toggle ${bulkUploadType === "SPLICE" ? "active" : ""}`}
+                onClick={() => setBulkUploadType("SPLICE")}
+              >
+                Splice
+              </button>
+            </div>
+          </div>
+
+          <div className="im-card-body">
+            <p className="im-hint">
+              Select multiple files. Filename must match entity code (e.g., B3.jpg).
+              Will be uploaded as location images.
+            </p>
+            <div style={{ marginBottom: "16px" }}>
+              <button
+                className="im-btn im-btn-secondary im-btn-full"
+                onClick={handleExportToExcel}
+                title="Download all codes for the selected model to use as a renaming template"
+              >
+                <FiDownload /> Download Codes Template
+              </button>
+            </div>
+            <label className="im-file-input-wrapper">
+              <input
+                id="bulk-location-file-input"
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleBulkFileSelect}
+                disabled={bulkUploading}
+              />
+              <span className="im-file-input-label">
+                <FiUpload /> Browse Images
+              </span>
+            </label>
+
+            {bulkFiles.length > 0 && (
+              <div className="im-file-list">
+                <h4>{bulkFiles.length} file(s) selected:</h4>
+                <ul>
+                  {bulkFiles.map((file, idx) => (
+                    <li key={idx}>{file.name}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <button
+              className="im-btn im-btn-primary im-btn-full"
+              onClick={handleBulkUpload}
+              disabled={bulkFiles.length === 0 || bulkUploading}
+            >
+              {bulkUploading ? "Uploading..." : "Upload All"}
+            </button>
+          </div>
+        </div>
+
+        {/* Specific Upload Card */}
         <div className="im-card im-specific-upload">
           <div className="im-card-header">
             <h2>Upload Location Images</h2>
@@ -753,7 +861,6 @@ export default function LocationImageManagement() {
                 </th>
                 <th>Code</th>
                 <th className="hide-mobile">Type</th>
-                <th>Title</th>
                 <th>Filename</th>
                 <th className="hide-mobile">Size</th>
                 <th className="hide-mobile">Uploaded</th>
@@ -781,25 +888,10 @@ export default function LocationImageManagement() {
                       {image.entityType}
                     </span>
                   </td>
-                  <td>{image.title || "-"}</td>
                   <td>{image.fileName}</td>
                   <td className="hide-mobile">{(image.fileSize / 1024).toFixed(2)} KB</td>
                   <td className="hide-mobile">{new Date(image.uploadedAt).toLocaleDateString()}</td>
                   <td className="im-actions-col">
-                    <button
-                      className="im-action-btn"
-                      onClick={() => handleEditClick(image)}
-                      title="Edit image details"
-                    >
-                      <FiEdit2 size={18} />
-                    </button>
-                    <button
-                      className="im-action-btn"
-                      onClick={() => handleReplaceClick(image)}
-                      title="Replace image"
-                    >
-                      <FiUpload size={18} />
-                    </button>
                     <button
                       className="im-action-btn-danger"
                       onClick={() => handleDeleteSingle(image.id)}
@@ -815,91 +907,7 @@ export default function LocationImageManagement() {
         )}
       </div>
 
-      {/* Edit Modal */}
-      {showEditModal && editingImage && (
-        <div className="im-modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="im-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Edit Location Image</h2>
-            <div className="im-form-group">
-              <label htmlFor="edit-title" className="im-form-label">Title</label>
-              <input
-                id="edit-title"
-                type="text"
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="im-input"
-              />
-            </div>
-            <div className="im-form-group">
-              <label htmlFor="edit-tags" className="im-form-label">Tags</label>
-              <input
-                id="edit-tags"
-                type="text"
-                value={editTags}
-                onChange={(e) => setEditTags(e.target.value)}
-                className="im-input"
-              />
-            </div>
-            <div className="im-modal-actions">
-              <button
-                className="im-btn im-btn-secondary"
-                onClick={() => setShowEditModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="im-btn im-btn-primary"
-                onClick={handleEditSave}
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Replace Modal */}
-      {showReplaceModal && replacingImage && (
-        <div className="im-modal-overlay" onClick={() => setShowReplaceModal(false)}>
-          <div className="im-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Replace Location Image</h2>
-            <p>Current file: <strong>{replacingImage.fileName}</strong></p>
-            <div className="im-form-group">
-              <label htmlFor="replace-file" className="im-form-label">Select New Image</label>
-              <label className="im-file-input-wrapper">
-                <input
-                  id="replace-file"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleReplaceFileSelect}
-                  disabled={replacing}
-                />
-                <span className="im-file-input-label">
-                  <FiUpload /> Browse Image
-                </span>
-              </label>
-              {replaceFile && (
-                <p className="im-selected-file">{replaceFile.name}</p>
-              )}
-            </div>
-            <div className="im-modal-actions">
-              <button
-                className="im-btn im-btn-secondary"
-                onClick={() => setShowReplaceModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="im-btn im-btn-primary"
-                onClick={handleReplaceSave}
-                disabled={!replaceFile || replacing}
-              >
-                {replacing ? "Replacing..." : "Replace"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
